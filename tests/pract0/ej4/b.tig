@@ -1,0 +1,2 @@
+/*VarExp(SubscriptVar(SimpleVar "a", IntExp(7, 0)), 0)*/
+a[7]

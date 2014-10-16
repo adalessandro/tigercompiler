@@ -1,0 +1,2 @@
+/*AssignExp({exp = NilExp 0, var = SimpleVar "a"}, 0)*/
+a := nil

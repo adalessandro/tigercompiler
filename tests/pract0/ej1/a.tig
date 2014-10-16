@@ -1,0 +1,23 @@
+/* Prác. 0 - Ej. 1  */
+let
+
+    type lista = {item : int, resto : lista}
+    
+    function agrega (i : int, l : lista) : lista =
+        lista{item = i, resto = l}
+
+    function filtra (n : int, l : lista) : lista =
+        if l = nil then nil
+        else if l.item <> n then lista{item = n, resto = filtra(n, l.resto)}
+             else filtra(n, l.resto)
+
+in
+
+    let
+        var l : lista := lista{item = 1, resto = lista{item = 2, resto = lista{item = 3, resto = nil}}}
+    in
+        agrega(4, l);
+        filtra(2, l)
+    end
+
+end

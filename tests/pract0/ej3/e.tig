@@ -1,0 +1,4 @@
+let
+    type lista = {item: int, resto: lista}
+in
+end

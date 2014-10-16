@@ -1,0 +1,3 @@
+/*ArrayExp({init = IntExp(5, 0), size = IntExp(10, 0), typ = "a"}, 0)*/
+a[10] of 5
+

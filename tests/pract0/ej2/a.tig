@@ -1,0 +1,8 @@
+/* Prác. 0 - Ej. 2  */
+let
+    var s : string := "hola"
+in
+    s := "caca";
+    print("ssttrriinngg");
+    print(s)
+end

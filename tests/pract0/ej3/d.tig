@@ -1,0 +1,5 @@
+let
+    var f := 10
+in
+    f(f, f); f
+end
