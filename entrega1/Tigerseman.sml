@@ -24,6 +24,8 @@ type venv = (string, EnvEntry) Tigertab.Tabla
 (* Tipo tabla espacio de nombres de tipos *)
 type tenv = (string, Tipo) Tigertab.Tabla
 
+fun printtenv tenv = map (fn x => print (("("^(#1 x)^", "^printTipo(#2 x)^")")^"\n")) (tabAList tenv)
+
 (* Tabla inicial del espacio de nombres de variables y funciones *)
 val tab_vars : (string, EnvEntry) Tabla = tabInserList(
     tabNueva(),
@@ -253,15 +255,15 @@ fun transExp(venv, tenv) =
                     val _ = if tiposIguales (#ty tsize) (TInt RW)
                             then ()
                             else error("El tamaño del arreglo no es del tipo entero", nl)
-                    val tyarr =
+                    val (tytyp, unico) =
                         case tabBusca(typ, tenv) of
-                            SOME t => t
-                          | NONE => error("Tipo no definido", nl)
+                            SOME (TArray (t, u)) => (t, u)
+                          | _ => error("No está definido el array "^typ, nl)
                     val tinit = trexp init
-                    val _ = if tiposIguales tyarr (#ty tinit)
+                    val _ = if tiposIguales tytyp (#ty tinit)
                             then ()
                             else error("Valor inicial del arreglo no es del tipo indicado", nl)
-                in  {exp=SCAF, ty=tyarr}
+                in  {exp=SCAF, ty=TArray(tytyp, unico)}
                 end
         and trvar(SimpleVar s, nl) =
                 let val tvar =
@@ -294,11 +296,11 @@ fun transExp(venv, tenv) =
                 in {exp=SCAF, ty=tyarr}
                 end
         and trdec (venv, tenv) (VarDec ({name, escape, typ=NONE, init}, nl)) =
-                let val {exp=e', ty=t'} = trexp(init)
+                let val {exp=e', ty=t'} = transExp (venv, tenv) init
                 in  (tabRInserta(name, Var{ty=t'}, venv), tenv, [{exp=SCAF, ty=t'}])
                 end
           | trdec (venv, tenv) (VarDec ({name, escape, typ=SOME b, init}, nl)) =
-                let val {exp=e', ty=t'} = trexp(init)
+                let val {exp=e', ty=t'} = transExp (venv, tenv) init
                     val tret' = case tabBusca(b, tenv) of
                             SOME t => t
                           | NONE => error("Tipo no definido", nl)
