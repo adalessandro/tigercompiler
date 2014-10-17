@@ -3,6 +3,7 @@ struct
 
 open Tigerabs
 open Tigersres
+open Topsort
 
 (* Tipo temporal *)
 datatype SCAF = SCAF
@@ -368,9 +369,10 @@ fun transExp(venv, tenv) =
                         NONE => (venv'', tenv, [])
                       | SOME x => error("El batch de declaraciones repite la función "^((#name o #1) x), (#2 x))
                 end
-(***************************************************************************************)
           | trdec (venv,tenv) (TypeDec ts) =
-                (venv, tenv, []) (*COMPLETAR*)
+                let val batch = List.map #1 ts
+                    val tenv' = fijaTipos batch tenv
+                in  (venv, tenv', []) end
     in 
         trexp 
     end

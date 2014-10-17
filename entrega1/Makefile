@@ -68,12 +68,13 @@ depend: Tigerabs.sml Tigergrm.sml Tigerlex.sml Tigermain.sml \
 
 ### DO NOT DELETE THIS LINE
 CantPrints.uo: CantPrints.ui Tigerabs.uo 
-Topsort.uo: Topsort.ui Tigerabs.uo 
+Topsort.uo: Topsort.ui Tigerabs.uo Tigersres.uo 
 Tigerescap.uo: Tigerescap.ui Tigerabs.uo Tigertab.ui 
 CantPrints.ui: Tigerabs.uo 
 Tigerpp.ui: Tigerabs.uo 
 Tigerpp.uo: Tigerpp.ui Tigerabs.uo 
-Tigerseman.uo: Tigerseman.ui Tigerabs.uo Tigersres.uo Tigertab.ui 
+Tigerseman.uo: Tigerseman.ui Tigerabs.uo Tigersres.uo Tigertab.ui \
+    Topsort.ui 
 Tigergrm.uo: Tigergrm.ui Tigerabs.uo Tigernlin.uo 
 Tigersres.uo: Tigerabs.uo Tigertips.uo Tigertab.ui Tigertemp.ui 
 Tigergrm.ui: Tigerabs.uo 
