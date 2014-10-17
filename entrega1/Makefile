@@ -58,7 +58,7 @@ clean:
 	$(MOSMLC) $<
 
 depend: Tigerabs.sml Tigergrm.sml Tigerlex.sml Tigermain.sml \
-	Tigernlin.sml Tigerpp.sml \
+	Tigernlin.sml Tigerpp.sml Topsort.sml \
     CantPrints.sml
 
 	$(REMOVE) Makefile.bak
@@ -67,19 +67,21 @@ depend: Tigerabs.sml Tigergrm.sml Tigerlex.sml Tigermain.sml \
 	$(MOSMLTOOLS)/mosmldep >> Makefile
 
 ### DO NOT DELETE THIS LINE
-Tigermain.uo: Tigerseman.ui Tigerlex.uo Tigerpp.ui Tigerescap.ui \
-    Tigergrm.ui CantPrints.ui 
-Tigergrm.uo: Tigergrm.ui Tigerabs.uo Tigernlin.uo 
+CantPrints.uo: CantPrints.ui Tigerabs.uo 
+Topsort.uo: Topsort.ui Tigerabs.uo 
+Tigerescap.uo: Tigerescap.ui Tigerabs.uo Tigertab.ui 
+CantPrints.ui: Tigerabs.uo 
+Tigerpp.ui: Tigerabs.uo 
 Tigerpp.uo: Tigerpp.ui Tigerabs.uo 
+Tigerseman.uo: Tigerseman.ui Tigerabs.uo Tigersres.uo Tigertab.ui 
+Tigergrm.uo: Tigergrm.ui Tigerabs.uo Tigernlin.uo 
 Tigersres.uo: Tigerabs.uo Tigertips.uo Tigertab.ui Tigertemp.ui 
 Tigergrm.ui: Tigerabs.uo 
-CantPrints.uo: CantPrints.ui Tigerabs.uo 
 Tigerescap.ui: Tigerabs.uo 
-Tigerseman.ui: Tigerabs.uo 
-Tigerlex.uo: Tigergrm.ui Tigernlin.uo 
-CantPrints.ui: Tigerabs.uo 
-Tigerseman.uo: Tigerseman.ui Tigerabs.uo Tigersres.uo Tigertab.ui 
 Tigertab.uo: Tigertab.ui 
-Tigerescap.uo: Tigerescap.ui Tigerabs.uo Tigertab.ui 
+Tigermain.uo: Tigerseman.ui Tigerlex.uo Tigerpp.ui Tigerescap.ui \
+    Tigergrm.ui CantPrints.ui 
 Tigertemp.uo: Tigertemp.ui 
-Tigerpp.ui: Tigerabs.uo 
+Tigerseman.ui: Tigerabs.uo 
+Topsort.ui: Tigerabs.uo Tigertips.uo Tigertab.ui 
+Tigerlex.uo: Tigergrm.ui Tigernlin.uo 
