@@ -1,8 +1,9 @@
 structure Topsort :> Topsort =
 struct
 
+open Tigertips
+open Tigertab
 open Tigerabs
-open Tigersres
 
 infix -- ---
 infix rs ls
@@ -16,6 +17,8 @@ fun i -- e = List.filter (op <> rs e) i
 fun lp --- e = List.filter ((op <> rs e) o fst) lp
 
 exception Ciclo
+
+fun printtenv tenv = map (fn x => print (("("^(#1 x)^", "^printTipo(#2 x)^")")^"\n")) (tabAList tenv)
 
 fun topsort p =
     let fun candidatos p e = List.filter (fn e => List.all((op<> rs e) o snd) p) e
@@ -113,13 +116,36 @@ fun fijaNone [] env = env
         in fijaNone t (tabRInserta (name, TRecord (lf', u), env)) end
   | fijaNone (_::t) env = fijaNone t env
 
+fun fijaRecords decs env =
+  let fun buscaEnv t = case tabBusca (t,env) of
+                            SOME t' => t'
+                          | _ => raise Fail (t^" no existe!!")
+      fun fija1 (name, TTipo (s, ref NONE),n) = (name, TTipo (s, ref (SOME (buscaEnv s))),n)
+        | fija1 (name, TRecord (lf,u),n) =
+                       let val (nr,r) = valOf (List.find(fn(_,TRecord (_,u'))=> u = u'
+                                                           | _ => false) decs)
+                       in (name, TTipo (nr, ref (SOME r)),n) end
+        | fija1 x = x
+      fun fija (name, TRecord(lf,u)) = (name, TRecord (List.map fija1 lf, u))
+        | fija x = x
+      val envlist = List.map fija decs
+      val env' = tabNueva()
+  in  List.foldl (fn ((x,y), t) => tabInserta (x, y, t)) env' envlist
+  end
+
 fun fijaTipos batch env =
     let val pares = genPares batch
         val recs = buscaRecords batch
         val ordered = topsort pares
         val env' = procesa ordered batch recs env
         val env'' = procRecords recs env'
+        val _ = print "-----------------------\n"
+        val _ = printtenv env''
         val env''' = fijaNone (tabAList env'') env''
-    in env''' end
+        val env'''' = fijaRecords (tabAList env''') env'''
+        val _ = print "-----------------------\n"
+        val _ = printtenv env''''
+        val _ = print "-----------------------\n"
+    in env'''' end
 
 end

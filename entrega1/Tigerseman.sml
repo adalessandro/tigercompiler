@@ -291,12 +291,15 @@ fun transExp(venv, tenv) =
                           | _ => error("No es un array", nl)
                     val (expsub, tysub) =
                         case trexp e of
-                            {exp, ty=TInt RW} => (exp, TInt RW)
+                            {exp, ty=TInt r} => (exp, TInt r)
                           | _ => error("Índice de array no es entero", nl)
                 in {exp=SCAF, ty=tyarr}
                 end
         and trdec (venv, tenv) (VarDec ({name, escape, typ=NONE, init}, nl)) =
                 let val {exp=e', ty=t'} = transExp (venv, tenv) init
+                    val _ = case t' of
+                                 TNil => error("No se puede inicializar la variable "^name^" con Nil sin declarar su tipo", nl)
+                               | _ => ()
                 in  (tabRInserta(name, Var{ty=t'}, venv), tenv, [{exp=SCAF, ty=t'}])
                 end
           | trdec (venv, tenv) (VarDec ({name, escape, typ=SOME b, init}, nl)) =
@@ -304,7 +307,9 @@ fun transExp(venv, tenv) =
                     val tret' = case tabBusca(b, tenv) of
                             SOME t => t
                           | NONE => error("Tipo no definido", nl)
-                    val _ = tiposIguales t' tret'
+                    val _ = if tiposIguales t' tret'
+                            then ()
+                            else error ("El tipo del valor inicial es incorrecto", nl)
                 in  (tabRInserta(name, Var{ty=tret'}, venv), tenv, [{exp=SCAF, ty=tret'}])
                 end
           | trdec (venv, tenv) (FunctionDec fs) =
