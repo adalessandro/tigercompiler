@@ -1,5 +1,8 @@
 *.ui
 *.uo
+*.o
+*.output
+*.bak
 entrega1/tiger
 *.swp
-*.sml~
+*~
