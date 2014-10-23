@@ -106,32 +106,61 @@ fun procRecords recs env =
 
 fun fijaNone [] env = env
   | fijaNone ((name, TArray (TTipo (s, ref NONE), u))::t) env =
-        (case tabBusca (s,env) of
-              SOME (r as (TRecord _)) => fijaNone t (tabRInserta (name, TArray (TTipo (s, ref (SOME r)), u), env))
-            | _ => raise Fail "Error interno 666+1")
-  | fijaNone ((name, TRecord (lf, u))::t) env =
-        let fun busNone ((s, TTipo (t, ref NONE), n), l) = ( (s, TTipo (t, ref (SOME (tabSaca (t,env))) ), n)::l )
-              | busNone (d,l) = d::l
-            val lf' = List.foldr busNone [] lf
+     (case tabBusca (s,env) of
+         SOME (r as (TRecord _)) => fijaNone t (tabRInserta(name, TArray (TTipo (s,ref(SOME r)), u), env))
+       | _ => raise Fail "Error interno 666+1")
+  | fijaNone ((name, TRecord (lf, u)) :: t) env =
+        let 
+               fun busNone ((s, TTipo (ts, oprec), n), l) = 
+                    (case !oprec of 
+                         NONE => let val _ = oprec:= SOME (tabSaca (ts,env))
+                                 in (s, TTipo (ts, oprec), n) :: l
+                                 end
+                        |SOME _ => (s, TTipo (ts, oprec), n) :: l)
+                   busNone (d,l) = d::l
+               val lf' = List.foldr busNone [] lf
         in fijaNone t (tabRInserta (name, TRecord (lf', u), env)) end
-  | fijaNone (_::t) env = fijaNone t env
+ | fijaNone ((name, TTipo (ty, _)) :: t) env =
+     let 
+          val (ta,env') = case tabBusca (ty,env) of
+                              SOME t => (t,tabRInserta (name, t, env))
+                            | NONE => raise Fail (ty ^ " es un tipo no declarado")
+     in fijaNone t env'
+     end
+ | fijaNone (_::t) env = fijaNone t env
 
-fun fijaRecords decs env =
-  let fun buscaEnv t = case tabBusca (t,env) of
-                            SOME t' => t'
-                          | _ => raise Fail (t^" no existe!!")
-      fun fija1 (name, TTipo (s, ref NONE),n) = (name, TTipo (s, ref (SOME (buscaEnv s))),n)
-        | fija1 (name, TRecord (lf,u),n) =
-                       let val (nr,r) = valOf (List.find(fn(_,TRecord (_,u'))=> u = u'
-                                                           | _ => false) decs)
-                       in (name, TTipo (nr, ref (SOME r)),n) end
-        | fija1 x = x
-      fun fija (name, TRecord(lf,u)) = (name, TRecord (List.map fija1 lf, u))
-        | fija x = x
-      val envlist = List.map fija decs
-      val env' = tabNueva()
-  in  List.foldl (fn ((x,y), t) => tabInserta (x, y, t)) env' envlist
-  end
+ (* Encuentra NONEs y los reemplaza con su tipo en el env *)
+        fun fijaNONE [] env = env
+        | fijaNONE ((name, TArray (TTipo (s, ref NONE), u)) :: t) env =
+          (case tabBusca(s, env) of
+              SOME (r as (TRecord _)) => fijaNONE t (tabRInserta (name, TArray (r, u) , env))
+              | SOME _ => error (s ^ " no record?", firstNL)
+              | _ => error (s^": Tipo inexistente", firstNL))
+        | fijaNONE ((name, TRecord (lf, u)) :: t) env =
+          let
+            fun busNONE ((s, TTipo (t, ref NONE), i), l) =
+              (case tabBusca(t, env) of
+                SOME (tt as (TRecord _)) => (s, TTipo (t, ref (SOME tt)), i) :: l
+                | SOME _ => error (s ^ " no record?", firstNL)
+                | _ => error (s^": Tipo inexistente", firstNL))
+            | busNONE (d, l) = d :: l
+            val lf' = List.foldr busNONE [] lf
+          in fijaNONE t (tabRInserta(name, TRecord (lf', u), env)) end
+        | fijaNONE ((name, TTipo (s, ref NONE)) :: t) env =
+          (case tabBusca (s, env) of
+            SOME (r as (TRecord _)) => fijaNONE t (tabRInserta (name, r, env))
+            | SOME _ => error (s ^ " no record?", firstNL)
+            | _ => error (s ^ ": Tipo inexistente", firstNL))
+        | fijaNONE (_::t) env = fijaNONE t env
+
+
+
+
+
+
+
+
+
 
 fun fijaTipos batch env =
     let val pares = genPares batch
@@ -139,13 +168,11 @@ fun fijaTipos batch env =
         val ordered = topsort pares
         val env' = procesa ordered batch recs env
         val env'' = procRecords recs env'
-        val _ = print "-----------------------\n"
+        val _ = print "----------Despues de procRecords---------\n"
         val _ = printtenv env''
         val env''' = fijaNone (tabAList env'') env''
-        val env'''' = fijaRecords (tabAList env''') env'''
-        val _ = print "-----------------------\n"
-        val _ = printtenv env''''
-        val _ = print "-----------------------\n"
-    in env'''' end
+        val _ = print "--------Despues de fijaNone---------------\n"
+        val _ = printtenv env'''
+    in env''' end
 
 end
