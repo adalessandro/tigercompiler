@@ -1,0 +1,5 @@
+let
+    type R = {i: int, prox: R}
+in
+    ()
+end

@@ -377,8 +377,14 @@ fun transExp(venv, tenv) =
                       | SOME x => error("El batch de declaraciones repite la función "^((#name o #1) x), (#2 x))
                 end
           | trdec (venv,tenv) (TypeDec ts) =
-                let val batch = List.map #1 ts
+                let fun reps [] = false
+                      | reps (({name, ...}, nl) :: t) = if List.exists (fn ({name = x, ...}, _) => x = name) t
+                                                  then true
+                                                  else reps t
+                    val _ = if reps ts then raise Fail("nombres de tipos repetidos en el batch") else ()
+                    val batch = List.map #1 ts
                     val tenv' = fijaTipos batch tenv
+                                handle Topsort.Ciclo => raise Fail("existe un ciclo en el batch")
                 in  (venv, tenv', []) end
     in 
         trexp 
