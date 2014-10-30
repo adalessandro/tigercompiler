@@ -26,6 +26,10 @@ type tenv = (string, Tipo) Tigertab.Tabla
 
 fun printtenv tenv = map (fn x => print (("("^(#1 x)^", "^printTipo(#2 x)^")")^"\n")) (tabAList tenv)
 
+fun varName (SimpleVar s) = s
+  | varName (FieldVar (v, _)) = varName v
+  | varName (SubscriptVar (v, _)) = varName v
+
 (* Tabla inicial del espacio de nombres de variables y funciones *)
 val tab_vars : (string, EnvEntry) Tabla = tabInserList(
     tabNueva(),
@@ -288,7 +292,7 @@ fun transExp(venv, tenv) =
                 let val (exparr, tyarr) =
                         case trvar(v, nl) of
                             {exp, ty=TArray(tyarr, _)} => (exp, tyarr)
-                          | _ => error("No es un array", nl)
+                          | _ => error((varName v)^"No es un array", nl)
                     val (expsub, tysub) =
                         case trexp e of
                             {exp, ty=TInt r} => (exp, TInt r)
@@ -376,15 +380,16 @@ fun transExp(venv, tenv) =
                         NONE => (venv'', tenv, [])
                       | SOME x => error("El batch de declaraciones repite la función "^((#name o #1) x), (#2 x))
                 end
-          | trdec (venv,tenv) (TypeDec ts) =
+            (* trdec: ts es del tipo ({name: symbol, ty: ty} * pos) list *)
+          | trdec (venv, tenv) (TypeDec ts) =
                 let fun reps [] = false
                       | reps (({name, ...}, nl) :: t) = if List.exists (fn ({name = x, ...}, _) => x = name) t
-                                                  then true
-                                                  else reps t
+                                                        then true
+                                                        else reps t
                     val _ = if reps ts then raise Fail("nombres de tipos repetidos en el batch") else ()
                     val batch = List.map #1 ts
                     val tenv' = fijaTipos batch tenv
-                                handle Topsort.Ciclo => raise Fail("existe un ciclo en el batch")
+                                    handle Topsort.Ciclo => raise Fail("existe un ciclo en el batch")
                 in  (venv, tenv', []) end
     in 
         trexp 

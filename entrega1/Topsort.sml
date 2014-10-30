@@ -20,14 +20,19 @@ exception Ciclo
 
 fun printtenv tenv = map (fn x => print (("("^(#1 x)^", "^printTipo(#2 x)^")")^"\n")) (tabAList tenv)
 
+(* topsort genera una (symbol list) donde cada elemento depende solo de los anteriores.
+        p es del tipo (symbol, symbol) list
+ *)
 fun topsort p =
-    let fun candidatos p e = List.filter (fn e => List.all((op<> rs e) o snd) p) e
+            (* candidatos filtra los elementos de st dejando solo aquellos que 
+                    no son segunda componente (el tipo dependiente) de ningún par en p *)
+    let fun candidatos p st = List.filter (fn e => List.all((op<> rs e) o snd) p) st
         fun tsort p [] res = rev res
           | tsort [] st res = rev (st@res)
           | tsort p (st as (h::t)) res =
-                let val x = (hd(candidatos p st)) handle Empty => raise Ciclo
+                let val x = (hd (candidatos p st)) handle Empty => raise Ciclo (* quedan elementos y no hay candidato, implica Ciclo *)
                 in tsort (p---x) (st--x) (x::res) end
-        fun elementos lt =
+        fun elementos lt = (* dada una lista de pares, genera una lista con sus elementos sin repetir *)
             List.foldr ( fn((x,y), l) =>
                 let val l1 = case List.find (op= rs x) l of
                                   NONE => x::l
@@ -38,114 +43,93 @@ fun topsort p =
                 in l2 end) [] lt
     in tsort p (elementos p) [] end
 
+(* buscaRecords filtra un batch dejando solo las declaraciones de Records y Arrays *)
 fun buscaRecords lt =
     let fun buscaRecs [] recs = recs
           | buscaRecs ((r as {name,ty=RecordTy _})::t) recs = buscaRecs t (r::recs)
-          | buscaRecs ((r as {name,ty=ArrayTy _})::t) recs = buscaRecs t (r::recs)
           | buscaRecs (_::t) recs = buscaRecs t recs
     in buscaRecs lt [] end
 
+(* genPares toma un batch y genera los pares (p, s) que indica que el tipo s depende de p. 
+        lt: es un batch de declaraciones de tipo ({name: symbol, ty: ty} list)
+        NOTA: están todos los pares excepto los (r1, r2) donde r1 y r2 son records de este batch y r1 es field de r2.
+ *)
 fun genPares lt =
     let val lrecs = buscaRecords lt
         fun genP [] res = res
-          | genP ({name,ty=NameTy s}::t) res = genP t ((s,name)::res)
-          | genP ({name,ty=ArrayTy s}::t) res = genP t ((s,name)::res)
-          | genP ({name,ty=RecordTy lf}::t) res =
-                let fun recorre({typ=NameTy x,...}::t) = (* los records permiten referencias circulares entre sí *)
+          | genP ({name, ty=NameTy s}::t) res = genP t ((s,name)::res)
+          | genP ({name, ty=ArrayTy s}::t) res = genP t ((s,name)::res)
+          | genP ({name, ty=RecordTy lf}::t) res =
+                let fun recorre({typ=NameTy x, ...}::t) = (* los records permiten referencias circulares entre sí *)
                         (case List.find ((op= rs x) o #name) lrecs of
-                              SOME _ => recorre t (*si es un record definido en este batch, lo salteamos*)
-                            | NONE => x::recorre t) (*caso contrario devuelve el par*)
-                      | recorre(_::t) = raise Fail ("error semántico, un field tiene que ser de un tipo ya definido") (*recorre t*)
+                              SOME _ => recorre t (* si el field es del tipo de un record definido en este batch, lo salteamos*)
+                            | NONE => x::recorre t) (* caso contrario devuelve el par *)
+                      | recorre(_::t) = raise Fail ("error interno genP: los fields son NameTy")
                       | recorre [] = []
                     val res' = recorre lf
                     val res'' = List.map (fn x => (x, name)) res'
                 in genP t (res''@res) end
-       in genP lt [] end
+    in genP lt [] end
 
+(* procesa sorted batch recs env: toma el primer elemento de sorted e inserta los tipos que dependen del mismo (excepto los records)
+        sorted: (symbol list) devuelta por topsort
+        batch:  ({name: symbol, ty: ty} list)
+        recs: batch filtrado por buscaRecords
+        env: el tenv (environment de tipos)
+ *)
 fun procesa [] batch recs env = env
-  | procesa (sorted as (h::t)) (batch : {name: symbol, ty: ty} list) (recs : {name: symbol, ty: ty} list) env =
-       let fun filt h {name,ty=NameTy t} = h = t
-             | filt h {name,ty=ArrayTy t} = false (*h = t*)
-             | filt h {name,ty=RecordTy lt} = false (*List.exists ((h ls op=) o #name) lt*)
-           val (ps,ps') = List.partition (filt h) batch
-           val ttopt = case List.find ((h ls op=) o #name) recs of
-                            SOME _ => SOME (TTipo (h,ref NONE)) (* lo records se procesan después *)
-                          | NONE => case tabBusca(h,env) of
+  | procesa (sorted as (h::t)) (batch : {name: symbol, ty: ty} list) (recs : {name: symbol, ty: ty} list) env = (* h depende de tipos ya insertados en env *)
+       let fun filt h {name, ty=NameTy t} = h = t (* filt determina si un tipo depende solo de h *)
+             | filt h {name, ty=ArrayTy t} = h = t
+             | filt h {name, ty=RecordTy lt} = false 
+           val (ps, ps') = List.partition (filt h) batch (* ps=tipos que dependen solo de h, ps'=otros *)
+           val ttopt = case List.find ((h ls op=) o #name) recs of (* ponemos en ttopt el tipo de h *)
+                            SOME _ => SOME (TTipo (h, ref NONE)) (* si h es un record del batch, generamos una cabecera temporal y lo procesamos después *)
+                          | NONE => case tabBusca(h, env) of (* caso contrario debería haber sido insertado en tenv *)
                                          SOME t => SOME t
                                        | _ => raise Fail (h^" no existe")
            val env' = case ttopt of
                            SOME tt => List.foldr (fn ({name,ty=NameTy _},env') => (tabRInserta(name,tt,env))
-                                                 (*  | ({name,ty=ArrayTy _},env') => tabRInserta(name,TArray (tt, ref ()), env') *)
+                                                   | ({name,ty=ArrayTy _},env') => tabRInserta(name,TArray (tt, ref ()), env')
                                                    | ({name,...},_) => raise Fail ("Error interno 666+2 "^name)
                                                  ) env ps
-                         | _ => env
+                         | _ => raise Fail ("error interno: procesa")
        in procesa t ps' recs env' end
 
+(* procRecord inserta los records en tenv
+        los fields del record que tienen el tipo de un record del batch se insertan con una cabecera temporal
+ *)
 fun procRecords recs env =
-    let fun buscaEnv env' t = 
+    let fun buscaEnv env' t = (* buscaEnv trae el tipo de t, que debería estar en tenv salvo que sea un record *)
             case tabBusca (t,env) of
                  SOME (x as (TRecord _)) => TTipo (t, ref (SOME x))
                | SOME (x as (TArray _)) => TTipo (t, ref (SOME x))
                | SOME t' => t'
-               (*| NONE => case tabBusca(t, env') of
-                              SOME (x as (TRecord _)) => TTipo (t, ref (SOME x))
-                            | SOME t' => t'*)
-                            | NONE => case List.find (fn {name,...} => name = t) recs of
-                                           SOME {name,...} => (print(name^"NONErefHOLA\n"); TTipo (name, ref NONE))
-                                         | _ => raise Fail (t^" *** no existe!!")
+               | NONE => case List.find (fn {name, ...} => name = t) recs of
+                              SOME {name, ...} => TTipo(name, ref NONE)
+                            | _ => raise Fail (t^" *** no existe!! error interno")
         fun precs [] env' = env'
           | precs ({name, ty=RecordTy lf}::t) env' =
                 let val lf' = List.foldl (fn ({name, typ=NameTy t, ...}, l) => (name, buscaEnv env' t) :: l
-                                           (*| ({name, typ=ArrayTy t, ...}, l) => (name, TArray(buscaEnv env' t, ref ())) :: l*)
-                                           | (_, l) => raise Fail ("Error interno miembro mal definido. procRecords.") (*l*)
+                                           | (_, l) => raise Fail ("Error interno miembro mal definido. procRecords.")
                                          ) [] lf
-                    val (_, lf'') = List.foldl (fn ((x,y), (n,l)) => (n+1, (x,y,n)::l)) (0,[]) lf'
+                    val (_, lf'') = List.foldl (fn ((x,y), (n,l)) => (n+1, (x,y,n)::l)) (0,[]) lf' (* enumeramos los fields *)
                     val env'' = tabRInserta (name, TRecord (lf'', ref()), env')
-                in precs t env'' end
-          | precs ({name, ty=ArrayTy s}::t) env' =
-                let val arrty = buscaEnv env' s
-                    val env'' = tabRInserta (name, TArray (arrty, ref()), env')
                 in precs t env'' end
           | precs _ _ = raise Fail "Error interno 666"
     in precs recs env end
 
- (* Encuentra NONEs y los reemplaza con su tipo en el env *)
- (* fijaNONE lista env: los miembros de lista son pares (symbol, Tipo) *)
-    fun fijaNONE [] env = env
-      | fijaNONE ((name, TArray (TTipo (s, ref NONE), u)) :: t) env =
-            (case tabBusca(s, env) of
-                  SOME (r as (TRecord _)) => fijaNONE t (tabRInserta (name, TArray (r, u) , env))
-                | SOME (r as (TArray _) ) => fijaNONE t (tabRInserta (name, TArray (r, u) , env))
-                | SOME _ => raise Fail (s ^ " no record en fijaNONE TArray!")
-                | _ => raise Fail (s^": Tipo inexistente"))
-      | fijaNONE ((name, TRecord (lf, u)) :: t) env =
-            let
-                fun busNONE ((s, TTipo (t, ref NONE), i), l) =
-                    (case tabBusca(t, env) of
-                          SOME (tt as (TRecord _)) => (s, TTipo (t, ref (SOME tt)), i) :: l
-                        | SOME (tt as (TArray _) ) => (s, TTipo (t, ref (SOME tt)), i) :: l
-                        | SOME _ => raise Fail (s ^ " no record en fijaNONE TRecord!")
-                        | _ => raise Fail (s^": Tipo inexistente"))
-                  | busNONE (d, l) = d :: l
-                val lf' = List.foldr busNONE [] lf
-            in fijaNONE t (tabRInserta(name, TRecord (lf', u), env)) end
-      | fijaNONE ((name, TTipo (s, ref NONE)) :: t) env =
-            (case tabBusca (s, env) of
-                  SOME (r as (TRecord _)) => fijaNONE t (tabRInserta (name, r, env))
-                | SOME (r as (TArray _) ) => fijaNONE t (tabRInserta (name, r, env))
-                | SOME _ => raise Fail (s ^ " no record fijaNONE TTipo!")
-                | _ => raise Fail (s^": Tipo inexistente"))
-      | fijaNONE (_::t) env = fijaNONE t env
-
-fun fijaRecords decs env =
-  let fun buscaEnv t = case tabBusca (t,env) of
-                            SOME t' => t'
-                          | _ => raise Fail (t^" no existe!!")
-      fun fija1 (name, TTipo (s, x),n) = (x := (SOME (buscaEnv s)))
-        | fija1 x = ()
-      fun fija (name, TRecord(lf,u)) = (List.map fija1 lf)
-        | fija x = []
-   in List.map fija decs end
+fun fijaNone [] env = env
+  | fijaNone ((name, TArray (TTipo (s, ref NONE), u))::t) env =
+                     (case tabBusca (s,env) of
+                           SOME (r as (TRecord _)) => fijaNone t (tabRInserta (name, TArray (r,u), env))
+                         | _ => raise Fail "Error interno 666+1")
+ | fijaNone ((name,TRecord (lf,u))::t) env =
+       let fun busNone (s,TTipo (t, r as (ref NONE)), n) = r := (SOME (tabSaca (t,env)))
+             | busNone d = ()
+           val _ = List.app busNone lf
+       in fijaNone t env end
+ | fijaNone (_::t) env = fijaNone t env
 
 fun fijaTipos batch env =
     let val pares = genPares batch (*genera los pares de dependencias de tipo*)
@@ -157,12 +141,12 @@ fun fijaTipos batch env =
         val _ = printtenv env'
         val _ = print "----------Antes de procRecords---------\n"
         val env'' = procRecords recs env' (*mete en el tenv los records; los miembros que tienen tipo record referencian a NONE*)
+        (* llegado hasta acá tenemos todos los tipos insertados, donde las referencias a records del batch son TTipo(name_record, ref NONE) *)
         val _ = print "----------Despues de procRecords---------\n"
         val _ = printtenv env''
-        val env''' = fijaNONE (tabAList env'') env'' (*cambia las referencias a NONE por las referencias al tipo*)
-        val _ = print "--------Antes de fijaRecords---------------\n"
-        val _ = fijaRecords (tabAList env''') env''' (*cambia las referencias a NONE de los fields de records que referencian a un record recien agregado*)
-        val _ = print "--------Despues de fijaRecords---------------\n"
+        val _ = print "----------Antes de fijaNone---------\n"
+        val env''' = fijaNone (tabAList env'') env'' (*cambia las referencias a NONE por las referencias al tipo*)
+        val _ = print "----------Despues de fijaNone---------\n"
         val _ = printtenv env'''
     in env''' end
 
