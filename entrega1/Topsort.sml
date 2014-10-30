@@ -69,13 +69,13 @@ fun procesa [] batch recs env = env
              | filt h {name,ty=RecordTy lt} = false (*List.exists ((h ls op=) o #name) lt*)
            val (ps,ps') = List.partition (filt h) batch
            val ttopt = case List.find ((h ls op=) o #name) recs of
-                            SOME _ => NONE (* lo records se procesan después *)
+                            SOME _ => SOME (TTipo (h,ref NONE)) (* lo records se procesan después *)
                           | NONE => case tabBusca(h,env) of
                                          SOME t => SOME t
                                        | _ => raise Fail (h^" no existe")
            val env' = case ttopt of
                            SOME tt => List.foldr (fn ({name,ty=NameTy _},env') => (tabRInserta(name,tt,env))
-                                                   | ({name,ty=ArrayTy _},env') => tabRInserta(name,TArray (tt, ref ()), env')
+                                                 (*  | ({name,ty=ArrayTy _},env') => tabRInserta(name,TArray (tt, ref ()), env') *)
                                                    | ({name,...},_) => raise Fail ("Error interno 666+2 "^name)
                                                  ) env ps
                          | _ => env
@@ -115,14 +115,16 @@ fun procRecords recs env =
       | fijaNONE ((name, TArray (TTipo (s, ref NONE), u)) :: t) env =
             (case tabBusca(s, env) of
                   SOME (r as (TRecord _)) => fijaNONE t (tabRInserta (name, TArray (r, u) , env))
-                | SOME _ => raise Fail (s ^ " no record!")
+                | SOME (r as (TArray _) ) => fijaNONE t (tabRInserta (name, TArray (r, u) , env))
+                | SOME _ => raise Fail (s ^ " no record en fijaNONE TArray!")
                 | _ => raise Fail (s^": Tipo inexistente"))
       | fijaNONE ((name, TRecord (lf, u)) :: t) env =
             let
                 fun busNONE ((s, TTipo (t, ref NONE), i), l) =
                     (case tabBusca(t, env) of
                           SOME (tt as (TRecord _)) => (s, TTipo (t, ref (SOME tt)), i) :: l
-                        | SOME _ => raise Fail (s ^ " no record!")
+                        | SOME (tt as (TArray _) ) => (s, TTipo (t, ref (SOME tt)), i) :: l
+                        | SOME _ => raise Fail (s ^ " no record en fijaNONE TRecord!")
                         | _ => raise Fail (s^": Tipo inexistente"))
                   | busNONE (d, l) = d :: l
                 val lf' = List.foldr busNONE [] lf
@@ -130,7 +132,8 @@ fun procRecords recs env =
       | fijaNONE ((name, TTipo (s, ref NONE)) :: t) env =
             (case tabBusca (s, env) of
                   SOME (r as (TRecord _)) => fijaNONE t (tabRInserta (name, r, env))
-                | SOME _ => raise Fail (s ^ " no record!")
+                | SOME (r as (TArray _) ) => fijaNONE t (tabRInserta (name, r, env))
+                | SOME _ => raise Fail (s ^ " no record fijaNONE TTipo!")
                 | _ => raise Fail (s^": Tipo inexistente"))
       | fijaNONE (_::t) env = fijaNONE t env
 
