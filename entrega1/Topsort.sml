@@ -4,6 +4,7 @@ struct
 open Tigertips
 open Tigertab
 open Tigerabs
+open Tigersres
 
 infix -- ---
 infix rs ls
@@ -19,6 +20,8 @@ fun lp --- e = List.filter ((op <> rs e) o fst) lp
 exception Ciclo
 
 fun printtenv tenv = map (fn x => print (("("^(#1 x)^", "^printTipo(#2 x)^")")^"\n")) (tabAList tenv)
+
+fun printvenv venv = map (fn x => print (("("^(#1 x)^", "^envEntry2String(#2 x)^")")^"\n")) (tabAList venv)
 
 (* topsort genera una (symbol list) donde cada elemento depende solo de los anteriores.
         p es del tipo (symbol, symbol) list

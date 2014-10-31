@@ -4,7 +4,8 @@ FILE=$1;
 
 if [ $FILE = "ALL" ]; then
 
-for f in `ls ../tests/good/`; do ./catTiger.sh "../tests/good/$f"; done
+#for f in `ls ../tests/good/`; do ./catTiger.sh "../tests/good/$f"; done
+for f in `ls ../tests/type/`; do ./catTiger.sh "../tests/type/$f"; done
 
 else
 

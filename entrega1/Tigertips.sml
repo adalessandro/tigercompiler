@@ -23,9 +23,8 @@ fun printTipo TUnit = "TUnit"
   | printTipo (TRecord (l,_)) = "TRec("^printFields l^")"
   | printTipo (TFunc _) = "TFunc(...)"
   | printTipo (TTipo(s,ref NONE)) = "TTipo("^s^",NONE!!!!)"
-  (*| printTipo (TTipo(s,ref (SOME x))) = "TTipo("^s^","^printTipo x^")"*)
-  | printTipo (TTipo(s,ref (SOME x))) = "TTipo("^s^","^"SOMEEE"^")"
+  | printTipo (TTipo(s,ref (SOME x))) = "TTipo("^s^","^"SOME"^")"
 
-and printFields l = List.foldl (fn(x,y) => x^", "^y) "" (map (fn(a,b,i)=>a^":"^printTipo b^" ("^makestring(i)^")") l)
+and printFields l = List.foldl (fn(x,y) => x ^ ", " ^ y) "" (map (fn(a,b,i) => a ^ ":" ^ printTipo b ^ " (" ^ makestring(i) ^ ")") l)
 
 end

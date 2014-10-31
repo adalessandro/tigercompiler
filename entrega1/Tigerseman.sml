@@ -26,6 +26,8 @@ type tenv = (string, Tipo) Tigertab.Tabla
 
 fun printtenv tenv = map (fn x => print (("("^(#1 x)^", "^printTipo(#2 x)^")")^"\n")) (tabAList tenv)
 
+fun printvenv venv = map (fn x => print (("("^(#1 x)^", "^envEntry2String(#2 x)^")")^"\n")) (tabAList venv)
+
 fun varName (SimpleVar s) = s
   | varName (FieldVar (v, _)) = varName v
   | varName (SubscriptVar (v, _)) = varName v
@@ -119,7 +121,7 @@ fun transExp(venv, tenv) =
                     val leargs = aux forms args []
                     val leargs' = map #exp leargs
                     val pf = (res = TUnit) (* es procedure o función? *)
-                in  {exp=SCAF, ty=res}
+                in  {exp=SCAF, ty=tipoReal(res)}
                 end
           | trexp(OpExp({left, oper=EqOp, right}, nl)) =
                 let val {exp=_, ty=tyl} = trexp left
@@ -189,13 +191,13 @@ fun transExp(venv, tenv) =
                             else if tiposIguales ty t then verificar cs ds
                                  else error("Error de tipo del campo "^s, nl)
                     val _ = verificar cs tfields
-                in  {exp=SCAF, ty=tyr}
+                in  {exp=SCAF, ty=tipoReal(tyr)}
                 end
           | trexp(SeqExp(s, nl)) =
                 let val lexti = map trexp s
                     val exprs = map #exp lexti
                     val {exp, ty=tipo} = hd(rev lexti)
-                in  {exp=SCAF, ty=tipo}
+                in  {exp=SCAF, ty=tipoReal(tipo)}
                 end
           | trexp(AssignExp({var, exp}, nl)) =
                 let val {exp=expvar, ty=tyvar} = trvar(var, nl)
@@ -212,7 +214,7 @@ fun transExp(venv, tenv) =
                     val {exp=elseexp, ty=tyelse} = trexp else'
                 in  if tipoReal tytest=TInt RW andalso 
                       tiposIguales tythen tyelse 
-                    then {exp=SCAF, ty=tythen}
+                    then {exp=SCAF, ty=tipoReal(tythen)}
                     else error("Error de tipos en if", nl)
                 end
           | trexp(IfExp({test, then', else'=NONE}, nl)) =
@@ -243,14 +245,14 @@ fun transExp(venv, tenv) =
                     then error("Límite inferior de for no es del tipo entero", nl)
                     else if not (tiposIguales (#ty thi) (TInt RW))
                          then error("Límite superior de for no es del tipo entero", nl)
-                         else {exp=SCAF, ty=(#ty tbody)}
+                         else {exp=SCAF, ty=tipoReal((#ty tbody))}
                 end
           | trexp(LetExp({decs, body}, _)) =
                 let val (venv', tenv', _) = 
                         List.foldl (fn (d, (v, t, _)) => trdec (v, t) d)
                             (venv, tenv, []) decs
                     val {exp=expbody, ty=tybody} = transExp (venv', tenv') body
-                in  {exp=SCAF, ty=tybody}
+                in  {exp=SCAF, ty=tipoReal(tybody)}
                 end
           | trexp(BreakExp nl) =
                 {exp=SCAF, ty=TUnit} 
@@ -275,7 +277,7 @@ fun transExp(venv, tenv) =
                             SOME (Var{ty}) => ty
                           | SOME _ => error(s^" no es una variable", nl)
                           | NONE => error(s^" no está definido", nl)
-                in  {exp=SCAF, ty=tvar}
+                in  {exp=SCAF, ty=tipoReal(tvar)}
                 end
           | trvar(FieldVar(v, s), nl) =
                 let val (expv, fs) =
@@ -286,7 +288,7 @@ fun transExp(venv, tenv) =
                         case List.find (fn x => #1(x) = s) fs of
                             SOME (_, t', i') => (t', i')
                           | _ => error(s^" no es miembro del record", nl)
-                    in {exp=SCAF, ty=t'}
+                    in {exp=SCAF, ty=tipoReal(t')}
                     end
           | trvar(SubscriptVar(v, e), nl) =
                 let val (exparr, tyarr) =
@@ -297,14 +299,14 @@ fun transExp(venv, tenv) =
                         case trexp e of
                             {exp, ty=TInt r} => (exp, TInt r)
                           | _ => error("Índice de array no es entero", nl)
-                in {exp=SCAF, ty=tyarr}
+                in {exp=SCAF, ty=tipoReal(tyarr)}
                 end
         and trdec (venv, tenv) (VarDec ({name, escape, typ=NONE, init}, nl)) =
                 let val {exp=e', ty=t'} = transExp (venv, tenv) init
                     val _ = case t' of
                                  TNil => error("No se puede inicializar la variable "^name^" con Nil sin declarar su tipo", nl)
                                | _ => ()
-                in  (tabRInserta(name, Var{ty=t'}, venv), tenv, [{exp=SCAF, ty=t'}])
+                in  (tabRInserta(name, Var{ty=t'}, venv), tenv, [{exp=SCAF, ty=tipoReal(t')}])
                 end
           | trdec (venv, tenv) (VarDec ({name, escape, typ=SOME b, init}, nl)) =
                 let val {exp=e', ty=t'} = transExp (venv, tenv) init
@@ -314,7 +316,7 @@ fun transExp(venv, tenv) =
                     val _ = if tiposIguales t' tret'
                             then ()
                             else error ("El tipo del valor inicial es incorrecto", nl)
-                in  (tabRInserta(name, Var{ty=tret'}, venv), tenv, [{exp=SCAF, ty=tret'}])
+                in  (tabRInserta(name, Var{ty=tret'}, venv), tenv, [{exp=SCAF, ty=tipoReal(tret')}])
                 end
           | trdec (venv, tenv) (FunctionDec fs) =
                 let 
