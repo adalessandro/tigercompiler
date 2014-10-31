@@ -3,7 +3,7 @@ struct
 
 open Tigerabs
 
-(* cantPrintsExpr: dado un tigerabs.exp devuelve la cantidad de llamadas a la
+(* cantPrintsExpr: dado un Tigerabs.exp devuelve la cantidad de llamadas a la
 función print cuyo argumento no es un StringExp.*)
 fun cantPrintsExpr (VarExp(var, _)) = cantPrintsVar var 
   | cantPrintsExpr (UnitExp(_)) = 0
@@ -32,13 +32,13 @@ fun cantPrintsExpr (VarExp(var, _)) = cantPrintsVar var
   | cantPrintsExpr (BreakExp(_)) = 0
   | cantPrintsExpr (ArrayExp({typ=_, size=_, init=_}, _)) = 0
 
-(* cantPrintsVar: dado un tigerabs.var devuelve la cantidad de llamadas a la
+(* cantPrintsVar: dado un Tigerabs.var devuelve la cantidad de llamadas a la
 función print cuyo argumento no es un StringExp.*)
 and cantPrintsVar (SimpleVar(_)) = 0
   | cantPrintsVar (FieldVar(var, _)) = cantPrintsVar var 
   | cantPrintsVar (SubscriptVar(var, exp)) = cantPrintsVar var + cantPrintsExpr exp
 
-(* cantPrintsDec: dado un tigerabs.dec devuelve la cantidad de llamadas a la
+(* cantPrintsDec: dado un Tigerabs.dec devuelve la cantidad de llamadas a la
 función print cuyo argumento no es un StringExp.*)
 and cantPrintsDec (FunctionDec(funcDecs)) = 
         foldr (fn(x, n) => cantPrintsExpr(#body(#1(x))) + n) 0 funcDecs

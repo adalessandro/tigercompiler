@@ -6,8 +6,10 @@ open Tigertab
 open Tigertips
 
 datatype EnvEntry =
+	(*| Var of {ty: Tipo, access: Tigertrans.access, level: int}
+     *)
     Var of {ty: Tipo}
-  | Func of {level: unit, label: Tigertemp.label,
+  | Func of {level: Tigertrans.level, label: Tigertemp.label,
         formals: Tipo list, result: Tipo, extern: bool}
 
 fun envEntry2String (Var{ty}) = "Var of " ^ printTipo ty
