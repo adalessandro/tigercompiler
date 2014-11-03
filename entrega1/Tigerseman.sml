@@ -37,28 +37,28 @@ fun varName (SimpleVar s) = s
 
 (* Tabla inicial del espacio de nombres de variables y funciones *)
 val tab_vars : (string, EnvEntry) Tabla = tabInserList(
-	tabNueva(),
-	[("print", Func{level=topLevel(), label="print",
-		formals=[TString], result=TUnit, extern=true}),
-	("flush", Func{level=topLevel(), label="flush",
-		formals=[], result=TUnit, extern=true}),
-	("getchar", Func{level=topLevel(), label="getstr",
-		formals=[], result=TString, extern=true}),
-	("ord", Func{level=topLevel(), label="ord",
-		formals=[TString], result=TInt RW, extern=true}),
-	("chr", Func{level=topLevel(), label="chr",
-		formals=[TInt RW], result=TString, extern=true}),
-	("size", Func{level=topLevel(), label="size",
-		formals=[TString], result=TInt RW, extern=true}),
-	("substring", Func{level=topLevel(), label="substring",
-		formals=[TString, TInt RW, TInt RW], result=TString, extern=true}),
-	("concat", Func{level=topLevel(), label="concat",
-		formals=[TString, TString], result=TString, extern=true}),
-	("not", Func{level=topLevel(), label="not",
-		formals=[TInt RW], result=TInt RW, extern=true}),
-	("exit", Func{level=topLevel(), label="exit",
-		formals=[TInt RW], result=TUnit, extern=true})
-	])
+    tabNueva(),
+    [("print", Func{level=topLevel(), label="print",
+        formals=[TString], result=TUnit, extern=true}),
+    ("flush", Func{level=topLevel(), label="flush",
+        formals=[], result=TUnit, extern=true}),
+    ("getchar", Func{level=topLevel(), label="getstr",
+        formals=[], result=TString, extern=true}),
+    ("ord", Func{level=topLevel(), label="ord",
+        formals=[TString], result=TInt RW, extern=true}),
+    ("chr", Func{level=topLevel(), label="chr",
+        formals=[TInt RW], result=TString, extern=true}),
+    ("size", Func{level=topLevel(), label="size",
+        formals=[TString], result=TInt RW, extern=true}),
+    ("substring", Func{level=topLevel(), label="substring",
+        formals=[TString, TInt RW, TInt RW], result=TString, extern=true}),
+    ("concat", Func{level=topLevel(), label="concat",
+        formals=[TString, TString], result=TString, extern=true}),
+    ("not", Func{level=topLevel(), label="not",
+        formals=[TInt RW], result=TInt RW, extern=true}),
+    ("exit", Func{level=topLevel(), label="exit",
+        formals=[TInt RW], result=TUnit, extern=true})
+    ])
 
 (* Tabla inicial del espacio de nombres de tipos *)
 val tab_tipos : (string, Tipo) Tabla = 
@@ -262,7 +262,7 @@ fun transExp(venv, tenv) =
                 end
           | trexp(LetExp({decs, body}, _)) =
                 let fun aux (d, (v, t, exps1)) =
-                            let val (v', t', exps2 : ({exp: Tigertrans.exp, ty: Tipo} list)) = trdec (v, t) d
+                            let val (v', t', exps2 : (Tigertrans.exp list)) = trdec (v, t) d
                             in (v', t', exps1@exps2) end
                     val (venv', tenv', expdecs) = List.foldl aux (venv, tenv, []) decs
                     val {exp=expbody, ty=tybody} = transExp (venv', tenv') body
@@ -321,7 +321,7 @@ fun transExp(venv, tenv) =
                     val _ = case t' of
                                  TNil => error("No se puede inicializar la variable "^name^" con Nil sin declarar su tipo", nl)
                                | _ => ()
-                in  (tabRInserta(name, Var{ty=t'}, venv), tenv, [{exp=nilExp(), ty=tipoReal(t')}])
+                in  (tabRInserta(name, Var{ty=t'}, venv), tenv, [nilExp()])
                 end
           | trdec (venv, tenv) (VarDec ({name, escape, typ=SOME b, init}, nl)) = (*COMPLETAR*)
                 let val {exp=e', ty=t'} = transExp (venv, tenv) init
@@ -331,7 +331,7 @@ fun transExp(venv, tenv) =
                     val _ = if tiposIguales t' tret'
                             then ()
                             else error ("El tipo del valor inicial es incorrecto", nl)
-                in  (tabRInserta(name, Var{ty=tret'}, venv), tenv, [{exp=nilExp(), ty=tipoReal(tret')}])
+                in  (tabRInserta(name, Var{ty=tret'}, venv), tenv, [nilExp()])
                 end
           | trdec (venv, tenv) (FunctionDec fs) = (*COMPLETAR*)
                 let 
@@ -362,7 +362,7 @@ fun transExp(venv, tenv) =
                               | _ => name^"."^makestring(nl)^"."^makestring(newLabel())
                             (* insertamos la función en tenv *)
                             val venv' = tabRInserta(name,
-                                Func {level = mainLevel,
+                                Func {level = outermost, (* COMPLETAR level *)
                                       label = labelname,
                                       formals = typarams,
                                       result = tyres,

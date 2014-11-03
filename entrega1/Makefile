@@ -26,7 +26,7 @@ EXEFILE=
 
 GRALOBJS= Tigerabs.uo Tigergrm.uo Tigerlex.uo Tigermain.uo \
 	Tigernlin.uo Tigerpp.uo Tigerescap.uo Tigertab.uo Tigerseman.uo Tigertemp.uo Topsort.uo \
-    Tigercanon.uo Tigerframe.uo Tigerinterp.uo Tigerpila.uo Tigertrans.uo Tigertree.uo Tigerit.ou \
+    Tigercanon.uo Tigerframe.uo Tigerinterp.uo Tigerpila.uo Tigertrans.uo Tigertree.uo \
     CantPrints.uo
 
 all: tiger
@@ -86,7 +86,7 @@ Tigersres.uo: Tigerabs.uo Tigertips.uo Tigertab.ui Tigertemp.ui \
     Tigertrans.ui 
 Tigercanon.uo: Tigercanon.ui Tigertree.uo Tigertab.ui Tigertemp.ui 
 Tigerframe.ui: Tigertree.uo Tigertemp.ui 
-Tigercanon.ui: Tigertree.uo 
+Tigercanon.ui: Tigertree.uo Tigertemp.ui 
 Tigergrm.ui: Tigerabs.uo 
 Tigerframe.uo: Tigerframe.ui Tigertree.uo Tigertemp.ui 
 Tigertrans.ui: Tigerabs.uo Tigertree.uo Tigerframe.ui Tigertemp.ui 

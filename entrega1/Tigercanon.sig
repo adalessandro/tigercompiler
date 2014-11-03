@@ -18,7 +18,7 @@ val linearize : Tigertree.stm -> Tigertree.stm list
    upon exit.
 *)
 val basicBlocks :
-	Tigertree.stm list -> (Tigertree.stm list list * Tigertree.label)
+	Tigertree.stm list -> (Tigertree.stm list list * Tigertemp.label)
 
 (* From a list of basic blocks satisfying properties 1-6,
    along with an "exit" label, produce a list of stms such that:
@@ -29,6 +29,6 @@ val basicBlocks :
    as possible are eliminated by falling through into T.LABEL(lab).
 *)
 val traceSchedule :
-	Tigertree.stm list list * Tigertree.label -> Tigertree.stm list
+	Tigertree.stm list list * Tigertemp.label -> Tigertree.stm list
 end
 

@@ -213,7 +213,7 @@ struct
 		let
 			val str = TextIO.inputLine TextIO.stdIn
 		in
-			storeString str
+			storeString (valOf str)
 		end
 
 		val tabLib: (Tigertemp.label, int list -> int) Tabla =
@@ -313,7 +313,9 @@ struct
 				(* Encontrar la función*)
 				val ffrac = List.filter (fn (body, frame) => Tigerframe.name(frame)=f) funfracs
 				val _ = if (List.length(ffrac)<>1) then raise Fail ("No se encuentra la función, o repetida: "^f^"\n") else ()
-				val [(body, frame)] = ffrac
+                val (body, frame) = if List.length ffrac = 1
+                                    then hd ffrac
+                                    else raise Fail("error en Tigerinterp.evalFun, pattern matching caso no contemplado")
 				(* Mostrar qué se está haciendo, si showdebug *)
 				val _ = if showdebug then (print((Tigerframe.name frame)^":\n");List.app (print o Tigerit.tree) body; print("Argumentos: "); List.app (fn n => (print(Int.toString(n)); print("  "))) args; print("\n")) else ()
 
@@ -352,7 +354,9 @@ struct
 				val _ = map (fn (x,y) => 
 					case x of
 						TEMP t => storeTemp t y
-						| MEM m => storeMem (evalExp m) y) formalsValues
+						| MEM m => storeMem (evalExp m) y
+                        | _ => raise Fail("error en Tigerinterp.evalFun, pattern matching caso no contemplado")
+                    ) formalsValues
 				(* Ejecutar la lista de instrucciones *)
 				val _ = execute body
 				val rv = loadTemp Tigerframe.rv
