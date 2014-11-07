@@ -89,7 +89,7 @@ fun Ir(e) =
     in  aux3 e end
 fun nombreFrame frame = print(".globl " ^ Tigerframe.name frame ^ "\n")
 
-(* While y for necesitan la u'ltima etiqueta para un break *)
+(* While y for necesitan la ultima etiqueta para un break *)
 local
     val salidas: label option Tigerpila.Pila = Tigerpila.nuevaPila1 NONE
 in
@@ -97,8 +97,8 @@ in
     fun popSalida() = Tigerpila.popPila salidas
     fun topSalida() =
         case Tigerpila.topPila salidas of
-        SOME l => l
-        | NONE => raise Fail "break incorrecto!"            
+            SOME l => l
+          | NONE => raise Fail "break incorrecto!"            
 end
 
 val datosGlobs = ref ([]: frag list)
@@ -143,7 +143,7 @@ fun intExp i = Ex (CONST i)
 fun simpleVar(InFrame i, nivel) =
         let fun aux 0 = TEMP fp
               | aux n = MEM(BINOP(PLUS,
-                        CONST fpPrev, aux(n-1)))
+                        CONST fpPrev, aux(n-1))) (* ver si es fpPrevLev *)
         in  Ex (MEM(BINOP(PLUS, aux(!actualLevel - nivel), CONST i))) end
   | simpleVar(InReg l, _) =
         Ex (TEMP l) 
@@ -154,38 +154,39 @@ fun fieldVar(var, field) =
     Ex (CONST 0) (*COMPLETAR*)
 
 fun subscriptVar(arr, ind) =
-let
-    val a = unEx arr
-    val i = unEx ind
-    val ra = newtemp()
-    val ri = newtemp()
-in
-    Ex( ESEQ(seq[MOVE(TEMP ra, a),
-        MOVE(TEMP ri, i),
-        EXP(externalCall("_checkindex", [TEMP ra, TEMP ri]))],
-        MEM(BINOP(PLUS, TEMP ra,
-            BINOP(MUL, TEMP ri, CONST Tigerframe.wSz)))))
-end
+    let
+        val a = unEx arr
+        val i = unEx ind
+        val ra = newtemp()
+        val ri = newtemp()
+    in
+        Ex( ESEQ(seq[MOVE(TEMP ra, a),
+                     MOVE(TEMP ri, i),
+                     EXP(externalCall("_checkindex", [TEMP ra, TEMP ri]))],
+                MEM(BINOP(PLUS, TEMP ra,
+                    BINOP(MUL, TEMP ri, CONST Tigerframe.wSz)))))
+    end
 
 fun recordExp l =
     Ex (CONST 0) (*COMPLETAR*)
 
 fun arrayExp{size, init} =
-let
-    val s = unEx size
-    val i = unEx init
-in
-    Ex (externalCall("allocArray", [s, i]))
+    let
+        val s = unEx size
+        val i = unEx init
+    in
+        Ex (externalCall("allocArray", [s, i]))
 end
 
-fun callExp (name,external,isproc,lev:level,ls) = 
+fun callExp (name, external, isproc, lev:level, ls) = 
     Ex (CONST 0) (*COMPLETAR*)
 
 fun letExp ([], body) = Ex (unEx body)
  |  letExp (inits, body) = Ex (ESEQ(seq inits,unEx body))
 
 fun breakExp() = 
-    Ex (CONST 0) (*COMPLETAR*)
+    let val ts = topSalida()
+    in  Nx (seq[JUMP(NAME ts, [ts])]) end
 
 fun seqExp ([]:exp list) = Nx (EXP(CONST 0))
     | seqExp (exps:exp list) =
@@ -207,30 +208,84 @@ fun preWhileForExp() = pushSalida(SOME(newlabel()))
 fun postWhileForExp() = (popSalida(); ())
 
 fun whileExp {test: exp, body: exp, lev:level} =
-let
-    val cf = unCx test
-    val expb = unNx body
-    val (l1, l2, l3) = (newlabel(), newlabel(), topSalida())
-in
-    Nx (seq[LABEL l1,
-        cf(l2,l3),
-        LABEL l2,
-        expb,
-        JUMP(NAME l1, [l1]),
-        LABEL l3])
-end
+    let
+        val cf = unCx test
+        val expb = unNx body
+        val (l1, l2, l3) = (newlabel(), newlabel(), topSalida())
+    in
+        Nx (seq[LABEL l1,
+            cf(l2,l3),
+            LABEL l2,
+            expb,
+            JUMP(NAME l1, [l1]),
+            LABEL l3])
+    end
 
 fun forExp {lo, hi, var, body} =
-    Ex (CONST 0) (*COMPLETAR*)
+    let
+        val inf = unEx lo
+        val sup = unEx hi
+        val expBody = unNx body
+        val (l1, l2) = (newlabel(), topSalida())
+        val (r1, r2) = (newtemp(), newtemp())
+        val expVar = unEx var
+    in
+        Nx (seq[MOVE(expVar, inf),
+                MOVE(TEMP r1, inf),
+                MOVE(TEMP r2, sup),
+                LABEL l1,
+                CJUMP(GT, expVar, TEMP r2, l2, l1),
+                expBody,
+                MOVE(expVar, BINOP(PLUS, (CONST 1), expVar)),
+                JUMP(NAME l1, [l1]),
+                LABEL l2])
+    end
 
 fun ifThenExp{test, then'} =
-    Ex (CONST 0) (*COMPLETAR*)
+    let
+        val cTest = unCx test
+        val nThen = unNx then'
+        val (l1, l2) = (newlabel(), newlabel())
+    in
+        Nx (seq[cTest(l1, l2),
+                LABEL l1,
+                nThen,
+                LABEL l2])
+    end
 
-fun ifThenElseExp {test,then',else'} =
-    Ex (CONST 0) (*COMPLETAR*)
+fun ifThenElseExp {test, then', else'} =
+    let
+        val cTest = unCx test
+        val eThen = unEx then'
+        val eElse = unEx else'
+        val r1 = newtemp()
+        val (l1, l2, l3) = (newlabel(), newlabel(), newlabel())
+    in
+        Ex (ESEQ((seq[cTest(l1, l2),
+                    LABEL l1,
+                    MOVE(TEMP r1, eThen),
+                    JUMP(NAME l3, [l3]),
+                    LABEL l2,
+                    MOVE(TEMP r1, eElse),
+                    LABEL l3]),
+                TEMP r1))
+    end
 
-fun ifThenElseExpUnit {test,then',else'} =
-    Ex (CONST 0) (*COMPLETAR*)
+fun ifThenElseExpUnit {test, then', else'} =
+    let
+        val cTest = unCx test
+        val nThen = unNx then'
+        val nElse = unNx else'
+        val (l1, l2, l3) = (newlabel(), newlabel(), newlabel())
+    in
+        Nx (seq[cTest(l1, l2),
+                LABEL l1,
+                JUMP(NAME l3, [l3]),
+                nThen,
+                LABEL l2,
+                nElse,
+                LABEL l3])
+    end
 
 fun assignExp{var, exp} =
 let

@@ -6,6 +6,7 @@ open Tigersres
 open Topsort
 open Tigertrans
 
+(* Pilas para el manejo de levels de anidamiento de funciones *)
 val levelPila: Tigertrans.level Tigerpila.Pila = Tigerpila.nuevaPila1(Tigertrans.outermost) 
 fun pushLevel l = Tigerpila.pushPila levelPila l
 fun popLevel() = Tigerpila.popPila levelPila 
@@ -17,9 +18,6 @@ local
 in
     fun newLabel() = !n before n:= !n + 1
 end
-
-(* Expresión tipada *)
-type expty = {exp: unit, ty: Tipo}
 
 (* Tipo tabla espacio de nombres de variables y funciones *)
 type venv = (string, EnvEntry) Tigertab.Tabla
@@ -246,19 +244,27 @@ fun transExp(venv, tenv) =
                     val _ = if #ty tbody = TUnit
                             then ()
                             else error("Cuerpo de while no puede devolver un valor", nl)
+                    
+                    let val _ = preWhileForExp()
                     val exp' = whileExp {test=(#exp ttest), body=(#exp tbody), lev=topLevel()}
+                    let val _ = postWhileForExp()
                 in  {exp=exp', ty=TUnit}
                 end
-          | trexp(ForExp({var, escape, lo, hi, body}, nl)) = (*COMPLETAR*)
+          | trexp(ForExp({var, escape, lo, hi, body}, nl)) = 
                 let val tlo = trexp lo
                     val thi = trexp hi
                     val venv' = (tabRInserta(var, Var({ty=TInt RO}), venv))
                     val tbody = transExp (venv', tenv) body
+                    val accVar = allocLocal (topLevel()) (!escape) 
+                    val expVar = varDec(accVar)
+                    let val _ = preWhileForExp()
+                    val expFor = forExp {lo=(#exp tlo), hi=(#exp thi), var=expVar, body=(#exp tbody)}
+                    let val _ = postWhileForExp()
                 in  if not (tiposIguales (#ty tlo) (TInt RW))
                     then error("Límite inferior de for no es del tipo entero", nl)
                     else if not (tiposIguales (#ty thi) (TInt RW))
                          then error("Límite superior de for no es del tipo entero", nl)
-                         else {exp=nilExp(), ty=tipoReal((#ty tbody))}
+                         else {exp=expFor, ty=tipoReal((#ty tbody))}
                 end
           | trexp(LetExp({decs, body}, _)) =
                 let fun aux (d, (v, t, exps1)) =
@@ -269,8 +275,8 @@ fun transExp(venv, tenv) =
                     val exp' = seqExp(expdecs@[expbody])
                 in  {exp=exp', ty=tipoReal(tybody)}
                 end
-          | trexp(BreakExp nl) = (*COMPLETAR*)
-                {exp=nilExp(), ty=TUnit} 
+          | trexp(BreakExp nl) = 
+                {exp=breakExp(), ty=TUnit} 
           | trexp(ArrayExp({typ, size, init}, nl)) = (*COMPLETAR*)
                 let val tsize = trexp size
                     val _ = if tiposIguales (#ty tsize) (TInt RW)
@@ -314,16 +320,20 @@ fun transExp(venv, tenv) =
                         case trexp e of
                             {exp, ty=TInt r} => (exp, TInt r)
                           | _ => error("Índice de array no es entero", nl)
-                in {exp=nilExp(), ty=tipoReal(tyarr)}
+                    val expSubsVar = subscriptVar(exparr, expsub)
+                in {exp=expSubsVar, ty=tipoReal(tyarr)}
                 end
-        and trdec (venv, tenv) (VarDec ({name, escape, typ=NONE, init}, nl)) = (*COMPLETAR*)
+        and trdec (venv, tenv) (VarDec ({name, escape, typ=NONE, init}, nl)) = 
                 let val {exp=e', ty=t'} = transExp (venv, tenv) init
                     val _ = case t' of
                                  TNil => error("No se puede inicializar la variable "^name^" con Nil sin declarar su tipo", nl)
                                | _ => ()
-                in  (tabRInserta(name, Var{ty=t'}, venv), tenv, [nilExp()])
+                    val accVar = allocLocal (topLevel()) (!escape) 
+                    val expVar = varDec(accVar)
+                    val nivel = getActualLev() (* #level(topLevel()) *)
+                in  (tabRInserta(name, Var2{ty=t', access=accVar, level=nivel}, venv), tenv, [expVar])
                 end
-          | trdec (venv, tenv) (VarDec ({name, escape, typ=SOME b, init}, nl)) = (*COMPLETAR*)
+          | trdec (venv, tenv) (VarDec ({name, escape, typ=SOME b, init}, nl)) = 
                 let val {exp=e', ty=t'} = transExp (venv, tenv) init
                     val tret' = case tabBusca(b, tenv) of
                             SOME t => t
@@ -331,7 +341,10 @@ fun transExp(venv, tenv) =
                     val _ = if tiposIguales t' tret'
                             then ()
                             else error ("El tipo del valor inicial es incorrecto", nl)
-                in  (tabRInserta(name, Var{ty=tret'}, venv), tenv, [nilExp()])
+                    val accVar = allocLocal (topLevel()) (!escape) 
+                    val expVar = varDec(accVar)
+                    val nivel = getActualLev() (* #level(topLevel()) *)
+                in  (tabRInserta(name, Var2{ty=tret', access=accVar, level=nivel}, venv), tenv, [expVar])
                 end
           | trdec (venv, tenv) (FunctionDec fs) = (*COMPLETAR*)
                 let 
