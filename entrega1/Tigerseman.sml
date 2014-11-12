@@ -100,7 +100,7 @@ fun transExp(venv, tenv) =
           | trexp(NilExp _) = {exp=nilExp(), ty=TNil}
           | trexp(IntExp(i, _)) = {exp=intExp i, ty=TInt RW}
           | trexp(StringExp(s, _)) = {exp=stringExp(s), ty=TString}
-          | trexp(CallExp({func, args}, nl)) = (*COMPLETAR*)
+          | trexp(CallExp({func, args}, nl)) = 
                 let val (level, label, forms, res, ext) =
                     (* Recuperar la declaración de la función *)
                         case tabBusca(func, venv) of
@@ -122,7 +122,7 @@ fun transExp(venv, tenv) =
                     val leargs = aux forms args []
                     val leargs' = map #exp leargs
                     val pf = (res = TUnit) (* es procedure o función? *)
-                in  {exp=nilExp(), ty=tipoReal(res)}
+                in  {exp=callExp(label, ext, pf, level, leargs'), ty=tipoReal(res)}
                 end
           | trexp(OpExp({left, oper=EqOp, right}, nl)) =
                 let val {exp=expl, ty=tyl} = trexp left
@@ -166,16 +166,16 @@ fun transExp(venv, tenv) =
                                     then {exp=binOpIntExp {left=expl, oper=oper, right=expr}, ty=TInt RW} 
                                     else error("Error de tipos", nl)
                       | LtOp => if tiposIguales tyl (TInt RW) orelse tiposIguales tyl (TString)
-                                then {exp=binOpIntExp {left=expl, oper=oper, right=expr}, ty=TInt RW} 
+                                then {exp=binOpIntRelExp {left=expl, oper=oper, right=expr}, ty=TInt RW} 
                                 else error("Error de tipos", nl)
                       | LeOp => if tiposIguales tyl (TInt RW) orelse tiposIguales tyl (TString)
-                                then {exp=binOpIntExp {left=expl, oper=oper, right=expr}, ty=TInt RW} 
+                                then {exp=binOpIntRelExp {left=expl, oper=oper, right=expr}, ty=TInt RW} 
                                 else error("Error de tipos", nl)
                       | GtOp => if tiposIguales tyl (TInt RW) orelse tiposIguales tyl (TString)
-                                then {exp=binOpIntExp {left=expl, oper=oper, right=expr}, ty=TInt RW} 
+                                then {exp=binOpIntRelExp {left=expl, oper=oper, right=expr}, ty=TInt RW} 
                                 else error("Error de tipos", nl)
                       | GeOp => if tiposIguales tyl (TInt RW) orelse tiposIguales tyl (TString) 
-                                then {exp=binOpIntExp {left=expl, oper=oper, right=expr}, ty=TInt RW} 
+                                then {exp=binOpIntRelExp {left=expl, oper=oper, right=expr}, ty=TInt RW} 
                                 else error("Error de tipos", nl)
                       | _ => raise Fail "Internal error (3)"
                     else error("Error de tipos", nl)
@@ -206,13 +206,13 @@ fun transExp(venv, tenv) =
                     val {exp, ty=tipo} = hd(rev lexti)
                 in  {exp=seqExp(exprs), ty=tipoReal(tipo)}
                 end
-          | trexp(AssignExp({var, exp}, nl)) = (*COMPLETAR*)
+          | trexp(AssignExp({var, exp}, nl)) =
                 let val {exp=expvar, ty=tyvar} = trvar(var, nl)
                     val {exp=assexp, ty=tyexp} = trexp exp
                 in  if tipoReal tyvar = (TInt RO)
                     then error("Variable de solo lectura no puede ser asignada", nl)
                     else if tiposIguales tyvar tyexp
-                         then {exp=nilExp(), ty=TUnit}
+                         then {exp=assignExp{var=expvar, exp=assexp}, ty=TUnit}
                          else error("Los tipos no coinciden en asignación.", nl)
                 end
           | trexp(IfExp({test, then', else'=SOME else'}, nl)) =
@@ -237,7 +237,9 @@ fun transExp(venv, tenv) =
                 end
           | trexp(WhileExp({test, body}, nl)) =
                 let val ttest = trexp test
+                    val _ = preWhileForExp()
                     val tbody = trexp body
+                    val _ = postWhileForExp()
                     val _ = if tipoReal(#ty ttest) = TInt RW
                             then ()
                             else error("Error de tipo en la condición", nl)
@@ -245,21 +247,19 @@ fun transExp(venv, tenv) =
                             then ()
                             else error("Cuerpo de while no puede devolver un valor", nl)
                     
-                    let val _ = preWhileForExp()
                     val exp' = whileExp {test=(#exp ttest), body=(#exp tbody), lev=topLevel()}
-                    let val _ = postWhileForExp()
                 in  {exp=exp', ty=TUnit}
                 end
           | trexp(ForExp({var, escape, lo, hi, body}, nl)) = 
                 let val tlo = trexp lo
                     val thi = trexp hi
-                    val venv' = (tabRInserta(var, Var({ty=TInt RO}), venv))
+                    val venv' = tabRInserta(var, Var({ty=TInt RO}), venv)
+                    val _ = preWhileForExp()
                     val tbody = transExp (venv', tenv) body
+                    val _ = postWhileForExp()
                     val accVar = allocLocal (topLevel()) (!escape) 
                     val expVar = varDec(accVar)
-                    let val _ = preWhileForExp()
                     val expFor = forExp {lo=(#exp tlo), hi=(#exp thi), var=expVar, body=(#exp tbody)}
-                    let val _ = postWhileForExp()
                 in  if not (tiposIguales (#ty tlo) (TInt RW))
                     then error("Límite inferior de for no es del tipo entero", nl)
                     else if not (tiposIguales (#ty thi) (TInt RW))
@@ -277,7 +277,7 @@ fun transExp(venv, tenv) =
                 end
           | trexp(BreakExp nl) = 
                 {exp=breakExp(), ty=TUnit} 
-          | trexp(ArrayExp({typ, size, init}, nl)) = (*COMPLETAR*)
+          | trexp(ArrayExp({typ, size, init}, nl)) =
                 let val tsize = trexp size
                     val _ = if tiposIguales (#ty tsize) (TInt RW)
                             then ()
@@ -290,15 +290,15 @@ fun transExp(venv, tenv) =
                     val _ = if tiposIguales tytyp (#ty tinit)
                             then ()
                             else error("Valor inicial del arreglo no es del tipo indicado", nl)
-                in  {exp=nilExp(), ty=TArray(tytyp, unico)}
+                in  {exp=arrayExp{size=(#exp tsize), init=(#exp tinit)}, ty=TArray(tytyp, unico)}
                 end
-        and trvar(SimpleVar s, nl) = (*COMPLETAR*)
-                let val tvar =
+        and trvar(SimpleVar s, nl) = 
+                let val (tvar, tacc, tlev) =
                         case tabBusca(s, venv) of
-                            SOME (Var{ty}) => ty
+                            SOME (Var2{ty, access, level}) => (ty, access, level)
                           | SOME _ => error(s^" no es una variable", nl)
                           | NONE => error(s^" no está definido", nl)
-                in  {exp=nilExp(), ty=tipoReal(tvar)}
+                in  {exp=simpleVar(tacc, tlev), ty=tipoReal(tvar)}
                 end
           | trvar(FieldVar(v, s), nl) =
                 let val (expv, fs) =
@@ -309,7 +309,7 @@ fun transExp(venv, tenv) =
                         case List.find (fn x => #1(x) = s) fs of
                             SOME (_, t', i') => (t', i')
                           | _ => error(s^" no es miembro del record", nl)
-                    in {exp=nilExp(), ty=tipoReal(t')}
+                    in {exp=fieldVar(expv, i'), ty=tipoReal(t')}
                     end
           | trvar(SubscriptVar(v, e), nl) =
                 let val (exparr, tyarr) =

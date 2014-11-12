@@ -70,11 +70,11 @@ fun unNx (Ex e) = EXP e
 fun unCx (Nx s) = raise Fail ("Error (UnCx(Nx..))")
     | unCx (Cx cf) = cf
     | unCx (Ex (CONST 0)) =
-    (fn (t,f) => JUMP(NAME f, [f]))
+        (fn (t,f) => JUMP(NAME f, [f]))
     | unCx (Ex (CONST _)) =
-    (fn (t,f) => JUMP(NAME t, [t]))
+        (fn (t,f) => JUMP(NAME t, [t]))
     | unCx (Ex e) =
-    (fn (t,f) => CJUMP(NE, e, CONST 0, t, f))
+        (fn (t,f) => CJUMP(NE, e, CONST 0, t, f))
 
 fun Ir(e) =
     let fun aux(Ex e) = Tigerit.tree(EXP e)
@@ -87,6 +87,7 @@ fun Ir(e) =
         fun aux3 [] = ""
         | aux3(h::t) = (aux2 h)^(aux3 t)
     in  aux3 e end
+
 fun nombreFrame frame = print(".globl " ^ Tigerframe.name frame ^ "\n")
 
 (* While y for necesitan la ultima etiqueta para un break *)
@@ -102,11 +103,13 @@ in
 end
 
 val datosGlobs = ref ([]: frag list)
-fun procEntryExit{level: level, body} =
+
+fun procEntryExit{level: level, body} = (* REVISAR *)
     let val label = STRING(name(#frame level), "")
         val body' = PROC{frame= #frame level, body=unNx body}
         val final = STRING(";;-------", "")
     in  datosGlobs:=(!datosGlobs@[label, body', final]) end
+
 fun getResult() = !datosGlobs
 
 fun stringLen s =
@@ -115,23 +118,26 @@ fun stringLen s =
         | aux(_::t) = 1+aux(t)
     in  aux(explode s) end
 
-fun stringExp(s: string) =
+fun stringExp(s: string) = (* REVISAR *)
     let val l = newlabel()
         val len = ".long "^makestring(stringLen s)
         val str = ".string \""^s^"\""
         val _ = datosGlobs:=(!datosGlobs @ [STRING(l, len), STRING("", str)])
     in  Ex(NAME l) end
-fun preFunctionDec() =
+
+fun preFunctionDec() = (* REVISAR *)
     (pushSalida(NONE);
     actualLevel := !actualLevel+1)
-fun functionDec(e, l, proc) =
+
+fun functionDec(e, l, proc) = (* REVISAR *)
     let val body =
                 if proc then unNx e
                 else MOVE(TEMP rv, unEx e)
         val body' = procEntryExit1(#frame l, body)
         val () = procEntryExit{body=Nx body', level=l}
     in  Ex(CONST 0) end
-fun postFunctionDec() =
+
+fun postFunctionDec() = (* REVISAR *)
     (popSalida(); actualLevel := !actualLevel-1)
 
 fun unitExp() = Ex (CONST 0)
@@ -150,8 +156,12 @@ fun simpleVar(InFrame i, nivel) =
 
 fun varDec(acc) = simpleVar(acc, getActualLev())
 
-fun fieldVar(var, field) = 
-    Ex (CONST 0) (*COMPLETAR*)
+fun fieldVar(var, pos) = 
+    let val t = newtemp()
+    in  Ex( ESEQ( seq[MOVE( TEMP t, unEx var),
+                      EXP( externalCall("_checkNil", [TEMP t])) ],
+                  MEM (BINOP( PLUS, CONST(wSz * pos), TEMP t))))
+    end
 
 fun subscriptVar(arr, ind) =
     let
@@ -168,18 +178,54 @@ fun subscriptVar(arr, ind) =
     end
 
 fun recordExp l =
-    Ex (CONST 0) (*COMPLETAR*)
-
+    let val ret = newtemp()
+        fun gentemps 0 = []
+          | gentemps n = newtemp() :: gentemps(n-1)
+        val regs = gentemps (length l)
+        fun aux ((e, s), t) = (MOVE (TEMP t, unEx e), s, TEMP t)
+        val lexps = map aux (ListPair.zip (l, regs))
+        val l' = Listsort.sort (fn((_, m, _), (_, n, _)) => Int.compare(m, n)) lexps
+        val lexps' = map #1 lexps
+    in
+        Ex( ESEQ( seq( lexps' @ [EXP (externalCall("_allocRecord", CONST (length l) :: (List.map #3 l'))), MOVE ( TEMP ret, TEMP rv) ] ), TEMP ret))
+    end
+        
 fun arrayExp{size, init} =
     let
         val s = unEx size
         val i = unEx init
     in
         Ex (externalCall("allocArray", [s, i]))
-end
+    end
 
-fun callExp (name, external, isproc, lev:level, ls) = 
-    Ex (CONST 0) (*COMPLETAR*)
+fun callExp (name, external, isproc, lev:level, la) = 
+    let val nivel = #level lev
+        fun aux 0 = TEMP fp
+          | aux n = MEM(BINOP(PLUS,
+                    CONST fpPrev, aux(n-1))) (* ver si es fpPrevLev *)
+        val fpLev = MEM(aux(!actualLevel - nivel)) (* arrastra warning *)
+        fun preparaArgs [] (rt, re) = (rt, re)
+          | preparaArgs (h :: t) (rt, re) =
+                case h of
+                     Ex(CONST n) => preparaArgs t ((CONST n) :: rt, re)
+                   | Ex(NAME n) => preparaArgs t ((NAME n) :: rt, re)
+                   | Ex(TEMP n) => preparaArgs t ((TEMP n) :: rt, re)
+                   | _ => let val temp = newtemp()
+                          in  preparaArgs t ((TEMP temp) :: rt,
+                                             MOVE( TEMP temp, unEx h) :: re)
+                          end
+        val (ta, la') = preparaArgs (rev la) ([], [])
+        val ta' = if external then ta else fpLev :: ta
+    in
+        if isproc then
+            Nx( seq( la' @ [EXP( CALL( NAME name, ta') ) ] ) )
+        else
+            let val temp = newtemp()
+            in Ex( ESEQ( seq( la' @ [EXP( CALL( NAME name, ta') ), 
+                                        MOVE( TEMP temp, TEMP rv)]),
+                   TEMP temp))
+            end
+    end
 
 fun letExp ([], body) = Ex (unEx body)
  |  letExp (inits, body) = Ex (ESEQ(seq inits,unEx body))
@@ -296,13 +342,42 @@ in
 end
 
 fun binOpIntExp {left, oper, right} = 
-    Ex (CONST 0) (*COMPLETAR*)
+    let val oper' = case oper of
+                         PlusOp => PLUS
+                       | MinusOp => MINUS
+                       | TimesOp => MUL
+                       | DivideOp => DIV
+                       | _ => raise Fail ("Error interno en binOpIntExp")
+        val eleft = unEx left
+        val eright = unEx right
+    in  Ex(BINOP(oper', eleft, eright))
+    end
 
 fun binOpIntRelExp {left,oper,right} =
-    Ex (CONST 0) (*COMPLETAR*)
+    let val oper' = case oper of
+                         LtOp => LT
+                       | LeOp => LE
+                       | GtOp => GT
+                       | GeOp => GE
+                       | EqOp => EQ
+                       | NeqOp => NE
+                       | _ => raise Fail ("Error interno en binOpIntRelExp")
+        val eleft = unEx left
+        val eright = unEx right
+    in  Cx (fn (t, f) => (CJUMP( oper', eleft, eright, t, f)))
+    end
 
 fun binOpStrExp {left,oper,right} =
-    Ex (CONST 0) (*COMPLETAR*)
-
+     let val oper' = case oper of
+                         EqOp => EQ
+                       | NeqOp => NE
+                       | _ => raise Fail ("Error interno en binOpStrExp")
+        val eleft = unEx left
+        val eright = unEx right
+        val temp = newtemp()
+    in  Cx (fn (t, f) => seq[EXP(externalCall("_stringCompare", [eleft, eright])), (* 0 si son iguales *)
+                             MOVE( TEMP temp, TEMP rv),
+                             (CJUMP( oper', TEMP temp, CONST 0, t, f))])
+    end
 
 end
