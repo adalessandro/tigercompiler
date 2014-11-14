@@ -27,5 +27,6 @@ val procEntryExit1 : frame * Tigertree.stm -> Tigertree.stm
 (*val procEntryExit2 : frame * Tigerassem.instr list -> Tigerassem.instr list*)
 datatype frag = PROC of {body: Tigertree.stm, frame: frame}
 	| STRING of Tigertemp.label * string
-
+datatype canonfrag = CPROC of {body: Tigertree.stm list, frame: frame}
+    | CSTRING of Tigertemp.label * string
 end

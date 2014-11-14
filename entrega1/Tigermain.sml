@@ -5,6 +5,8 @@ open Tigerseman
 open BasicIO Nonstdio
 open CantPrints
 
+val debug = (fn x => print ("\n\n\nDEBUGMAIN: " ^ x ^ "\n\n\n"))
+
 fun lexstream(is: instream) =
     Lexing.createLexer(fn b => fn n => buff_input is b 0 n);
 
@@ -29,13 +31,31 @@ fun main(args) =
                     handle _ => raise Fail (n^" no existe!"))
               | [] => std_in
               | _ => raise Fail "opción desconocida!"
+
         val lexbuf = lexstream entrada
         val expr = prog Tok lexbuf handle _ => errParsing lexbuf
+
         val _ = findEscape(expr)
         val _ = if arbol then Tigerpp.exprAst expr else ()
         val _ = if cantprints then print(Int.toString(CantPrints.cantPrintsExpr(expr))^"\n") else ()
+        val _ = transProg(expr)
+
+        fun insertr e (ls,rs) = (ls,e::rs)
+        val fraglist = Tigertrans.getResult() (* fragment list *)
+        val canonfraglist = Tigercanon.canonize fraglist
+        fun insertl e (ls,rs) = (e::ls,rs)
+        fun insertr e (ls,rs) = (ls,e::rs)
+        fun splitcanon [] = ([],[])
+          | splitcanon (x::xs) = 
+                case x of
+                     (Tigerframe.CSTRING s) => insertr s (splitcanon xs) 
+                   | (Tigerframe.CPROC {body,frame}) => insertl (body, frame) (splitcanon xs) 
+        val a = inter   
+        val (b,c) = splitcanon canonfraglist 
+    (*b: (Tigertree.stm list*Tigerframe.frame) list*)
+    (*c: (Tigertemp.label*string) list*)
+        val _ = Tigerinterp.inter a b c 
     in
-        transProg(expr);
         print "yes!!\n"
     end handle Fail s => print("Fail: "^s^"\n")
 

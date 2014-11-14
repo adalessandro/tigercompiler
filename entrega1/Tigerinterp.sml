@@ -15,6 +15,8 @@ struct
 	open Dynarray
 	open Tigertree
 
+    val debug = (fn x => print ("\n\n\nDEBUGINTERP: " ^ x ^ "\n\n\n"))
+
 	fun inter showdebug (funfracs: (stm list*Tigerframe.frame) list) (stringfracs: (Tigertemp.label*string) list) =
 	let
 		(* Memoria y registros *)

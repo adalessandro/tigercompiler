@@ -84,9 +84,11 @@ Tigerseman.uo: Tigerseman.ui Tigerabs.uo Tigersres.uo Tigerpila.ui \
 Tigergrm.uo: Tigergrm.ui Tigerabs.uo Tigernlin.uo 
 Tigersres.uo: Tigerabs.uo Tigertips.uo Tigertab.ui Tigertemp.ui \
     Tigertrans.ui 
-Tigercanon.uo: Tigercanon.ui Tigertree.uo Tigertab.ui Tigertemp.ui 
+Tigercanon.uo: Tigercanon.ui Tigertree.uo Tigerframe.ui Tigertab.ui \
+    Tigertemp.ui 
+Tigerinterp_postam.ui: Tigertree.uo Tigerframe.ui Tigertemp.ui 
 Tigerframe.ui: Tigertree.uo Tigertemp.ui 
-Tigercanon.ui: Tigertree.uo Tigertemp.ui 
+Tigercanon.ui: Tigertree.uo Tigerframe.ui Tigertemp.ui 
 Tigergrm.ui: Tigerabs.uo 
 Tigerframe.uo: Tigerframe.ui Tigertree.uo Tigertemp.ui 
 Tigertrans.ui: Tigerabs.uo Tigertree.uo Tigerframe.ui Tigertemp.ui 
@@ -94,10 +96,13 @@ Tigerit.uo: Tigertree.uo Tigertab.ui
 Tigerescap.ui: Tigerabs.uo 
 Tigertab.uo: Tigertab.ui 
 Tigermain.uo: Tigerseman.ui Tigerlex.uo Tigerpp.ui Tigerescap.ui \
-    Tigergrm.ui CantPrints.ui 
+    Tigerinterp.uo Tigerframe.ui Tigercanon.ui Tigergrm.ui Tigertrans.ui \
+    CantPrints.ui 
 Tigerinterp.uo: Tigertree.uo Tigerframe.ui Tigertab.ui Tigerit.uo \
     Tigertemp.ui 
 Tigertemp.uo: Tigertemp.ui 
 Tigerseman.ui: Tigerabs.uo 
 Topsort.ui: Tigerabs.uo Tigertips.uo Tigertab.ui 
+Tigerinterp_postam.uo: Tigerinterp_postam.ui Tigertree.uo Tigerframe.ui \
+    Tigertab.ui Tigerit.uo Tigertemp.ui 
 Tigerlex.uo: Tigergrm.ui Tigernlin.uo 

@@ -138,19 +138,10 @@ fun fijaTipos batch env =
     let val pares = genPares batch (*genera los pares de dependencias de tipo*)
         val recs = buscaRecords batch (*deja solo los records*)
         val ordered = topsort pares (*topsort: arma una secuencia de tipos donde el i-esimo puede depender solo de los anteriores*)
-        val _ = print "----------Antes de procesa---------\n"
         val env' = procesa ordered batch recs env (*mete en el tenv los tipos, salvo los records*)
-        val _ = print "----------Despues de procesa---------\n"
-        val _ = printtenv env'
-        val _ = print "----------Antes de procRecords---------\n"
         val env'' = procRecords recs env' (*mete en el tenv los records; los miembros que tienen tipo record referencian a NONE*)
         (* llegado hasta acá tenemos todos los tipos insertados, donde las referencias a records del batch son TTipo(name_record, ref NONE) *)
-        val _ = print "----------Despues de procRecords---------\n"
-        val _ = printtenv env''
-        val _ = print "----------Antes de fijaNone---------\n"
         val env''' = fijaNone (tabAList env'') env'' (*cambia las referencias a NONE por las referencias al tipo*)
-        val _ = print "----------Despues de fijaNone---------\n"
-        val _ = printtenv env'''
     in env''' end
 
 end

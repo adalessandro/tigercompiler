@@ -14,6 +14,8 @@ type access = Tigerframe.access
 type frag = Tigerframe.frag
 val fraglist = ref ([]: frag list)
 
+val debug = (fn x => print ("\n\n\nDEBUGTRANS: " ^ x ^ "\n\n\n"))
+
 val actualLevel = ref ~1 (* _Tigermain debe tener level = 0. *)
 fun getActualLev() = !actualLevel
 
@@ -104,7 +106,7 @@ end
 
 val datosGlobs = ref ([]: frag list)
 
-fun procEntryExit{level: level, body} = (* REVISAR *)
+fun procEntryExit{level: level, body} =
     let val label = STRING(name(#frame level), "")
         val body' = PROC{frame= #frame level, body=unNx body}
         val final = STRING(";;-------", "")
@@ -118,26 +120,25 @@ fun stringLen s =
         | aux(_::t) = 1+aux(t)
     in  aux(explode s) end
 
-fun stringExp(s: string) = (* REVISAR *)
+fun stringExp(s: string) =
     let val l = newlabel()
         val len = ".long "^makestring(stringLen s)
         val str = ".string \""^s^"\""
         val _ = datosGlobs:=(!datosGlobs @ [STRING(l, len), STRING("", str)])
     in  Ex(NAME l) end
 
-fun preFunctionDec() = (* REVISAR *)
+fun preFunctionDec() =
     (pushSalida(NONE);
     actualLevel := !actualLevel+1)
 
-fun functionDec(e, l, proc) = (* REVISAR *)
-    let val body =
-                if proc then unNx e
-                else MOVE(TEMP rv, unEx e)
+fun functionDec(e, l, proc) =
+    let val body = if proc then unNx e
+                   else MOVE(TEMP rv, unEx e)
         val body' = procEntryExit1(#frame l, body)
         val () = procEntryExit{body=Nx body', level=l}
     in  Ex(CONST 0) end
 
-fun postFunctionDec() = (* REVISAR *)
+fun postFunctionDec() =
     (popSalida(); actualLevel := !actualLevel-1)
 
 fun unitExp() = Ex (CONST 0)
@@ -203,12 +204,14 @@ fun callExp (name, external, isproc, lev:level, la) =
         fun aux 0 = TEMP fp
           | aux n = MEM(BINOP(PLUS,
                     CONST fpPrev, aux(n-1))) (* ver si es fpPrevLev *)
-        val fpLev = MEM(aux(!actualLevel - nivel)) (* arrastra warning *)
+        val fpLev = let val levDif = (!actualLevel - nivel)
+                    in  if levDif < 0 then aux 0 else MEM(aux(levDif)) (* arrastra warning *)
+                    end
         fun preparaArgs [] (rt, re) = (rt, re)
           | preparaArgs (h :: t) (rt, re) =
                 case h of
-                     Ex(CONST n) => preparaArgs t ((CONST n) :: rt, re)
-                   | Ex(NAME n) => preparaArgs t ((NAME n) :: rt, re)
+                  (*   Ex(CONST n) => (debug (Int.toString(n)) ; preparaArgs t ((CONST n) :: rt, re)) *)
+                     Ex(NAME n) => preparaArgs t ((NAME n) :: rt, re)
                    | Ex(TEMP n) => preparaArgs t ((TEMP n) :: rt, re)
                    | _ => let val temp = newtemp()
                           in  preparaArgs t ((TEMP temp) :: rt,
