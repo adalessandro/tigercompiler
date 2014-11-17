@@ -330,7 +330,10 @@ fun transExp(venv, tenv, actLevel) =
                     val _ = case t' of
                                  TNil => error("No se puede inicializar la variable "^name^" con Nil sin declarar su tipo", nl)
                                | _ => ()
-                    val accVar = allocLocal (topLevel()) (!escape) 
+                    val accVar = case tabBusca(name, venv) of
+                                      NONE => allocLocal (topLevel()) (!escape)
+                                    | SOME (Var d) => #access d
+                                    | _ => error("Error en VarDec", nl)
                     val expVar = varDec(accVar)
                     val expAssign = assignExp{var=expVar, exp=e'}
                     val nivel = getActualLev() (* #level(topLevel()) *)
@@ -344,7 +347,10 @@ fun transExp(venv, tenv, actLevel) =
                     val _ = if tiposIguales t' tret'
                             then ()
                             else error ("El tipo del valor inicial es incorrecto", nl)
-                    val accVar = allocLocal (topLevel()) (!escape) 
+                    val accVar = case tabBusca(name, venv) of
+                                      NONE => allocLocal (topLevel()) (!escape)
+                                    | SOME (Var d) => #access d
+                                    | _ => error("Error en VarDec", nl)
                     val expVar = varDec(accVar)
                     val expAssign = assignExp{var=expVar, exp=e'}
                     val nivel = getActualLev() (* #level(topLevel()) *)
@@ -399,7 +405,7 @@ fun transExp(venv, tenv, actLevel) =
                                 SOME (Func {result, ...}) => result
                               | _ => error("Internal error (5)", nl)
                             (* generamos e insertamos las variables de los args en venv *)
-                            fun transParam x = let val accParam = allocLocal actLevel (!(#escape x)) 
+                            fun transParam x = let val accParam = allocArg actLevel (!(#escape x)) 
                                                    val tyParam = transNameTy (#typ x) tenv nl
                                                in  (#name x, Var{ty=tyParam, access=accParam, level=getActualLev()})
                                                end
