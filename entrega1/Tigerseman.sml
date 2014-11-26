@@ -95,7 +95,7 @@ fun tiposIguales (TRecord _) TNil = true
 
 (* transExp: venv -> tenv -> Tigerabs.exp -> 
     Tipa una expr con los entornos venv, tenv. *)
-fun transExp(venv, tenv, actLevel) =
+fun transExp(venv, tenv) =
     let fun error(s, p) = raise Fail ("Error -- línea "^Int.toString(p)^": "^s^"\n")
         fun trexp(VarExp v) = trvar(v)
           | trexp(UnitExp _) = {exp=unitExp(), ty=TUnit}
@@ -258,9 +258,9 @@ fun transExp(venv, tenv, actLevel) =
                     val accVar = allocLocal (topLevel()) (!escape) 
                     val venv' = tabRInserta(var, Var({ty=TInt RO, access=accVar, level=getActualLev()}), venv)
                     val _ = preWhileForExp()
-                    val tbody = transExp (venv', tenv, actLevel) body
+                    val tbody = transExp (venv', tenv) body
                     val _ = postWhileForExp()
-                    val expVar = varDec(accVar)
+                    val expVar = varDec(accVar, #exp tlo)
                     val expFor = forExp {lo=(#exp tlo), hi=(#exp thi), var=expVar, body=(#exp tbody)}
                 in  if not (tiposIguales (#ty tlo) (TInt RW))
                     then error("Límite inferior de for no es del tipo entero", nl)
@@ -273,7 +273,7 @@ fun transExp(venv, tenv, actLevel) =
                             let val (v', t', exps2 : (Tigertrans.exp list)) = trdec (v, t) d
                             in (v', t', exps1@exps2) end
                     val (venv', tenv', expdecs) = List.foldl aux (venv, tenv, []) decs
-                    val {exp=expbody, ty=tybody} = transExp (venv', tenv', actLevel) body
+                    val {exp=expbody, ty=tybody} = transExp (venv', tenv') body
                     val exp' = seqExp(expdecs@[expbody])
                 in  {exp=exp', ty=tipoReal(tybody)}
                 end
@@ -326,35 +326,27 @@ fun transExp(venv, tenv, actLevel) =
                 in {exp=expSubsVar, ty=tipoReal(tyarr)}
                 end
         and trdec (venv, tenv) (VarDec ({name, escape, typ=NONE, init}, nl)) = 
-                let val {exp=e', ty=t'} = transExp (venv, tenv, actLevel) init
+                let val {exp=e', ty=t'} = transExp (venv, tenv) init
                     val _ = case t' of
                                  TNil => error("No se puede inicializar la variable "^name^" con Nil sin declarar su tipo", nl)
                                | _ => ()
-                    val accVar = case tabBusca(name, venv) of
-                                      NONE => allocLocal (topLevel()) (!escape)
-                                    | SOME (Var d) => #access d
-                                    | _ => error("Error en VarDec", nl)
-                    val expVar = varDec(accVar)
-                    val expAssign = assignExp{var=expVar, exp=e'}
+                    val accVar = allocLocal (topLevel()) (!escape)
+                    val expVar = varDec(accVar, e')
                     val nivel = getActualLev() (* #level(topLevel()) *)
-                in  (tabRInserta(name, Var{ty=t', access=accVar, level=nivel}, venv), tenv, [expAssign])
+                in  (tabRInserta(name, Var{ty=t', access=accVar, level=nivel}, venv), tenv, [expVar])
                 end
           | trdec (venv, tenv) (VarDec ({name, escape, typ=SOME b, init}, nl)) = 
-                let val {exp=e', ty=t'} = transExp (venv, tenv, actLevel) init
+                let val {exp=e', ty=t'} = transExp (venv, tenv) init
                     val tret' = case tabBusca(b, tenv) of
                             SOME t => t
                           | NONE => error("Tipo no definido", nl)
                     val _ = if tiposIguales t' tret'
                             then ()
                             else error ("El tipo del valor inicial es incorrecto", nl)
-                    val accVar = case tabBusca(name, venv) of
-                                      NONE => allocLocal (topLevel()) (!escape)
-                                    | SOME (Var d) => #access d
-                                    | _ => error("Error en VarDec", nl)
-                    val expVar = varDec(accVar)
-                    val expAssign = assignExp{var=expVar, exp=e'}
+                    val accVar = allocLocal (topLevel()) (!escape)
+                    val expVar = varDec(accVar, e')
                     val nivel = getActualLev() (* #level(topLevel()) *)
-                in  (tabRInserta(name, Var{ty=tret', access=accVar, level=nivel}, venv), tenv, [expAssign])
+                in  (tabRInserta(name, Var{ty=tret', access=accVar, level=nivel}, venv), tenv, [expVar])
                 end
           | trdec (venv, tenv) (FunctionDec fs) = (*COMPLETAR*)
                 let 
@@ -369,12 +361,10 @@ fun transExp(venv, tenv, actLevel) =
                             SOME _ => (b, [])
                           | NONE => if (List.all (fn y => (key x) <> (key y)) xs)
                                     then (NONE, (x::xs)) else (SOME x, [])) (NONE, [])
-                    fun aux0 (({name, params, result, body}, nl), (venv, tenv, levlst)) =
+                    fun aux0 (({name, params, result, body}, nl), (venv, tenv)) =
                         let
                             (* tipamos todos los argumentos *)
                             val typarams = List.map (fn x => transNameTy (#typ x) tenv nl) params
-                            (* lista de booleanos según escapan los argumentos *)
-                            val escapparams = List.map (! o (#escape)) params
                             (* tipamos el retorno *)
                             val tyres = case result of
                                     NONE => TUnit
@@ -385,50 +375,57 @@ fun transExp(venv, tenv, actLevel) =
                             val labelname = case name of
                                 "_Tigermain" => name
                               | _ => name^"."^makestring(nl)^"."^makestring(newLabel())
-                            val newLev = newLevel{parent=actLevel, name=labelname, formals=escapparams }
                             (* insertamos la función en venv *)
                             val venv' = tabRInserta(name,
-                                Func {level = newLev,
+                                Func {level = topLevel(), (*newLev,*)
                                       label = labelname,
                                       formals = typarams,
                                       result = tyres,
-                                      extern = false}, venv)
+                                      extern = (labelname = "_tigermain")}, venv)
                         in
                             (* controlamos que no se repiten parametros en la función *)
                             case repite (#name) params of
-                                NONE => (venv', tenv, newLev :: levlst)
+                                NONE => (venv', tenv)
                               | SOME x => error(name^" repite el parámetro "^(#name x)^" en su declaración", nl)
                         end 
-                    fun aux1 ( (({name, params, result, body}, nl), lev) , (venv, tenv, explst)) =
+                    fun aux1 ( ({name, params, result, body}, nl) , (venv, tenv)) =
                         let 
-                            val tyres = case tabBusca(name, venv) of
-                                SOME (Func {result, ...}) => result
-                              | _ => error("Internal error (5)", nl)
+                            val (funlev, funlab, funform, funres, funext) = case tabBusca(name, venv) of
+                                SOME (Func {level, label, formals, result, extern}) => (level, label, formals, result, extern)
+                              | _ => error("Internal error FuncionDec aux1", nl)
+                            (* lista con los escapes de los parametros *)
+                            val escapparams = List.map (! o (#escape)) params
+                            val escapparams' = if funext then escapparams else true::escapparams
+
+                            (* tipamos el body de la función *)
+                            val lev = preFunctionDec(topLevel(), funlab, escapparams')
+                            val _ = pushLevel lev
+
                             (* generamos e insertamos las variables de los args en venv *)
-                            fun transParam x = let val accParam = allocArg actLevel (!(#escape x)) 
+                            fun transParam x = let val accParam = allocArg (topLevel()) (!(#escape x)) 
                                                    val tyParam = transNameTy (#typ x) tenv nl
                                                in  (#name x, Var{ty=tyParam, access=accParam, level=getActualLev()})
                                                end
                             val varEntries = List.map transParam params
                             val venv' = tabInserList (venv, varEntries)
-                            (* tipamos el body de la función *)
-                            val _ = preFunctionDec()
-                            val {exp=expbody, ty=tybody} = (transExp(venv', tenv, lev) body)
-                            val expfunc = functionDec(expbody, lev, (tyres = TUnit)) (* si tyres = TUnit implica que es un procedimiento *)
+
+                            (* recorremos el body *)
+                            val {exp=expbody, ty=tybody} = (transExp(venv', tenv) body)
+                            val expfunc = functionDec(expbody, lev, (tiposIguales funres TUnit)) (* si funres = TUnit implica que es un procedimiento *)
                             val _ = postFunctionDec()
+                            val _ = popLevel()
                         in
                             (* controlamos que el body tiene el tipo declarado del resultado *)
-                            if tiposIguales tybody tyres 
-                            then (venv', tenv, expfunc :: explst)
+                            if tiposIguales tybody funres 
+                            then (venv, tenv)
                             else error("Tipo del body no coincide con el tipo del resultado.", nl) 
                         end
-                    val (venv', _, levfs) = List.foldl aux0 (venv, tenv, []) fs (* levfs: lista con los nuevos niveles de cada función *)
-                    val fs' = ListPair.zip (fs, levfs)
-                    val (venv'', _, expfs) = List.foldl aux1 (venv', tenv, []) fs' (* expfs: lista con el código intermedio de cada función *)
+                    val (venv', _) = List.foldl aux0 (venv, tenv) fs
+                    val (venv'', _) = List.foldl aux1 (venv', tenv) fs
                 in
                     (* controlamos que no se repite declaración de la misma función en el batch *)
                     case repite (#name o #1) fs of
-                        NONE => (venv'', tenv, expfs)
+                        NONE => (venv'', tenv, [])
                       | SOME x => error("El batch de declaraciones repite la función "^((#name o #1) x), (#2 x))
                 end
             (* trdec: ts es del tipo ({name: symbol, ty: ty} * pos) list *)
@@ -452,7 +449,7 @@ fun transProg ex =
             LetExp({decs=[FunctionDec[({name="_Tigermain", params=[],
                         result=NONE, body=ex}, 0)]],
                     body=UnitExp 0}, 0)
-        val _ = transExp(tab_vars, tab_tipos, outermost) main
+        val _ = transExp(tab_vars, tab_tipos) main
     in  
         print "bien!\n" 
     end

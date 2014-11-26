@@ -3,23 +3,23 @@
 	inter a b c recibe:
 	a: bool - false sólo ejecuta el código, true muestra en cada paso la instrucción a ejecutar y el estado de la memoria y temporarios
 	b: (Tigertree.stm list*Tigerframe.frame) list - cada elemento de la lista es un par con la lista de Tigertree.stm devuelta por el canonizador y el frame de cada función
-	c: (Tigertemp.label*string) list - Una lista con un elemento por cada string definido en el código. Cada elemento es un par formado por el label y el string.
+	c: (Tigertemp.label*string) list - Una ista con un elemento por cada string definido en el código. Cada elemento es un par formado por el label y el string.
 	inter usa: 
 		Constantes de Tigerframe: wSz, rv, fp
 		Funciones de Tigerframe: formals, exp. formals (Appel, pág 135) debe devolver una lista con los Tigerframe.access de cada argumento pasado a la función, esto es el Tigerframe.access que se usa en el body de la función para referirse a cada argumento. También debe devolver un Tigerframe.access para el static link, como primer elemento de la lista.
 	Nota: en una máquina de N bits los enteros de ML tienen N-1 bits. El intérprete fallará si se usan números muy grandes.
 *)
-structure Tigerinterp =
+structure Tigerinterp:>Tigerinterp =
 struct
 	open Tigertab
 	open Dynarray
 	open Tigertree
 
-    val debug = (fn x => print ("\n\n\nDEBUGINTERP: " ^ x ^ "\n\n\n"))
-
 	fun inter showdebug (funfracs: (stm list*Tigerframe.frame) list) (stringfracs: (Tigertemp.label*string) list) =
 	let
 		(* Memoria y registros *)
+		val _ = print("stringfracs")
+  val _ = List.map (fn (x,y) => print("Guardamos str: "^y^" en el lab:"^x^"\n")) stringfracs
 		local
 			val tabTemps: (Tigertemp.temp, int ref) Tabla ref = ref (tabNueva())
 			val tabMem: (int, int ref) Tabla ref = ref (tabNueva())
@@ -97,23 +97,24 @@ struct
 					(update(stringArray, idx, str); storeMem addr idx; addr)
 				end
 		end
-		val _ = List.map (fn (lab, str) => storeLabel lab (storeString str)) stringfracs
+		val _ = List.map (fn (lab, str) => (print("Guardamos el string: "^str^" en el lab:"^lab^"\n");storeLabel lab (storeString str))) stringfracs
 
 		(* Funciones de biblioteca *)
 		fun initArray(siz::init::rest) =
 		let
-			val mem = getNewMem(siz)
-			val l = (mem+1, siz)::(List.tabulate(siz, (fn x => (mem+Tigerframe.wSz*x, init))))
+			val mem = getNewMem(siz+1)
+			val l = (mem, siz)::(List.tabulate(siz, (fn x => (mem+Tigerframe.wSz*(x+1), init))))
 			val _ = List.map (fn (a,v) => storeMem a v) l
 		in
-			mem
+			mem+Tigerframe.wSz
 		end
 		| initArray _ = raise Fail("No debería pasar (initArray)")
 
 		fun checkIndexArray(arr::idx::rest) =
 		let
-			val siz = loadMem (arr+1)
-			val _ = if (idx>=siz orelse idx<0) then raise Fail("Índice fuara de rango\n") else ()
+			val siz = loadMem (arr-Tigerframe.wSz)
+   val _ = print("Size:"^makestring arr^"\n")
+			val _ = if (idx>=siz orelse idx<0) then raise Fail("Índice fuera de rango"^" siz:"^Int.toString siz^" idx:"^Int.toString idx^"\n") else ()
 		in
 			0
 		end
@@ -153,7 +154,7 @@ struct
 
 		fun printFun(strPtr::rest) =
 		let
-			val str = loadString strPtr
+			val str = loadString (strPtr (*+ Tigerframe.wSz*)) (* esto era strPtr *)
 			val _ = print(str)
 		in
 			0
@@ -315,9 +316,7 @@ struct
 				(* Encontrar la función*)
 				val ffrac = List.filter (fn (body, frame) => Tigerframe.name(frame)=f) funfracs
 				val _ = if (List.length(ffrac)<>1) then raise Fail ("No se encuentra la función, o repetida: "^f^"\n") else ()
-                val (body, frame) = if List.length ffrac = 1
-                                    then hd ffrac
-                                    else raise Fail("error en Tigerinterp.evalFun, pattern matching caso no contemplado")
+				val [(body, frame)] = ffrac
 				(* Mostrar qué se está haciendo, si showdebug *)
 				val _ = if showdebug then (print((Tigerframe.name frame)^":\n");List.app (print o Tigerit.tree) body; print("Argumentos: "); List.app (fn n => (print(Int.toString(n)); print("  "))) args; print("\n")) else ()
 
@@ -351,14 +350,12 @@ struct
 				val fpPrev = loadTemp Tigerframe.fp
 				val _ = storeTemp Tigerframe.fp (fpPrev-1024*1024)
 				(* Poner argumentos donde la función los espera *)
-				val formals = map (fn x => Tigerframe.exp x (TEMP Tigerframe.fp)) (Tigerframe.formals frame)
+				val formals = map (fn x => Tigerframe.exp x (*(TEMP Tigerframe.fp)*)) (Tigerframe.formals frame)
 				val formalsValues = ListPair.zip(formals, args)
 				val _ = map (fn (x,y) => 
 					case x of
 						TEMP t => storeTemp t y
-						| MEM m => storeMem (evalExp m) y
-                        | _ => raise Fail("error en Tigerinterp.evalFun, pattern matching caso no contemplado")
-                    ) formalsValues
+						| MEM m => storeMem (evalExp m) y) formalsValues
 				(* Ejecutar la lista de instrucciones *)
 				val _ = execute body
 				val rv = loadTemp Tigerframe.rv

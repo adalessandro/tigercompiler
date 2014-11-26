@@ -8,7 +8,8 @@ open Tigerabs
 exception breakexc
 exception divCero
     
-type level = {parent:frame option , frame: frame, level: int}
+type level = {parent:frame option , frame: frame, levelint: int}
+
 type access = Tigerframe.access
 
 type frag = Tigerframe.frag
@@ -17,77 +18,79 @@ val fraglist = ref ([]: frag list)
 val debug = (fn x => print ("\n\n\nDEBUGTRANS: " ^ x ^ "\n\n\n"))
 
 val actualLevel = ref ~1 (* _Tigermain debe tener level = 0. *)
+
 fun getActualLev() = !actualLevel
 
 val outermost: level = {parent=NONE,
-    frame=newFrame{name="_Tigermain", formals=[]}, level=getActualLev()}
+                        frame=newFrame{name="_Tigermain", formals=[]},
+                        levelint=getActualLev()}
 
-fun newLevel{parent={parent, frame, level}, name, formals} =
-    {
-    parent=SOME frame,
-    frame=newFrame{name=name, formals=formals},
-    level=level+1}
+fun newLevel{parent={parent, frame, levelint}, name, formals} =
+    {parent=SOME frame,
+     frame=newFrame{name=name, formals=formals},
+     levelint=levelint+1}
 
-fun allocArg{parent, frame, level} b = Tigerframe.allocArg frame b
-fun allocLocal{parent, frame, level} b = Tigerframe.allocLocal frame b
-fun formals{parent, frame, level} = Tigerframe.formals frame
+fun allocArg{parent, frame, levelint} b = Tigerframe.allocArg frame b
+fun allocLocal{parent, frame, levelint} b = Tigerframe.allocLocal frame b
+
+fun formals{parent, frame, levelint} = Tigerframe.formals frame
 
 datatype exp =
     Ex of Tigertree.exp
-    | Nx of Tigertree.stm
-    | Cx of label * label -> Tigertree.stm
+  | Nx of Tigertree.stm
+  | Cx of label * label -> Tigertree.stm
 
 fun seq [] = EXP (CONST 0)
-    | seq [s] = s
-    | seq (x::xs) = SEQ (x, seq xs)
+  | seq [s] = s
+  | seq (x::xs) = SEQ (x, seq xs)
 
 fun unEx (Ex e) = e
-    | unEx (Nx s) = ESEQ(s, CONST 0)
-    | unEx (Cx cf) =
-    let
-        val r = newtemp()
-        val t = newlabel()
-        val f = newlabel()
-    in
-        ESEQ(seq [MOVE(TEMP r, CONST 1),
-            cf (t, f),
-            LABEL f,
-            MOVE(TEMP r, CONST 0),
-            LABEL t],
-            TEMP r)
-    end
+  | unEx (Nx s) = ESEQ(s, CONST 0)
+  | unEx (Cx cf) =
+        let
+            val r = newtemp()
+            val t = newlabel()
+            val f = newlabel()
+        in
+            ESEQ(seq [MOVE(TEMP r, CONST 1),
+                cf (t, f),
+                LABEL f,
+                MOVE(TEMP r, CONST 0),
+                LABEL t],
+                TEMP r)
+        end
 
 fun unNx (Ex e) = EXP e
-    | unNx (Nx s) = s
-    | unNx (Cx cf) =
-    let
-        val t = newlabel()
-        val f = newlabel()
-    in
-        seq [cf(t,f),
-            LABEL t,
-            LABEL f]
-    end
+  | unNx (Nx s) = s
+  | unNx (Cx cf) =
+        let
+            val t = newlabel()
+            val f = newlabel()
+        in
+            seq [cf(t,f),
+                LABEL t,
+                LABEL f]
+        end
 
 fun unCx (Nx s) = raise Fail ("Error (UnCx(Nx..))")
-    | unCx (Cx cf) = cf
-    | unCx (Ex (CONST 0)) =
+  | unCx (Cx cf) = cf
+  | unCx (Ex (CONST 0)) =
         (fn (t,f) => JUMP(NAME f, [f]))
-    | unCx (Ex (CONST _)) =
+  | unCx (Ex (CONST _)) =
         (fn (t,f) => JUMP(NAME t, [t]))
-    | unCx (Ex e) =
+  | unCx (Ex e) =
         (fn (t,f) => CJUMP(NE, e, CONST 0, t, f))
 
 fun Ir(e) =
     let fun aux(Ex e) = Tigerit.tree(EXP e)
-        | aux(Nx s) = Tigerit.tree(s)
-        | aux _ = raise Fail "bueno, a completar!"
+          | aux(Nx s) = Tigerit.tree(s)
+          | aux _ = raise Fail "bueno, a completar!"
         fun aux2(PROC{body, frame}) = aux(Nx body)
-        | aux2(STRING(l, "")) = l^":\n"
-        | aux2(STRING("", s)) = "\t"^s^"\n"
-        | aux2(STRING(l, s)) = l^":\t"^s^"\n"
+          | aux2(STRING(l, "")) = l^":\n"
+          | aux2(STRING("", s)) = "\t"^s^"\n"
+          | aux2(STRING(l, s)) = l^":\t"^s^"\n"
         fun aux3 [] = ""
-        | aux3(h::t) = (aux2 h)^(aux3 t)
+          | aux3(h::t) = (aux2 h)^(aux3 t)
     in  aux3 e end
 
 fun nombreFrame frame = print(".globl " ^ Tigerframe.name frame ^ "\n")
@@ -116,8 +119,8 @@ fun getResult() = !datosGlobs
 
 fun stringLen s =
     let fun aux[] = 0
-        | aux(#"\\":: #"x"::_::_::t) = 1+aux(t)
-        | aux(_::t) = 1+aux(t)
+          | aux(#"\\":: #"x"::_::_::t) = 1+aux(t)
+          | aux(_::t) = 1+aux(t)
     in  aux(explode s) end
 
 fun stringExp(s: string) =
@@ -127,9 +130,10 @@ fun stringExp(s: string) =
         val _ = datosGlobs:=(!datosGlobs @ [STRING(l, len), STRING("", str)])
     in  Ex(NAME l) end
 
-fun preFunctionDec() =
+fun preFunctionDec(l, n, f) =
     (pushSalida(NONE);
-    actualLevel := !actualLevel+1)
+     actualLevel := !actualLevel+1;
+     newLevel{formals=f(*[]*),name=n,parent=l})
 
 fun functionDec(e, l, proc) =
     let val body = if proc then unNx e
@@ -150,12 +154,16 @@ fun intExp i = Ex (CONST i)
 fun simpleVar(InFrame i, nivel) =
         let fun aux 0 = TEMP fp
               | aux n = MEM(BINOP(PLUS,
-                        CONST fpPrev, aux(n-1))) (* ver si es fpPrevLev *)
+                        CONST fpPrevLev, aux(n-1))) (* ver si es fpPrevLev *)
         in  Ex (MEM(BINOP(PLUS, aux(!actualLevel - nivel), CONST i))) end
   | simpleVar(InReg l, _) =
         Ex (TEMP l) 
 
-fun varDec(acc) = simpleVar(acc, getActualLev())
+(*fun varDec(acc) = simpleVar(acc, getActualLev())*)
+fun varDec(acc, e) = let val sv = unEx (simpleVar(acc, getActualLev()))
+                         val ex = unEx e
+                     in  Nx (MOVE (sv, ex))
+                     end
 
 fun fieldVar(var, pos) = 
     let val t = newtemp()
@@ -200,24 +208,34 @@ fun arrayExp{size, init} =
     end
 
 fun callExp (name, external, isproc, lev:level, la) = 
-    let val nivel = #level lev
+    let val nivel = #levelint lev
         fun aux 0 = TEMP fp
           | aux n = MEM(BINOP(PLUS,
-                    CONST fpPrev, aux(n-1))) (* ver si es fpPrevLev *)
-        val fpLev = let val levDif = (!actualLevel - nivel)
-                    in  if levDif < 0 then aux 0 else MEM(aux(levDif)) (* arrastra warning *)
-                    end
+                    CONST fpPrevLev, aux(n-1)))
+        val fpLev =
+            if nivel = getActualLev() 
+            then MEM (BINOP (PLUS, CONST fpPrevLev, TEMP fp))
+            else
+                if (nivel < getActualLev())
+                then aux(getActualLev() - nivel)
+                else aux 0
+        
+        val _ = print ("\n\nCCCCCCCCCCCCCCCCCCCCCC\n\n" ^ Int.toString(nivel) ^ "\n\nCCCCCCCCCCCCCCCCCCCCCC\n\n")
+        val _ = print ("\n\nCCCCCCCCCCCCCCCCCCCCCC\n\n" ^ Int.toString(getActualLev()) ^ "\n\nCCCCCCCCCCCCCCCCCCCCCC\n\n")
+        
         fun preparaArgs [] (rt, re) = (rt, re)
           | preparaArgs (h :: t) (rt, re) =
                 case h of
-                  (*   Ex(CONST n) => (debug (Int.toString(n)) ; preparaArgs t ((CONST n) :: rt, re)) *)
-                     Ex(NAME n) => preparaArgs t ((NAME n) :: rt, re)
+                     Ex(CONST n) => preparaArgs t ((CONST n) :: rt, re)
+                   | Ex(NAME n) => preparaArgs t ((NAME n) :: rt, re)
                    | Ex(TEMP n) => preparaArgs t ((TEMP n) :: rt, re)
                    | _ => let val temp = newtemp()
                           in  preparaArgs t ((TEMP temp) :: rt,
                                              MOVE( TEMP temp, unEx h) :: re)
                           end
         val (ta, la') = preparaArgs (rev la) ([], [])
+        val _ = debug (concat (map Tigerit.tree (map (fn x => EXP x) ta) ) )
+        val _ = debug (concat (map Tigerit.tree (la') ) )
         val ta' = if external then ta else fpLev :: ta
     in
         if isproc then

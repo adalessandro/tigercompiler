@@ -22,7 +22,7 @@ val nilExp : unit -> exp
 val intExp : int -> exp
 val stringExp : string -> exp
 val simpleVar : access * int -> exp
-val varDec : access -> exp
+val varDec : access * exp -> exp
 val fieldVar : exp * int -> exp
 val subscriptVar : exp * exp -> exp
 val recordExp : (exp * int) list -> exp
@@ -38,7 +38,7 @@ val ifThenExp : {test: exp, then': exp} -> exp
 val ifThenElseExp : {test: exp, then': exp, else': exp} -> exp
 val ifThenElseExpUnit : {test: exp, then': exp, else': exp} -> exp
 val assignExp : {var: exp, exp:exp}-> exp
-val preFunctionDec : unit -> unit
+val preFunctionDec : level * Tigertemp.label * bool list -> level
 val functionDec : exp * level * bool -> exp
 val postFunctionDec : unit -> unit
 val binOpIntExp : {left:exp, oper:Tigerabs.oper, right:exp} -> exp

@@ -49,13 +49,18 @@ type frame = {
     actualLocal: int ref,
     actualReg: int ref
 }
+
 type register = string
+
 datatype access = InFrame of int | InReg of Tigertemp.label
+
 datatype frag = PROC of {body: Tigertree.stm, frame: frame}
               | STRING of Tigertemp.label * string
+
 (* frag despues de canonizarlo *)
 datatype canonfrag = CPROC of {body: Tigertree.stm list, frame: frame}
-                   | CSTRING of Tigertemp.label * string (* ESTO NO DEBE USARSE NUNCA: ESTA MAL! saaara *)
+                   | CSTRING of Tigertemp.label * string (* ESTO NO DEBE USARSE NUNCA: ESTA MAL! *)
+
 fun newFrame{name, formals} = {
     name=name,
     formals=formals,
@@ -64,7 +69,9 @@ fun newFrame{name, formals} = {
     actualLocal=ref localsInicial,
     actualReg=ref regInicial
 }
+
 fun name(f: frame) = #name f
+
 fun string(l, s) = l^Tigertemp.makeString(s)^"\n"
 
 fun formals({formals=f, ...}: frame) = 
@@ -73,21 +80,28 @@ fun formals({formals=f, ...}: frame) =
     in aux(argsInicial, f) end
 
 fun maxRegFrame(f: frame) = !(#actualReg f)
+
 fun allocArg (f: frame) b = 
     case b of
-    true =>
-        let val ret = (!(#actualArg f)+argsOffInicial)*wSz
-            val _ = #actualArg f := !(#actualArg f)+1
-        in  InFrame ret end
-    | false => InReg(Tigertemp.newtemp())
+         true => let val ret = (!(#actualArg f)+argsOffInicial)*wSz
+                     val _ = #actualArg f := !(#actualArg f)+1
+                 in InFrame ret end
+       | false => (*InReg(tigertemp.newtemp())*)
+        let 
+            val ret = !(#actualReg f)
+            val _ = #actualReg f := !(#actualReg f) + 1 
+        in InReg (Int.toString ret) (*consultar*)
+        end
+
 fun allocLocal (f: frame) b = 
     case b of
-    true =>
-        let val ret = InFrame(!(#actualLocal f)+localsGap)
-        in  #actualLocal f:=(!(#actualLocal f)-1); ret end
-    | false => InReg(Tigertemp.newtemp())
-fun exp(InFrame k) e = MEM(BINOP(PLUS, TEMP(fp), CONST k))
-| exp(InReg l) e = TEMP l
+         true => let val ret = InFrame(!(#actualLocal f)*wSz+localsGap) (* InFrame(!(#actualLocal f)+localsGap) *)
+                 in  #actualLocal f:=(!(#actualLocal f)-1); ret end
+       | false => InReg(Tigertemp.newtemp())
+
+fun exp(InFrame k) = MEM(BINOP(PLUS, TEMP(fp), CONST k))
+  | exp(InReg l) = TEMP l
+
 fun externalCall(s, l) = CALL(NAME s, l)
 
 fun procEntryExit1 (frame, body) = body
