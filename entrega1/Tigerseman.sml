@@ -450,8 +450,8 @@ fun transProg ex =
     let 
         val main =
             LetExp({decs=[FunctionDec[({name="_Tigermain", params=[],
-                        (*result=SOME "int", body=ex}, 0)]],*)
-                        result=NONE, body=ex}, 0)]],
+                        result=SOME "int", body=ex}, 0)]],
+                        (*result=NONE, body=ex}, 0)]],*)
                     body=UnitExp 0}, 0)
         val _ = transExp(tab_vars, tab_tipos) main
     in  

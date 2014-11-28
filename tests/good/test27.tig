@@ -4,5 +4,5 @@ let
 
 	function g (a : int) : int = a 
 in
- g (2)
+ g (2); (); 97
 end
