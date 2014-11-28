@@ -28,13 +28,13 @@ val ov = "OV"               (* overflow value (edx en el 386) *)
 val wSz = 4                 (* word size in bytes *)
 val log2WSz = 2             (* base two logarithm of word size in bytes *)
 val fpPrev = 0              (* offset (bytes) *)
-val fpPrevLev = 8           (* offset (bytes) *)
-val argsInicial = 0         (* words *)
-val argsOffInicial = 0      (* words *)
+val fpPrevLev = 2*wSz         (* offset (bytes) *)
+val argsInicial = 1         (* words *)
+val argsOffInicial = 2      (* words *)
 val argsGap = wSz           (* bytes *)
 val regInicial = 1          (* reg *)
 val localsInicial = 0       (* words *)
-val localsGap = ~4          (* bytes *)
+val localsGap = ~wSz        (* bytes *)
 val calldefs = [rv]
 val specialregs = [rv, fp, sp]
 val argregs = []
@@ -49,6 +49,23 @@ type frame = {
     actualLocal: int ref,
     actualReg: int ref
 }
+
+fun printFrame (frame:frame) =
+    let val _ = print "\n"
+        val _ = (print ("name = " ^ (#name frame)))
+        val _ = print "\n"
+        val _ = (print "formals = " ; List.map (fn x => if x then print "T," else print "F,") (#formals frame))
+        val _ = print "\n"
+        val _ = (print "locals = " ; List.map (fn x => if x then print "T," else print "F,") (#locals frame))
+        val _ = print "\n"
+        val _ = (print "actualArg = " ; (print o Int.toString o ! o #actualArg) frame)
+        val _ = print "\n"
+        val _ = (print "actualLocal = " ; (print o Int.toString o ! o #actualArg) frame)
+        val _ = print "\n"
+        val _ = (print "actualReg = " ; (print o Int.toString o ! o #actualArg) frame)
+        val _ = print "\n"
+    in ()
+    end 
 
 type register = string
 
@@ -74,10 +91,14 @@ fun name(f: frame) = #name f
 
 fun string(l, s) = l^Tigertemp.makeString(s)^"\n"
 
-fun formals({formals=f, ...}: frame) = 
-    let fun aux(n, []) = []
-          | aux(n, h::t) = InFrame(n)::aux(n+argsGap, t)
-    in aux(argsInicial, f) end
+fun formals({formals=f, name=n, ...}: frame) = (* agregar el caso 0 *) 
+    let fun aux n m [] = []
+          | aux n m (x::xs) = (case x of
+                                    true => InFrame(n)::(aux (n+argsGap) m xs) 
+                                  | false => InReg(Int.toString m)::(aux n (m+1) xs))
+    in  
+        aux (argsInicial+wSz*argsOffInicial) regInicial f
+    end
 
 fun maxRegFrame(f: frame) = !(#actualReg f)
 

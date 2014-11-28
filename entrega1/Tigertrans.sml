@@ -10,6 +10,18 @@ exception divCero
     
 type level = {parent:frame option , frame: frame, levelint: int}
 
+fun printLevel (level:level) =
+    let val _ = print "\n"
+        val _ = case (#parent level) of
+                     SOME f => (print "parentFrame = " ; printFrame f)
+                   | NONE => print "parent = NONE"
+        val _ = print "\n"
+        val _ = (print "frame = " ; Tigerframe.printFrame (#frame level))
+        val _ = print "\n"
+        val _ = (print "levelint = " ; print (Int.toString (#levelint level)))
+        val _ = print "\n"
+    in () end
+
 type access = Tigerframe.access
 
 type frag = Tigerframe.frag
@@ -133,7 +145,7 @@ fun stringExp(s: string) =
 fun preFunctionDec(l, n, f) =
     (pushSalida(NONE);
      actualLevel := !actualLevel+1;
-     newLevel{formals=f(*[]*),name=n,parent=l})
+     newLevel{formals=f,name=n,parent=l})
 
 fun functionDec(e, l, proc) =
     let val body = if proc then unNx e
@@ -220,9 +232,6 @@ fun callExp (name, external, isproc, lev:level, la) =
                 then aux(getActualLev() - nivel)
                 else aux 0
         
-        val _ = print ("\n\nCCCCCCCCCCCCCCCCCCCCCC\n\n" ^ Int.toString(nivel) ^ "\n\nCCCCCCCCCCCCCCCCCCCCCC\n\n")
-        val _ = print ("\n\nCCCCCCCCCCCCCCCCCCCCCC\n\n" ^ Int.toString(getActualLev()) ^ "\n\nCCCCCCCCCCCCCCCCCCCCCC\n\n")
-        
         fun preparaArgs [] (rt, re) = (rt, re)
           | preparaArgs (h :: t) (rt, re) =
                 case h of
@@ -234,8 +243,6 @@ fun callExp (name, external, isproc, lev:level, la) =
                                              MOVE( TEMP temp, unEx h) :: re)
                           end
         val (ta, la') = preparaArgs (rev la) ([], [])
-        val _ = debug (concat (map Tigerit.tree (map (fn x => EXP x) ta) ) )
-        val _ = debug (concat (map Tigerit.tree (la') ) )
         val ta' = if external then ta else fpLev :: ta
     in
         if isproc then

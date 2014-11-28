@@ -4,6 +4,7 @@ exception breakexc
 exception divCero
 
 type level
+val printLevel : level -> unit
 type access
 type frag = Tigerframe.frag
 val outermost : level

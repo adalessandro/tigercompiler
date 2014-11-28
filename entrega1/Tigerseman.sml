@@ -399,6 +399,7 @@ fun transExp(venv, tenv) =
 
                             (* tipamos el body de la función *)
                             val lev = preFunctionDec(topLevel(), funlab, escapparams')
+                            val _ = Tigertrans.printLevel lev
                             val _ = pushLevel lev
 
                             (* generamos e insertamos las variables de los args en venv *)
@@ -447,7 +448,7 @@ fun transProg ex =
     let 
         val main =
             LetExp({decs=[FunctionDec[({name="_Tigermain", params=[],
-                        result=NONE, body=ex}, 0)]],
+                        result=SOME "int", body=ex}, 0)]],
                     body=UnitExp 0}, 0)
         val _ = transExp(tab_vars, tab_tipos) main
     in  

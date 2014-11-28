@@ -2,6 +2,7 @@ signature Tigerframe =
 sig
 
 type frame
+val printFrame : frame -> unit
 type register = string
 val rv : Tigertemp.temp
 val ov : Tigertemp.temp
