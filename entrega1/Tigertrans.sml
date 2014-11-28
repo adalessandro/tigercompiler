@@ -300,7 +300,7 @@ fun forExp {lo, hi, var, body} =
         val inf = unEx lo
         val sup = unEx hi
         val expBody = unNx body
-        val (l1, l2) = (newlabel(), topSalida())
+        val (l1, l2, l3) = (newlabel(), topSalida(), newlabel())
         val (r1, r2) = (newtemp(), newtemp())
         val expVar = unEx var
     in
@@ -308,7 +308,8 @@ fun forExp {lo, hi, var, body} =
                 MOVE(TEMP r1, inf),
                 MOVE(TEMP r2, sup),
                 LABEL l1,
-                CJUMP(GT, expVar, TEMP r2, l2, l1),
+                CJUMP(GT, expVar, TEMP r2, l2, l3),
+                LABEL l3,
                 expBody,
                 MOVE(expVar, BINOP(PLUS, (CONST 1), expVar)),
                 JUMP(NAME l1, [l1]),

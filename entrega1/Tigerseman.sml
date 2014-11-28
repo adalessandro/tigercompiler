@@ -241,6 +241,7 @@ fun transExp(venv, tenv) =
                 let val ttest = trexp test
                     val _ = preWhileForExp()
                     val tbody = trexp body
+                    val exp' = whileExp {test=(#exp ttest), body=(#exp tbody), lev=topLevel()}
                     val _ = postWhileForExp()
                     val _ = if tipoReal(#ty ttest) = TInt RW
                             then ()
@@ -249,7 +250,6 @@ fun transExp(venv, tenv) =
                             then ()
                             else error("Cuerpo de while no puede devolver un valor", nl)
                     
-                    val exp' = whileExp {test=(#exp ttest), body=(#exp tbody), lev=topLevel()}
                 in  {exp=exp', ty=TUnit}
                 end
           | trexp(ForExp({var, escape, lo, hi, body}, nl)) = 
@@ -259,9 +259,11 @@ fun transExp(venv, tenv) =
                     val venv' = tabRInserta(var, Var({ty=TInt RO, access=accVar, level=getActualLev()}), venv)
                     val _ = preWhileForExp()
                     val tbody = transExp (venv', tenv) body
-                    val _ = postWhileForExp()
-                    val expVar = varDec(accVar, #exp tlo)
+                    (*val expVar = varDec(accVar, #exp tlo)*)
+                    val expVar = simpleVar(accVar, getActualLev())
+
                     val expFor = forExp {lo=(#exp tlo), hi=(#exp thi), var=expVar, body=(#exp tbody)}
+                    val _ = postWhileForExp()
                 in  if not (tiposIguales (#ty tlo) (TInt RW))
                     then error("Límite inferior de for no es del tipo entero", nl)
                     else if not (tiposIguales (#ty thi) (TInt RW))
@@ -448,7 +450,8 @@ fun transProg ex =
     let 
         val main =
             LetExp({decs=[FunctionDec[({name="_Tigermain", params=[],
-                        result=SOME "int", body=ex}, 0)]],
+                        (*result=SOME "int", body=ex}, 0)]],*)
+                        result=NONE, body=ex}, 0)]],
                     body=UnitExp 0}, 0)
         val _ = transExp(tab_vars, tab_tipos) main
     in  

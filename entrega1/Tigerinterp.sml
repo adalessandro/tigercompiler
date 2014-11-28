@@ -17,7 +17,7 @@ struct
 
 	fun inter showdebug (funfracs: (stm list*Tigerframe.frame) list) (stringfracs: (Tigertemp.label*string) list) =
 	let
-        fun printStmList x =
+        (*fun printStmList x =
             let val _ = print "\nINICIO PRINT StmList\n"
                 val _ = List.map print (List.map Tigerit.tree x)
                 val _ = print "\nFIN PRINT StmList\n"
@@ -25,7 +25,7 @@ struct
         val _ = print "\nINICIO PRINT funfracs\n"
         val _ = (List.map (printStmList o #1) funfracs)
         val _ = print "\nFIN PRINT funfracs\n"
-        val _ = List.map (Tigerframe.printFrame o #2) funfracs
+        val _ = List.map (Tigerframe.printFrame o #2) funfracs*)
 		(* Memoria y registros *)
 		val _ = print("stringfracs")
   val _ = List.map (fn (x,y) => print("Guardamos str: "^y^" en el lab:"^x^"\n")) stringfracs

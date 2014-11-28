@@ -1,8 +1,9 @@
 /* valid rec comparisons */
 let 
 	type rectype = {name : string, id : int}
+    var a : int := 0
 	var b : rectype := nil
 in
-	b = nil;
+	a := (b = nil);
 	b <> nil
 end
