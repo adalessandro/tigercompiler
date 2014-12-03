@@ -27,6 +27,7 @@ EXEFILE=
 GRALOBJS= Tigerabs.uo Tigergrm.uo Tigerlex.uo Tigermain.uo \
 	Tigernlin.uo Tigerpp.uo Tigerescap.uo Tigertab.uo Tigerseman.uo Tigertemp.uo Topsort.uo \
     Tigercanon.uo Tigerframe.uo Tigerinterp.uo Tigerpila.uo Tigertrans.uo Tigertree.uo \
+    Tigerassem.uo \
     CantPrints.uo
 
 all: tiger
@@ -60,7 +61,7 @@ clean:
 
 depend: Tigerabs.sml Tigergrm.sml Tigerlex.sml Tigermain.sml \
 	Tigernlin.sml Tigerpp.sml Topsort.sml \
-    Tigertrans.sml \
+    Tigertrans.sml Tigerassem.sml \
     CantPrints.sml
 
 	$(REMOVE) Makefile.bak
@@ -73,16 +74,15 @@ Tigermain.uo: Tigerseman.ui Tigerlex.uo Tigerpp.ui Tigerescap.ui \
     Tigerinterp.ui Tigerframe.ui Tigercanon.ui Tigergrm.ui Tigertrans.ui \
     CantPrints.ui 
 Tigergrm.uo: Tigergrm.ui Tigerabs.uo Tigernlin.uo 
+Tigerassem.ui: Tigertree.uo Tigertemp.ui 
 Tigerpp.uo: Tigerpp.ui Tigerabs.uo 
-Tigerinterp_postam.uo: Tigerinterp_postam.ui Tigertree.uo Tigerframe.ui \
-    Tigertab.ui Tigerit.uo Tigertemp.ui 
 Tigerframe.ui: Tigertree.uo Tigertemp.ui 
-Tigerinterp_postam.ui: Tigertree.uo Tigerframe.ui Tigertemp.ui 
 Tigersres.uo: Tigerabs.uo Tigertips.uo Tigertab.ui Tigertemp.ui \
     Tigertrans.ui 
 Tigergrm.ui: Tigerabs.uo 
 Tigertrans.uo: Tigertrans.ui Tigerabs.uo Tigertree.uo Tigerframe.ui \
     Tigerpila.ui Tigerit.uo Tigertemp.ui 
+Tigersimpleregalloc.uo: Tigersimpleregalloc.ui Tigerassem.ui 
 Tigercanon.uo: Tigercanon.ui Tigertree.uo Tigerframe.ui Tigertab.ui \
     Tigertemp.ui 
 Topsort.ui: Tigerabs.uo Tigertips.uo Tigertab.ui 
@@ -90,8 +90,6 @@ Tigerit.uo: Tigertree.uo Tigertab.ui
 CantPrints.uo: CantPrints.ui Tigerabs.uo 
 Tigerpila.uo: Tigerpila.ui 
 Tigerescap.ui: Tigerabs.uo 
-Tigerinterp_orig.uo: Tigertree.uo Tigerframe.ui Tigertab.ui Tigerit.uo \
-    Tigertemp.ui 
 Tigercanon.ui: Tigertree.uo Tigerframe.ui Tigertemp.ui 
 Tigerseman.ui: Tigerabs.uo 
 Tigertree.uo: Tigertemp.ui 
@@ -99,8 +97,7 @@ Topsort.uo: Topsort.ui Tigerabs.uo Tigersres.uo Tigertips.uo Tigertab.ui
 Tigertrans.ui: Tigerabs.uo Tigertree.uo Tigerframe.ui Tigertemp.ui 
 Tigerinterp.uo: Tigerinterp.ui Tigertree.uo Tigerframe.ui Tigertab.ui \
     Tigerit.uo Tigertemp.ui 
-Tigerinterp_actual.uo: Tigertree.uo Tigerframe.ui Tigertab.ui Tigerit.uo \
-    Tigertemp.ui 
+Tigerassem.uo: Tigerassem.ui Tigertree.uo 
 Tigerlex.uo: Tigergrm.ui Tigernlin.uo 
 CantPrints.ui: Tigerabs.uo 
 Tigerseman.uo: Tigerseman.ui Tigerabs.uo Tigersres.uo Tigerpila.ui \
