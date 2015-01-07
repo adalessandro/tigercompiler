@@ -216,6 +216,68 @@ string *getstr()
     else
 		return (string*)(consts + i);
 }
+
+/*
+ * Copiada del gcc de arm.
+ * __udivmodsi4
+ * https://github.com/wayling/xboot-clone/blob/master/src/arch/arm/lib/gcc/__udivmodsi4.c
+ */
+unsigned int udiv(unsigned int num, unsigned int den,
+		  unsigned int *rem_p)
+{
+	unsigned int quot = 0, qbit = 1;
+	if (den == 0)
+	{
+		return 0;
+	}
+	/*
+	 * left-justify denominator and count shift
+	 */
+	while ((signed int) den >= 0)
+	{
+		den <<= 1;
+		qbit <<= 1;
+	}
+	while (qbit)
+	{
+		if (den <= num)
+		{
+			num -= den;
+			quot += qbit;
+		}
+		den >>= 1;
+		qbit >>= 1;
+	}
+	if (rem_p)
+		*rem_p = num;
+	return quot;
+}
+
+/*
+ * Copiada del gcc de arm.
+ * __aeabi_idiv
+ * https://github.com/wayling/xboot-clone/blob/master/src/arch/arm/lib/gcc/__aeabi_idiv.c
+ */
+signed int idiv(signed int num, signed int den)
+{
+	signed int minus = 0;
+	signed int v;
+	if (num < 0)
+	{
+		num = -num;
+		minus = 1;
+	}
+	if (den < 0)
+	{
+		den = -den;
+		minus ^= 1;
+	}
+	v = udiv(num, den, 0);
+	if (minus)
+		v = -v;
+	return v;
+}
+
 int main()
 {
     int i;
