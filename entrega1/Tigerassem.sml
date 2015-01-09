@@ -99,7 +99,33 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
         let val _ = munchStm s1
         in  munchStm (T.MOVE (e1, e2))
         end
-  | munchStm _ = ()
+  | munchStm (T.EXP e1) =
+        (munchExp e1; ())
+  | munchStm (T.JUMP (e1, llst)) =
+        let val e1' = munchExp e1
+        in  emits (OPER {assem = "b      `d0", dest = [e1'], src = [], jump = SOME llst})
+        end
+  | munchStm (T.CJUMP (op1, e1, e2, l1, l2)) =
+        let val (e1', e2') = (munchExp e1, munchExp e2)
+            val cond = case op1 of
+                            EQ => "eq"
+                          | NE => "ne"
+                          | LT => "lt"
+                          | GT => "gt"
+                          | LE => "le"
+                          | GE => "ge"
+                          | ULT => "lo"
+                          | ULE => "ls"
+                          | UGT => "hi"
+                          | UGE => "hs"
+            in  emits (OPER {assem = "b"^cond^" "^l1, dest = [], src = [], jump = SOME [l1]});
+                emits (OPER {assem = "b "^l2, dest = [], src = [], jump = SOME [l2]})
+            end
+  | munchStm (T.SEQ (s1, s2)) =
+        (munchStm s1; munchStm s2)
+  | munchStm (T.LABEL l) =
+        emits (LABEL {assem = l^":", lab = l})
+  | munchStm _ = raise Fail "munchStm undefined"
 
 and munchExp e = "t"
 
