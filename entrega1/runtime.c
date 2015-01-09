@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-
+#include <signal.h>
+/*
 typedef struct {
     long length;
     unsigned char chars[1];
@@ -216,7 +217,7 @@ string *getstr()
     else
 		return (string*)(consts + i);
 }
-
+*/
 /*
  * Copiada del gcc de arm.
  * __udivmodsi4
@@ -228,7 +229,7 @@ unsigned int udiv(unsigned int num, unsigned int den,
 	unsigned int quot = 0, qbit = 1;
 	if (den == 0)
 	{
-		return 0;
+		raise(SIGFPE);
 	}
 	/*
 	 * left-justify denominator and count shift
@@ -287,5 +288,9 @@ int main()
 		consts[i].chars[0] = i;
     }
 	*/
-    return _tigermain(0 /* static link!? */ );
+    //return _tigermain(0 /* static link!? */ );
+    return idiv(2,0);
 }
+
+
+
