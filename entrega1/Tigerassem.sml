@@ -89,6 +89,16 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
             val e1' = munchExp e1
         in  emits (OPER {assem = "movs    `d0, `s0", dest = [d], src = [e1'], jump = NONE})
         end
+  | munchStm (T.MOVE ((T.BINOP _), _)) = raise Fail "MOVE dest = BINOP"
+  | munchStm (T.MOVE ((T.MEM e1), e2)) =
+        let val (e1', e2') = (munchExp e1, munchExp e2)
+        in  emits (OPER {assem = "strs    `d0, `s0", dest = [e2'], src = [e1'], jump = NONE})
+        end
+  | munchStm (T.MOVE ((T.CALL _), _)) = raise Fail "MOVE dest = CALL"
+  | munchStm (T.MOVE ((T.ESEQ (s1, e1), e2))) =
+        let val _ = munchStm s1
+        in  munchStm (T.MOVE (e1, e2))
+        end
   | munchStm _ = ()
 
 and munchExp e = "t"
