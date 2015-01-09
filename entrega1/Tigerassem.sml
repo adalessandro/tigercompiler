@@ -27,6 +27,14 @@ fun emits x = ilist :=x::(!ilist)
 fun result gen = let val t = Tigertemp.newtemp()
                  in gen t; t end
 
+fun memStr x e1' = case x of
+                        (T.CONST _) => e1'
+                      | (T.NAME _) => e1'
+                      | (T.TEMP _) => "[`s0]"
+                      | (T.BINOP _) => "[`s0]"
+                      | (T.ESEQ (st, ex)) => memStr ex e1'
+                      | _ => raise Fail "memStr undefined"
+
 fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
   | munchStm (T.MOVE ((T.NAME _), _)) = raise Fail "MOVE dest = NAME"
   | munchStm (T.MOVE ((T.TEMP d), (T.CONST i))) = 
@@ -78,7 +86,7 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
         end
   | munchStm (T.MOVE ((T.TEMP d), (T.MEM e1))) =
         let val e1' = munchExp e1
-        in  emits (OPER {assem = "ldrs    `d0, `s0", dest = [d], src = [e1'], jump = NONE})
+        in  emits (OPER {assem = "ldrs    `d0, "^(memStr e1 e1'), dest = [d], src = [e1'], jump = NONE})
         end
   | munchStm (T.MOVE ((T.TEMP d), (T.CALL (ename, eargs)))) =
         let val _ = munchStm (T.EXP(T.CALL (ename, eargs)))
@@ -92,7 +100,7 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
   | munchStm (T.MOVE ((T.BINOP _), _)) = raise Fail "MOVE dest = BINOP"
   | munchStm (T.MOVE ((T.MEM e1), e2)) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
-        in  emits (OPER {assem = "strs    `d0, `s0", dest = [e2'], src = [e1'], jump = NONE})
+        in  emits (OPER {assem = "strs    `d0, "^(memStr e1 e1'), dest = [e2'], src = [e1'], jump = NONE})
         end
   | munchStm (T.MOVE ((T.CALL _), _)) = raise Fail "MOVE dest = CALL"
   | munchStm (T.MOVE ((T.ESEQ (s1, e1), e2))) =
@@ -127,6 +135,13 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
         emits (LABEL {assem = l^":", lab = l})
   | munchStm _ = raise Fail "munchStm undefined"
 
-and munchExp e = "t"
+and munchExp (T.CONST i) = const(i)
+  | munchExp (T.NAME l) = l
+  | munchExp (T.TEMP t) = t
+  | munchExp (T.BINOP (op1, e1, e2)) =
+        result (fn x => munchStm (T.MOVE (T.TEMP x, T.BINOP (op1, e1, e2))))
+  | munchExp (T.MEM e1) = munchExp e1
+  | munchExp (T.CALL (ename, _
+  | munchExp _ = raise Fail "munchExp undefined"
 
 end
