@@ -21,6 +21,8 @@ val maxRegFrame : frame -> int
 val wSz : int
 val log2WSz : int
 val calldefs : Tigertemp.temp list
+val argregs : Tigertemp.temp list
+val argregslen : int
 val callersaves : Tigertemp.temp list
 val exp : access -> Tigertree.exp
 val externalCall : string * Tigertree.exp list -> Tigertree.exp

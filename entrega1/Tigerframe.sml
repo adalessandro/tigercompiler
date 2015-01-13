@@ -21,10 +21,10 @@ open Tigertree
 
 type level = int
 
-val fp = "FP"               (* frame pointer *)
-val sp = "SP"               (* stack pointer *)
-val rv = "RV"               (* return value  *)
-val ov = "OV"               (* overflow value (edx en el 386) *)
+val fp = "fp"               (* frame pointer *)
+val sp = "sp"               (* stack pointer *)
+val rv = "r0"               (* return value  *)
+val ov = "ov"               (* overflow value (edx en el 386) *)
 val wSz = 4                 (* word size in bytes *)
 val log2WSz = 2             (* base two logarithm of word size in bytes *)
 val fpPrev = 0              (* offset (bytes) *)
@@ -37,7 +37,8 @@ val localsInicial = 0       (* words *)
 val localsGap = ~wSz        (* bytes *)
 val calldefs = [rv]
 val specialregs = [rv, fp, sp]
-val argregs = []
+val argregs = ["r0", "r1", "r2", "r3"]
+val argregslen = List.length argregs
 val callersaves = []
 val calleesaves = []
 

@@ -141,7 +141,19 @@ and munchExp (T.CONST i) = const(i)
   | munchExp (T.BINOP (op1, e1, e2)) =
         result (fn x => munchStm (T.MOVE (T.TEMP x, T.BINOP (op1, e1, e2))))
   | munchExp (T.MEM e1) = munchExp e1
-  | munchExp (T.CALL (ename, _
+  | munchExp (T.CALL (ename, eargs)) =
+        let val len = List.length eargs
+            val ename' = munchExp ename
+            fun str y = T.BINOP (T.PLUS, T.TEMP Tigerframe.sp, T.CONST((y-Tigerframe.argregslen)*Tigerframe.wSz))
+            val indexes = List.tabulate (len, (fn x => x))
+            val eargs' = ListPair.zip(eargs, indexes)
+            fun aux (x,y) = if y < 4 then munchStm (T.MOVE (T.TEMP (List.nth((Tigerframe.argregs), y)), x))
+                                     else munchStm (T.MOVE ((T.MEM (str y)), x))
+            val _ = munchStm (T.MOVE(T.TEMP Tigerframe.sp, (T.BINOP (T.MINUS, T.TEMP Tigerframe.sp, T.CONST((len - Tigerframe.argregslen)*Tigerframe.wSz)))))
+            val eargs'' = List.map aux eargs'
+            val _ = emits (OPER {assem = "bl     `d0", dest = [ename'], src = [], jump = SOME [ename']})
+            in Tigerframe.rv
+        end
   | munchExp _ = raise Fail "munchExp undefined"
 
 end
