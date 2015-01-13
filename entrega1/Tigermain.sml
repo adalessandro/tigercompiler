@@ -54,7 +54,9 @@ fun main(args) =
         val (b,c) = splitcanon canonfraglist 
     (*b: (Tigertree.stm list*Tigerframe.frame) list*)
     (*c: (Tigertemp.label*string) list*)
-        val _ = Tigerinterp.inter a b c 
+       (* val _ = Tigerinterp.inter a b c *)
+        val _ = List.map ((List.map Tigerassem.munchStm) o (#1)) b
+        val _ = List.map (fn x => (print (Tigerassem.format x); print "\n")) (!Tigerassem.ilist)
     in
         print "yes!!\n"
     end handle Fail s => print("Fail: "^s^"\n")

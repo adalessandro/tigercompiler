@@ -18,7 +18,7 @@ datatype instr =
              dest: temp list,
              src: temp list}
     
-fun format f i = ""
+(*fun format f i = ""*)
 fun const i = "#" ^ Int.toString(i)
 fun flabel l = "=" ^ l
 
@@ -26,6 +26,28 @@ val ilist = ref []
 fun emits x = ilist :=x::(!ilist)
 fun result gen = let val t = Tigertemp.newtemp()
                  in gen t; t end
+
+val format =
+    let fun speak(assem,dst,src,jump) =
+            let fun saylab s = s 
+                fun saytemp t = t 
+                fun f(#"`":: #"s":: i::rest) = 
+                        (explode(saytemp(List.nth(src,ord i - ord #"0"))) @ f rest)
+                  | f( #"`":: #"d":: i:: rest) = 
+                        (explode(saytemp(List.nth(dst,ord i - ord #"0"))) @ f rest)
+                  | f( #"`":: #"j":: i:: rest) = 
+                        (explode(saylab(List.nth(jump,ord i - ord #"0"))) @ f rest)
+                  (*| f( #"`":: #"`":: rest) = #"`" :: f rest*)
+                  | f( #"`":: _ :: rest) = raise Fail "bad Assem format"
+                  | f(c :: rest) = (c :: f rest)
+                  | f nil = nil 
+            in implode(f(explode assem))
+            end 
+    in fn OPER{assem,dest,src,jump=NONE} => speak("\t"^assem,dest,src,nil)
+        | OPER{assem,dest,src,jump=SOME j} => speak("\t"^assem,dest,src,j)
+        | LABEL{assem,...} => "\t"^assem
+        | MOVE{assem,dest,src} => speak("\t"^assem,dest,src,nil)
+    end
 
 fun memStr x e1' = case x of
                         (T.CONST _) => e1'
@@ -111,7 +133,7 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
         (munchExp e1; ())
   | munchStm (T.JUMP (e1, llst)) =
         let val e1' = munchExp e1
-        in  emits (OPER {assem = "b      `d0", dest = [e1'], src = [], jump = SOME llst})
+        in  emits (OPER {assem = "b      `j0", dest = [], src = [], jump = SOME llst})
         end
   | munchStm (T.CJUMP (op1, e1, e2, l1, l2)) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
@@ -126,8 +148,8 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
                           | ULE => "ls"
                           | UGT => "hi"
                           | UGE => "hs"
-            in  emits (OPER {assem = "b"^cond^" "^l1, dest = [], src = [], jump = SOME [l1]});
-                emits (OPER {assem = "b "^l2, dest = [], src = [], jump = SOME [l2]})
+            in  emits (OPER {assem = "b"^cond^"     `j0", dest = [], src = [], jump = SOME [l1]});
+                emits (OPER {assem = "b       `j0", dest = [], src = [], jump = SOME [l2]})
             end
   | munchStm (T.SEQ (s1, s2)) =
         (munchStm s1; munchStm s2)

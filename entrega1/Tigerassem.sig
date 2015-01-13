@@ -14,8 +14,11 @@ sig
       | MOVE of {assem: string,
                  dest: temp list,
                  src: temp list}
+
+    val ilist : instr list ref
     
-    val format : (temp -> string) -> instr -> string
+    (*val format : (temp -> string) -> instr -> string*)
+    val format : instr -> string
 
     val munchStm : Tigertree.stm -> unit
     val munchExp : Tigertree.exp -> temp
