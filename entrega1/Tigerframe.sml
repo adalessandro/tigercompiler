@@ -25,6 +25,7 @@ val fp = "fp"               (* frame pointer *)
 val sp = "sp"               (* stack pointer *)
 val rv = "r0"               (* return value  *)
 val ov = "ov"               (* overflow value (edx en el 386) *)
+val lr = "lr"
 val wSz = 4                 (* word size in bytes *)
 val log2WSz = 2             (* base two logarithm of word size in bytes *)
 val fpPrev = 0              (* offset (bytes) *)
@@ -112,7 +113,9 @@ fun allocArg (f: frame) b =
         let 
             val ret = !(#actualReg f)
             val _ = #actualReg f := !(#actualReg f) + 1 
-        in InReg (Int.toString ret) (*consultar*)
+        in if ret < argregslen
+           then InReg (List.nth(argregs, ret)) (*consultar*)
+           else InFrame ((ret-argregslen)*wSz)
         end
 
 fun allocLocal (f: frame) b = 
@@ -126,6 +129,19 @@ fun exp(InFrame k) = MEM(BINOP(PLUS, TEMP(fp), CONST k))
 
 fun externalCall(s, l) = CALL(NAME s, l)
 
-fun procEntryExit1 (frame, body) = body
-
+fun procEntryExit1 (frame, body) = 
+    let val prologo = seq(
+                      [MOVE(TEMP sp, BINOP(MINUS, TEMP sp, CONST wSz)),
+                       MOVE(MEM(TEMP sp), TEMP fp),
+                       MOVE(TEMP fp, TEMP sp)]
+                      )
+        val epilogo = seq(
+                      [MOVE(TEMP sp, TEMP fp),
+                       MOVE(TEMP fp, MEM(TEMP sp)),
+                       MOVE(TEMP sp, BINOP(PLUS, TEMP sp, CONST wSz)),
+                       JUMP(TEMP lr, [])]
+                      )
+    in
+        seq([prologo, body, epilogo])
+    end
 end

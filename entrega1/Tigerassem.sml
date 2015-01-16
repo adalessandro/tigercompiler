@@ -62,18 +62,16 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
   | munchStm (T.MOVE ((T.TEMP d), (T.CONST i))) = 
         emits (OPER {assem = "movs    `d0, "^const(i), dest = [d], src = [], jump = NONE})
   | munchStm (T.MOVE ((T.TEMP d), (T.NAME l))) =
-        emits (OPER {assem = "ldrs    `d0, "^flabel(l), dest = [d], src = [], jump = NONE})
+        emits (OPER {assem = "ldr     `d0, "^flabel(l), dest = [d], src = [], jump = NONE})
   | munchStm (T.MOVE ((T.TEMP d), (T.TEMP s))) =
         emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [s]})
   | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.PLUS, e1, e2)))) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
-            val _ = print "PLUS ================================== \n"
         in  emits (OPER {assem = "adds    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
         end
   | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.MUL, e1, e2)))) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
             val (e1'', e2'') = if (d = e1') then (e2', e1') else (e1', e2')
-            val _ = print "MUL ================================== \n"
         in  emits (OPER {assem = "muls    `d0, `s0, `s1", dest = [d], src = [e1'', e2''], jump = NONE})
         end
   | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.MINUS, e1, e2)))) =
@@ -110,7 +108,7 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
         end
   | munchStm (T.MOVE ((T.TEMP d), (T.MEM e1))) =
         let val e1' = munchExp e1
-        in  emits (OPER {assem = "ldrs    `d0, "^(memStr e1 e1'), dest = [d], src = [e1'], jump = NONE})
+        in  emits (OPER {assem = "ldr     `d0, "^(memStr e1 e1'), dest = [d], src = [e1'], jump = NONE})
         end
   | munchStm (T.MOVE ((T.TEMP d), (T.CALL (ename, eargs)))) =
         let val _ = munchStm (T.EXP(T.CALL (ename, eargs)))
@@ -124,7 +122,7 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
   | munchStm (T.MOVE ((T.BINOP _), _)) = raise Fail "MOVE dest = BINOP"
   | munchStm (T.MOVE ((T.MEM e1), e2)) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
-        in  emits (OPER {assem = "strs    `d0, "^(memStr e1 e1'), dest = [e2'], src = [e1'], jump = NONE})
+        in  emits (OPER {assem = "str    `d0, "^(memStr e1 e1'), dest = [e2'], src = [e1'], jump = NONE})
         end
   | munchStm (T.MOVE ((T.CALL _), _)) = raise Fail "MOVE dest = CALL"
   | munchStm (T.MOVE ((T.ESEQ (s1, e1), e2))) =
@@ -135,7 +133,7 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
         (munchExp e1; ())
   | munchStm (T.JUMP (e1, llst)) =
         let val e1' = munchExp e1
-        in  emits (OPER {assem = "b      `j0", dest = [], src = [], jump = SOME llst})
+        in  emits (OPER {assem = "b      `d0", dest = [e1'], src = [], jump = SOME llst})
         end
   | munchStm (T.CJUMP (op1, e1, e2, l1, l2)) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
@@ -162,7 +160,8 @@ and munchStmP s = (print "---------------------- Begin MunchStm ----------------
                    print (Tigerit.tree s);
                    munchStm(s))
 
-and munchExp (T.CONST i) = const(i)
+and munchExp (T.CONST i) = 
+        result (fn x => munchStm (T.MOVE (T.TEMP x, T.CONST i)))
   | munchExp (T.NAME l) = l
   | munchExp (T.TEMP t) = t
   | munchExp (T.BINOP (op1, e1, e2)) =
@@ -174,9 +173,9 @@ and munchExp (T.CONST i) = const(i)
             fun str y = T.BINOP (T.PLUS, T.TEMP Tigerframe.sp, T.CONST((y-Tigerframe.argregslen)*Tigerframe.wSz))
             val indexes = List.tabulate (len, (fn x => x))
             val eargs' = ListPair.zip(eargs, indexes)
-            fun aux (x,y) = if y < 4 then munchStm (T.MOVE (T.TEMP (List.nth((Tigerframe.argregs), y)), x))
+            fun aux (x,y) = if y < Tigerframe.argregslen then munchStm (T.MOVE (T.TEMP (List.nth((Tigerframe.argregs), y)), x))
                                      else munchStm (T.MOVE ((T.MEM (str y)), x))
-            val _ = munchStm (T.MOVE(T.TEMP Tigerframe.sp, (T.BINOP (T.MINUS, T.TEMP Tigerframe.sp, T.CONST((len - Tigerframe.argregslen)*Tigerframe.wSz)))))
+            val _ = if len < Tigerframe.argregslen then () else munchStm (T.MOVE(T.TEMP Tigerframe.sp, (T.BINOP (T.MINUS, T.TEMP Tigerframe.sp, T.CONST((len - Tigerframe.argregslen)*Tigerframe.wSz)))))
             val eargs'' = List.map aux eargs'
             val _ = emits (OPER {assem = "bl     `d0", dest = [ename'], src = [], jump = SOME [ename']})
             in Tigerframe.rv

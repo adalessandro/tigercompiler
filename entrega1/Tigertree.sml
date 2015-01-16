@@ -29,4 +29,8 @@ struct
       | notRel ULE = UGT
       | notRel UGT = ULE
 
+    fun seq [] = EXP (CONST 0)
+      | seq [s] = s
+      | seq (x::xs) = SEQ (x, seq xs)
+
 end

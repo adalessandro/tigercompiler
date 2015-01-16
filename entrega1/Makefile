@@ -78,7 +78,7 @@ CantPrints.uo: CantPrints.ui Tigerabs.uo
 Tigergrm.ui: Tigerabs.uo 
 Tigersimpleregalloc.uo: Tigersimpleregalloc.ui Tigerassem.ui 
 CantPrints.ui: Tigerabs.uo 
-Tigerassem.uo: Tigerassem.ui Tigerframe.ui Tigertemp.ui 
+Tigerassem.uo: Tigerassem.ui Tigerframe.ui Tigerit.uo Tigertemp.ui 
 Tigersres.uo: Tigerabs.uo Tigertips.uo Tigertab.ui Tigertemp.ui \
     Tigertrans.ui 
 Tigerassem.ui: Tigertree.uo Tigertemp.ui 
@@ -100,7 +100,7 @@ Tigertrans.uo: Tigertrans.ui Tigerabs.uo Tigertree.uo Tigerframe.ui \
     Tigerpila.ui Tigerit.uo Tigertemp.ui 
 Tigergrm.uo: Tigergrm.ui Tigerabs.uo Tigernlin.uo 
 Tigerinterp.ui: Tigertree.uo Tigerframe.ui Tigertemp.ui 
-Tigerframe.uo: Tigerframe.ui Tigertree.uo Tigertemp.ui 
+Tigerframe.uo: Tigerframe.ui Tigertree.uo Tigertemp.ui Tigertrans.ui 
 Tigerit.uo: Tigertree.uo Tigertab.ui 
 Tigercanon.uo: Tigercanon.ui Tigertree.uo Tigerframe.ui Tigertab.ui \
     Tigertemp.ui 

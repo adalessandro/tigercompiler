@@ -54,7 +54,7 @@ fun main(args) =
         val (b,c) = splitcanon canonfraglist 
     (*b: (Tigertree.stm list*Tigerframe.frame) list*)
     (*c: (Tigertemp.label*string) list*)
-        (* val _ = Tigerinterp.inter a b c *)
+        val _ = if inter then Tigerinterp.inter a b c else ()
         val _ = List.map ((List.map Tigerassem.munchStmP) o (#1)) b
         val _ = (print "*************** Assembler CODE! ***************\n";
                  List.map (fn x => (print (Tigerassem.format x); print "\n")) (List.rev (!Tigerassem.ilist)))

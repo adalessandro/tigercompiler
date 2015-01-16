@@ -52,10 +52,6 @@ datatype exp =
   | Nx of Tigertree.stm
   | Cx of label * label -> Tigertree.stm
 
-fun seq [] = EXP (CONST 0)
-  | seq [s] = s
-  | seq (x::xs) = SEQ (x, seq xs)
-
 fun unEx (Ex e) = e
   | unEx (Nx s) = ESEQ(s, CONST 0)
   | unEx (Cx cf) =
