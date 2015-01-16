@@ -401,7 +401,7 @@ fun transExp(venv, tenv) =
 
                             (* tipamos el body de la función *)
                             val lev = preFunctionDec(topLevel(), funlab, escapparams')
-                            val _ = Tigertrans.printLevel lev
+                            (* val _ = Tigertrans.printLevel lev *)
                             val _ = pushLevel lev
 
                             (* generamos e insertamos las variables de los args en venv *)

@@ -65,44 +65,46 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
         emits (OPER {assem = "ldrs    `d0, "^flabel(l), dest = [d], src = [], jump = NONE})
   | munchStm (T.MOVE ((T.TEMP d), (T.TEMP s))) =
         emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [s]})
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (MUL, e1, e2)))) =
+  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.PLUS, e1, e2)))) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
-            val (e1'', e2'') = if (d = e1') then (e2', e1') else (e1', e2')
-        in  emits (OPER {assem = "muls    `d0, `s0, `s1", dest = [d], src = [e1'', e2''], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (PLUS, e1, e2)))) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
+            val _ = print "PLUS ================================== \n"
         in  emits (OPER {assem = "adds    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
         end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (MINUS, e1, e2)))) =
+  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.MUL, e1, e2)))) =
+        let val (e1', e2') = (munchExp e1, munchExp e2)
+            val (e1'', e2'') = if (d = e1') then (e2', e1') else (e1', e2')
+            val _ = print "MUL ================================== \n"
+        in  emits (OPER {assem = "muls    `d0, `s0, `s1", dest = [d], src = [e1'', e2''], jump = NONE})
+        end
+  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.MINUS, e1, e2)))) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
         in  emits (OPER {assem = "subs    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
         end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (DIV, e1, e2)))) =
+  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.DIV, e1, e2)))) =
         let val _ = munchStm (T.EXP (T.CALL (T.NAME "idiv", [e1, e2])))
         in  emits (OPER {assem = "movs    `d0, `s0", dest = [d], src = [Tigerframe.rv], jump = NONE})
         end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (AND, e1, e2)))) =
+  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.AND, e1, e2)))) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
         in  emits (OPER {assem = "ands    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
         end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (OR, e1, e2)))) =
+  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.OR, e1, e2)))) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
         in  emits (OPER {assem = "orrs    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
         end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (XOR, e1, e2)))) =
+  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.XOR, e1, e2)))) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
         in  emits (OPER {assem = "eors    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
         end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (LSHIFT, e1, e2)))) =
+  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.LSHIFT, e1, e2)))) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
         in  emits (OPER {assem = "movs    `d0, `s0, lsl `s1", dest = [d], src = [e1', e2'], jump = NONE})
         end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (RSHIFT, e1, e2)))) =
+  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.RSHIFT, e1, e2)))) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
         in  emits (OPER {assem = "movs    `d0, `s0, lsr `s1", dest = [d], src = [e1', e2'], jump = NONE})
         end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (ARSHIFT, e1, e2)))) =
+  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.ARSHIFT, e1, e2)))) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
         in  emits (OPER {assem = "movs    `d0, `s0, asr `s1", dest = [d], src = [e1', e2'], jump = NONE})
         end
@@ -138,16 +140,16 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
   | munchStm (T.CJUMP (op1, e1, e2, l1, l2)) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
             val cond = case op1 of
-                            EQ => "eq"
-                          | NE => "ne"
-                          | LT => "lt"
-                          | GT => "gt"
-                          | LE => "le"
-                          | GE => "ge"
-                          | ULT => "lo"
-                          | ULE => "ls"
-                          | UGT => "hi"
-                          | UGE => "hs"
+                            T.EQ => "eq"
+                          | T.NE => "ne"
+                          | T.LT => "lt"
+                          | T.GT => "gt"
+                          | T.LE => "le"
+                          | T.GE => "ge"
+                          | T.ULT => "lo"
+                          | T.ULE => "ls"
+                          | T.UGT => "hi"
+                          | T.UGE => "hs"
             in  emits (OPER {assem = "b"^cond^"     `j0", dest = [], src = [], jump = SOME [l1]});
                 emits (OPER {assem = "b       `j0", dest = [], src = [], jump = SOME [l2]})
             end
@@ -155,7 +157,10 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
         (munchStm s1; munchStm s2)
   | munchStm (T.LABEL l) =
         emits (LABEL {assem = l^":", lab = l})
-  | munchStm _ = raise Fail "munchStm undefined"
+
+and munchStmP s = (print "---------------------- Begin MunchStm -----------------------\n";
+                   print (Tigerit.tree s);
+                   munchStm(s))
 
 and munchExp (T.CONST i) = const(i)
   | munchExp (T.NAME l) = l

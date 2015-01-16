@@ -21,5 +21,6 @@ sig
     val format : instr -> string
 
     val munchStm : Tigertree.stm -> unit
+    val munchStmP : Tigertree.stm -> unit
     val munchExp : Tigertree.exp -> temp
 end
