@@ -26,6 +26,7 @@ val sp = "sp"               (* stack pointer *)
 val rv = "r0"               (* return value  *)
 val ov = "ov"               (* overflow value (edx en el 386) *)
 val lr = "lr"
+val pc = "pc"
 val wSz = 4                 (* word size in bytes *)
 val log2WSz = 2             (* base two logarithm of word size in bytes *)
 val fpPrev = 0              (* offset (bytes) *)
@@ -131,15 +132,18 @@ fun externalCall(s, l) = CALL(NAME s, l)
 
 fun procEntryExit1 (frame, body) = 
     let val prologo = seq(
-                      [MOVE(TEMP sp, BINOP(MINUS, TEMP sp, CONST wSz)),
-                       MOVE(MEM(TEMP sp), TEMP fp),
-                       MOVE(TEMP fp, TEMP sp)]
+                      [MOVE(TEMP sp, BINOP(MINUS, TEMP sp, CONST (2*wSz))), (* sp -= 8 *)
+                       MOVE(MEM(BINOP(PLUS, TEMP sp, CONST wSz)), TEMP lr), (* [sp+4] = lr *)
+                       MOVE(MEM(TEMP sp), TEMP fp), (* [sp] = fp *)
+                       MOVE(TEMP fp, (BINOP(PLUS, TEMP sp, CONST wSz)))] (* fp = sp+4 *)
                       )
         val epilogo = seq(
-                      [MOVE(TEMP sp, TEMP fp),
-                       MOVE(TEMP fp, MEM(TEMP sp)),
-                       MOVE(TEMP sp, BINOP(PLUS, TEMP sp, CONST wSz)),
-                       JUMP(TEMP lr, [])]
+                      [MOVE(TEMP sp, (BINOP(MINUS, TEMP fp, CONST wSz))), (* sp = fp-4 *)
+                       MOVE(TEMP fp, MEM(TEMP sp)), (* fp = [sp] *)
+                       MOVE(TEMP lr, MEM(BINOP(PLUS, TEMP sp, CONST wSz))), (* lr = [sp+4] *)
+                       MOVE(TEMP sp, BINOP(PLUS, TEMP sp, CONST (2*wSz))), (* sp += 8 *)
+                       MOVE(TEMP pc, TEMP lr)]
+                       (* JUMP(TEMP lr, [])] *) (* bx lr *)
                       )
     in
         seq([prologo, body, epilogo])
