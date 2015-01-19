@@ -5,7 +5,6 @@ type frame
 val printFrame : frame -> unit
 type register = string
 val rv : Tigertemp.temp
-val ov : Tigertemp.temp
 val fp : Tigertemp.temp
 datatype access = InFrame of int | InReg of Tigertemp.label
 val fpPrev : int

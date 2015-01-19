@@ -14,21 +14,21 @@ struct
 			let
 				val desp = if mempos<0 then " - " ^ Int.toString(~mempos) else if mempos>0 then " + " ^ Int.toString(mempos) else ""
 			in
-				OPER {assem="mov `s0 M(a" ^ desp ^ ")", src=[temp], dst=[], jump=NONE}
+				OPER {assem="mov `s0 M(a" ^ desp ^ ")", src=[temp], dest=[], jump=NONE}
 			end
 		fun movaTemp(mempos, temp) =
 			let
 				val desp = if mempos<0 then " - " ^ Int.toString(~mempos) else if mempos>0 then " + " ^ Int.toString(mempos) else ""
 			in
-				OPER {assem="mov M(a" ^ desp ^ ") `d0", src=[], dst=[temp], jump=NONE}
+				OPER {assem="mov M(a" ^ desp ^ ") `d0", src=[], dest=[temp], jump=NONE}
 			end
 		val temps =
 			let
 				val tempList = 
 					let
-						fun f (OPER r, tmplist) = List.concat [#dst r, #src r, tmplist]
+						fun f (OPER r, tmplist) = List.concat [#dest r, #src r, tmplist]
 						| f (LABEL _, tmplist) = tmplist
-						| f (MOVE r, tmplist) = (#dst r)::(#src r)::tmplist
+						| f (MOVE r, tmplist) = List.concat [#dest r, #src r, tmplist]
 					in
 						List.foldr f [] body
 					end
@@ -47,12 +47,12 @@ struct
 				gfp T accesses
 			end
 
-		fun rewriteInstr (OPER {assem, dst, src, jump}) =
+		fun rewriteInstr (OPER {assem, dest, src, jump}) =
 			let
 				val eset = Splayset.empty String.compare
 				val precoloredSet = Splayset.addList(eset, precolored)
 				val asignablesSet = Splayset.addList(eset, asignables)
-				val dstset = Splayset.addList(eset, dst)
+				val dstset = Splayset.addList(eset, dest)
 				val srcset = Splayset.addList(eset, src)
 				val colores = Splayset.listItems(Splayset.difference(asignablesSet, Splayset.union(dstset, srcset)))
 				val uncolored = Splayset.listItems(Splayset.difference(Splayset.union(dstset, srcset), precoloredSet))
@@ -73,27 +73,32 @@ struct
 					fun mksetMov T = movaMem(getTempCol T, getFramePos T)
 					fun filterPC T = not(Splayset.member(precoloredSet, T))
 				in
-					(map mkgetMov (List.filter filterPC src), map mksetMov (List.filter filterPC dst))
+					(map mkgetMov (List.filter filterPC src), map mksetMov (List.filter filterPC dest))
 				end
-				val newdst = map getTempCol dst
+				val newdst = map getTempCol dest
 				val newsrc = map getTempCol src
-				val newinstr = OPER {assem=assem, dst=newdst, src=newsrc, jump=jump}
+				val newinstr = OPER {assem=assem, dest=newdst, src=newsrc, jump=jump}
 			in
 				List.concat [prevMovs, [newinstr], posMovs]
 			end
 		  | rewriteInstr (LABEL l) = [LABEL l]
-		  | rewriteInstr (MOVE {assem, dst, src}) =
+		  | rewriteInstr (MOVE {assem, dest, src}) =
 			let
 				val precoloredSet = Splayset.addList(Splayset.empty String.compare, precolored)
+                val destSet = Splayset.addList(Splayset.empty String.compare, dest)
+                val srcSet = Splayset.addList(Splayset.empty String.compare, src)
 			in
-				if Splayset.member(precoloredSet, dst) andalso Splayset.member(precoloredSet, src) then [OPER {assem=assem, dst=[dst], src=[src], jump=NONE}]
-				else if Splayset.member(precoloredSet, dst) then [movaTemp(getFramePos src, dst)]
-				else if Splayset.member(precoloredSet, src) then [movaMem(src, getFramePos dst)]
+				(* if Splayset.member(precoloredSet, dest) andalso Splayset.member(precoloredSet, src) then [OPER {assem=assem, dest=[dest], src=[src], jump=NONE}] *)
+				if Splayset.isSubset(destSet, precoloredSet) andalso Splayset.isSubset(srcSet, precoloredSet) then [OPER {assem=assem, dest=dest, src=src, jump=NONE}]
+				(* else if Splayset.member(precoloredSet, dest) then [movaTemp(getFramePos src, dest)] *)
+				else if Splayset.isSubset(destSet, precoloredSet) then [movaTemp(getFramePos src, dest)]
+				(* else if Splayset.member(precoloredSet, src) then [movaMem(src, getFramePos dest)] *)
+				else if Splayset.isSubset(srcSet, precoloredSet) then [movaMem(src, getFramePos dest)]
 				else
 					let
 						val color = hd(asignables)
 					in
-						[movaTemp(getFramePos src, color), movaMem(color, getFramePos dst)]
+						[movaTemp(getFramePos src, color), movaMem(color, getFramePos dest)]
 					end
 			end
 	in

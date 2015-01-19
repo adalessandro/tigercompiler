@@ -1,4 +1,4 @@
-signature tigersimpleregalloc =
+signature Tigersimpleregalloc =
 sig
-	val simpleregalloc : tigerframe.frame -> tigerassem.instr list -> tigerassem.instr list
+	val simpleregalloc : Tigerframe.frame -> Tigerassem.instr list -> Tigerassem.instr list
 end
