@@ -5,22 +5,18 @@ struct
 	
 	fun simpleregalloc (frm:frame.frame) (body:instr list) =
 	let
-		(* COMPLETAR: Temporarios que ya tienen color asignado (p.ej, el temporario que representa a rax) *)
-		val precolored = ["a", "b", "c", "d", "e", "f"]
-		(* COMPLETAR: Temporarios que se pueden usar (p.ej, el temporario que representa a rax. Diferencia con precolored: el temporario que representa a rbp no se puede usar) *)
-		val asignables = ["b", "c", "d", "e", "f"]
-		(* COMPLETAR: movaMem crea una instrucción que mueve un temporario a memoria. movaTemp, de memoria a un temporario.*)
+		(* Temporarios que ya tienen color asignado (p.ej, el temporario que representa a rax) *)
+		val precolored = frame.specialregs @ frame.argregs
+		(* Temporarios que se pueden usar (p.ej, el temporario que representa a rax. Diferencia con precolored: el temporario que representa a rbp no se puede usar) *)
+		val asignables = frame.generalregs
+		(* movaMem crea una instrucción que mueve un temporario a memoria. movaTemp, de memoria a un temporario.*)
 		fun movaMem(temp, mempos) =
-			let
-				val desp = if mempos<0 then " - " ^ Int.toString(~mempos) else if mempos>0 then " + " ^ Int.toString(mempos) else ""
-			in
-				OPER {assem="mov `s0 M(a" ^ desp ^ ")", src=[temp], dest=[], jump=NONE}
+			let val desp = if mempos<0 then " - " ^ Int.toString(~mempos) else if mempos>0 then " + " ^ Int.toString(mempos) else ""
+			in  OPER {assem="str     `s0, [`d0, #" ^ desp ^ "]", src=[temp], dest=[frame.fp], jump=NONE}
 			end
 		fun movaTemp(mempos, temp) =
-			let
-				val desp = if mempos<0 then " - " ^ Int.toString(~mempos) else if mempos>0 then " + " ^ Int.toString(mempos) else ""
-			in
-				OPER {assem="mov M(a" ^ desp ^ ") `d0", src=[], dest=[temp], jump=NONE}
+			let	val desp = if mempos<0 then " - " ^ Int.toString(~mempos) else if mempos>0 then " + " ^ Int.toString(mempos) else ""
+			in  OPER {assem="ldr     `d0, [`s0, #" ^ desp ^ "]", src=[frame.fp], dest=[temp], jump=NONE}
 			end
 		val temps =
 			let
@@ -38,7 +34,11 @@ struct
 				Splayset.listItems(Splayset.difference(s, precoloredSet))
 			end
 
-		val accesses = map (fn T => let val frame.InFrame n = frame.allocLocal frm true in (T, n) end) temps
+		val accesses = map (fn T => let val offset = frame.allocLocal frm true 
+                                        val n = (case offset of
+                                                      frame.InFrame n => n
+                                                    | _ => raise Fail("No debería suceder. Tigersimpleregalloc.accesses."))
+                                    in (T, n) end) temps
 		fun getFramePos T =
 			let
 				fun gfp T [] = raise Fail("Temporario no encontrado: "^T)
@@ -91,14 +91,14 @@ struct
 				(* if Splayset.member(precoloredSet, dest) andalso Splayset.member(precoloredSet, src) then [OPER {assem=assem, dest=[dest], src=[src], jump=NONE}] *)
 				if Splayset.isSubset(destSet, precoloredSet) andalso Splayset.isSubset(srcSet, precoloredSet) then [OPER {assem=assem, dest=dest, src=src, jump=NONE}]
 				(* else if Splayset.member(precoloredSet, dest) then [movaTemp(getFramePos src, dest)] *)
-				else if Splayset.isSubset(destSet, precoloredSet) then [movaTemp(getFramePos src, dest)]
+				else if Splayset.isSubset(destSet, precoloredSet) then [movaTemp(getFramePos (hd src), (hd dest))]
 				(* else if Splayset.member(precoloredSet, src) then [movaMem(src, getFramePos dest)] *)
-				else if Splayset.isSubset(srcSet, precoloredSet) then [movaMem(src, getFramePos dest)]
+				else if Splayset.isSubset(srcSet, precoloredSet) then [movaMem((hd src), getFramePos (hd dest))]
 				else
 					let
 						val color = hd(asignables)
 					in
-						[movaTemp(getFramePos src, color), movaMem(color, getFramePos dest)]
+						[movaTemp(getFramePos (hd src), color), movaMem(color, getFramePos (hd dest))]
 					end
 			end
 	in

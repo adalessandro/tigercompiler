@@ -74,6 +74,7 @@ Tigermain.uo: Tigerseman.ui Tigerlex.uo Tigerpp.ui Tigerescap.ui \
     Tigerinterp.ui Tigerframe.ui Tigercanon.ui Tigerassem.ui Tigergrm.ui \
     Tigertrans.ui CantPrints.ui 
 Tigertemp.uo: Tigertemp.ui 
+Tigersimpleregalloc.ui: Tigerframe.ui Tigerassem.ui 
 CantPrints.uo: CantPrints.ui Tigerabs.uo 
 Tigergrm.ui: Tigerabs.uo 
 Tigersimpleregalloc.uo: Tigersimpleregalloc.ui Tigerassem.ui 

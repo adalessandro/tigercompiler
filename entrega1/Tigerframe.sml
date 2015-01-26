@@ -21,16 +21,25 @@ open Tigertree
 
 type level = int
 
-val fp = "fp"               (* frame pointer *)
-val sp = "sp"               (* stack pointer *)
-val rv = "r0"               (* return value  *)
-val lr = "lr"               (* link register *)
-val pc = "pc"               (* program counter *)
+val fp = "fp"               (* frame pointer *) (* r11 *)
+val sp = "sp"               (* stack pointer *) (* r13 *)
+val rv = "r0"               (* return value  *) 
+val lr = "lr"               (* link register *) (* r14 *)
+val pc = "pc"               (* program counter *) (* r15 *)
 
 val r0 = "r0"               (* args/general purpose regs *)
 val r1 = "r1"
 val r2 = "r2"
 val r3 = "r3"
+val r4 = "r4"
+val r5 = "r5"
+val r6 = "r6"
+val r7 = "r7"
+val r8 = "r8"
+val r9 = "r9"
+val r10 = "r10"
+val r12 = "r12"
+val generalregs = [r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r12]
 
 val wSz = 4                 (* word size in bytes *)
 val log2WSz = 2             (* base two logarithm of word size in bytes *)
