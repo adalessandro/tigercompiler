@@ -80,7 +80,7 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
         end
   | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.DIV, e1, e2)))) =
         let val _ = munchStm (T.EXP (T.CALL (T.NAME "idiv", [e1, e2])))
-        in  emits (OPER {assem = "movs    `d0, `s0", dest = [d], src = [Tigerframe.rv], jump = NONE})
+        in  emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [Tigerframe.rv]})
         end
   | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.AND, e1, e2)))) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
@@ -112,12 +112,12 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
         end
   | munchStm (T.MOVE ((T.TEMP d), (T.CALL (ename, eargs)))) =
         let val _ = munchStm (T.EXP(T.CALL (ename, eargs)))
-        in  emits (OPER {assem = "movs    `d0, `s0", dest = [d], src = [Tigerframe.rv], jump = NONE})
+        in  emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [Tigerframe.rv]})
         end
   | munchStm (T.MOVE ((T.TEMP d), (T.ESEQ (s1, e1)))) =
         let val _ = munchStm s1
             val e1' = munchExp e1
-        in  emits (OPER {assem = "movs    `d0, `s0", dest = [d], src = [e1'], jump = NONE})
+        in  emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [e1']})
         end
   | munchStm (T.MOVE ((T.BINOP _), _)) = raise Fail "MOVE dest = BINOP"
   | munchStm (T.MOVE ((T.MEM e1), e2)) =
