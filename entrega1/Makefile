@@ -101,6 +101,7 @@ Tigergraph.uo: Tigergraph.ui Tigertab.ui
 Tigerpila.uo: Tigerpila.ui 
 Tigertrans.uo: Tigertrans.ui Tigerabs.uo Tigertree.uo Tigerframe.ui \
     Tigerpila.ui Tigerit.uo Tigertemp.ui 
+Tigergraph.ui: Tigertab.ui 
 Tigergrm.uo: Tigergrm.ui Tigerabs.uo Tigernlin.uo 
 Tigerinterp.ui: Tigertree.uo Tigerframe.ui Tigertemp.ui 
 Tigerframe.uo: Tigerframe.ui Tigertree.uo Tigertemp.ui 

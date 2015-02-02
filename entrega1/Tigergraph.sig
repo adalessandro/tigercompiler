@@ -15,7 +15,7 @@ sig
     val mk_edge : graph -> {from: node, to: node} -> graph
     val rm_edge : graph -> {from: node, to: node} -> graph
 
-    type 'a table
+    type 'a table = (node, 'a) Tigertab.Tabla
 
     val nodename : node -> string
     

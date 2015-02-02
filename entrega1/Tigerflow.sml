@@ -2,6 +2,7 @@ structure Tigerflow =
 struct
 
 open Tigergraph
+open Tigertab
 
 (*structure Graph*)
 datatype flowgraph =
@@ -11,14 +12,14 @@ datatype flowgraph =
                ismove: bool Tigergraph.table}
 
 (*
-        val t = Tigertab.tabNueva ()
+        val t = tabNueva ()
         val t' = List.foldr (fn ((tab, n), ins) => (tabInserta (n, ins, tab), n+1)) (t, 0) instrs
 *)
 fun makeFGraph (instrs:(Tigerassem.instr list)) =
     let val control = #1 (List.foldr (fn (_, (gra, n)) => (newNode gra n,  n+1)) (newGraph(), 0) instrs)
-        val def = Tigertab.tabNueva ()
-        val use = Tigertab.tabNueva ()
-        val isMove = Tigertab.tabNueva ()
+        val def = tabNueva ()
+        val use = tabNueva ()
+        val isMove = tabNueva ()
         fun genEdges cgraph [] _ = cgraph
           | genEdges cgraph (i::is) pos = 
                 let val cgraph' = 
@@ -50,7 +51,28 @@ fun makeFGraph (instrs:(Tigerassem.instr list)) =
                                  | x::xs => mk_edge cgraph {from=pos, to=pos+1})
                 in  genEdges cgraph' is (pos+1)
                 end
-    in  Tigergraph.printGraph (genEdges control instrs 0)
+        fun genMoves moveTab [] _ = moveTab
+          | genMoves moveTab (i::is) pos =
+                let val boolMove = case i of 
+                                        Tigerassem.MOVE _ => true
+                                      | _      => false
+                in  genMoves (tabInserta(pos, boolMove, moveTab)) is (pos+1)
+                end
+        fun genDefUse (defT, useT) [] _ = (defT, useT)
+          | genDefUse (defT, useT) (i::is) pos =
+                let val (dest, src) = case i of
+                                             Tigerassem.OPER {dest=dest, src=src, ...} => (dest, src)
+                                           | Tigerassem.LABEL _ => ([], [])
+                                           | Tigerassem.MOVE {dest=dest, src=src, ...} => (dest, src)
+                    val defT' = tabInserta(pos, dest, defT)
+                    val useT' = tabInserta(pos, src, useT)
+                in  genDefUse (defT', useT') is (pos+1)
+                end
+        val (def', use') = genDefUse (def, use) instrs 0
+    in  FGRAPH {control = genEdges control instrs 0,
+                def = def',
+                use = use',
+                ismove = genMoves isMove instrs 0}
     end
 
 val ej1 = [

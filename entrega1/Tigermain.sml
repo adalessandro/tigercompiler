@@ -58,7 +58,7 @@ fun main(args) =
         val _ = if code then List.map ((List.map Tigerassem.munchStmP) o (#1)) b else []
         val _ = if code then (print "*************** Assembler CODE! ***************\n";
                  List.map (fn x => (print (Tigerassem.format x); print "\n")) (List.rev (!Tigerassem.ilist))) else []
-        val _ = if flow then Tigerflow.makeFGraph Tigerflow.ej1 else []
+        val _ = if flow then (Tigerflow.makeFGraph Tigerflow.ej1; ()) else ()
     in
         print "yes!!\n"
     end handle Fail s => print("Fail: "^s^"\n")

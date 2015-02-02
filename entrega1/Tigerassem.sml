@@ -140,9 +140,8 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
   | munchStm (T.EXP e1) =
         (munchExp e1; ())
   | munchStm (T.JUMP (e1, llst)) =
-        let val e1' = munchExp e1
-        in  emits (OPER {assem = "b       `d0", dest = [e1'], src = [], jump = SOME llst})
-        end
+        (*let val e1' = munchExp e1*)
+        emits (OPER {assem = "b       `j0", dest = [], src = [], jump = SOME llst})
   | munchStm (T.CJUMP (op1, e1, e2, l1, l2)) =
         let val (e1', e2') = (munchExp e1, munchExp e2)
             val cond = case op1 of
@@ -185,7 +184,7 @@ and munchExp (T.CONST i) =
                                      else munchStm (T.MOVE ((T.MEM (str y)), x))
             val _ = if len < Tigerframe.argregslen then () else munchStm (T.MOVE(T.TEMP Tigerframe.sp, (T.BINOP (T.MINUS, T.TEMP Tigerframe.sp, T.CONST((len - Tigerframe.argregslen)*Tigerframe.wSz)))))
             val eargs'' = List.map aux eargs'
-            val _ = emits (OPER {assem = "bl     `d0", dest = [ename'], src = [], jump = SOME [ename']})
+            val _ = emits (OPER {assem = "bl     `j0", dest = [], src = [], jump = SOME [ename']})
             in Tigerframe.rv
         end
   | munchExp _ = raise Fail "munchExp undefined"
