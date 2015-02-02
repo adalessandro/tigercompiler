@@ -1,6 +1,8 @@
 structure Tigergraph :> Tigergraph =
 struct
 
+open Tigerextras
+
 type node = int 
 type neighbours = {suc : node list, pred : node list}
 type graph = (node, neighbours) Splaymap.dict 
@@ -19,13 +21,6 @@ fun nodes g = List.map (#1) (Splaymap.listItems g)
 fun succ g = (#suc o (findNode g))
 
 fun pred g = (#pred o (findNode g))
-
-fun unionsinrep [] ys = ys
-  | unionsinrep xs [] = xs
-  | unionsinrep (x::xs) ys = let fun eq z = (x = z)
-                                val exist = List.exists eq ys
-                            in  if exist then unionsinrep xs ys else x::(unionsinrep xs ys)
-                            end
 
 fun adj g n = let val {suc=suc, pred=pred} = findNode g n
               in  unionsinrep suc pred

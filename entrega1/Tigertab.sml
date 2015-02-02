@@ -71,4 +71,7 @@ fun tabPrimer(f, t) = hd(List.filter (fn(a, b) => f b) (listItems t))
 
 fun tabClaves t = List.map (fn(x, y) => x) (listItems t)
 
+fun tabEqRange t1 t2 range eqval =
+    List.foldr (fn (x, b) => if b then eqval (tabSaca (x, t1), tabSaca (x, t2)) else false) true range
+
 end

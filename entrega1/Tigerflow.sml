@@ -9,14 +9,16 @@ datatype flowgraph =
     FGRAPH of {control : Tigergraph.graph,
                def : Tigertemp.temp list Tigergraph.table,
                use : Tigertemp.temp list Tigergraph.table,
-               ismove: bool Tigergraph.table}
+               ismove: bool Tigergraph.table,
+               nodes: Tigerassem.instr Tigergraph.table}
 
 (*
         val t = tabNueva ()
         val t' = List.foldr (fn ((tab, n), ins) => (tabInserta (n, ins, tab), n+1)) (t, 0) instrs
 *)
 fun makeFGraph (instrs:(Tigerassem.instr list)) =
-    let val control = #1 (List.foldr (fn (_, (gra, n)) => (newNode gra n,  n+1)) (newGraph(), 0) instrs)
+    let val nodes = #1 (List.foldr (fn (i, (t, n)) => (tabInserta (n, i, t),  n+1)) (tabNueva(), 0) instrs)
+        val control = #1 (List.foldr (fn (_, (gra, n)) => (newNode gra n,  n+1)) (newGraph(), 0) instrs)
         val def = tabNueva ()
         val use = tabNueva ()
         val isMove = tabNueva ()
@@ -72,7 +74,8 @@ fun makeFGraph (instrs:(Tigerassem.instr list)) =
     in  FGRAPH {control = genEdges control instrs 0,
                 def = def',
                 use = use',
-                ismove = genMoves isMove instrs 0}
+                ismove = genMoves isMove instrs 0,
+                nodes = nodes}
     end
 
 val ej1 = [

@@ -27,8 +27,8 @@ EXEFILE=
 GRALOBJS= Tigerabs.uo Tigergrm.uo Tigerlex.uo Tigermain.uo \
 	Tigernlin.uo Tigerpp.uo Tigerescap.uo Tigertab.uo Tigerseman.uo Tigertemp.uo Topsort.uo \
     Tigercanon.uo Tigerframe.uo Tigerinterp.uo Tigerpila.uo Tigertrans.uo Tigertree.uo \
-    Tigerassem.uo Tigersimpleregalloc.uo Tigergraph.uo Tigerflow.uo \
-    CantPrints.uo
+    Tigerassem.uo Tigersimpleregalloc.uo Tigergraph.uo Tigerflow.uo Tigerinterference.uo \
+    CantPrints.uo Tigerextras.uo
 
 all: tiger
 
@@ -92,12 +92,13 @@ Tigerpp.ui: Tigerabs.uo
 Tigerflow.uo: Tigergraph.ui Tigertab.ui Tigerassem.ui Tigertemp.ui 
 Tigerlex.uo: Tigergrm.ui Tigernlin.uo 
 Tigerescap.uo: Tigerescap.ui Tigerabs.uo Tigertab.ui 
+Tigerinterference.uo: Tigergraph.ui Tigertab.ui Tigertemp.ui Tigerflow.uo 
 Tigerseman.uo: Tigerseman.ui Tigerabs.uo Tigersres.uo Tigerpila.ui \
     Tigertab.ui Topsort.ui Tigertrans.ui 
 Tigerescap.ui: Tigerabs.uo 
 Topsort.ui: Tigerabs.uo Tigertips.uo Tigertab.ui 
 Tigertree.uo: Tigertemp.ui 
-Tigergraph.uo: Tigergraph.ui Tigertab.ui 
+Tigergraph.uo: Tigergraph.ui Tigertab.ui Tigerextras.uo 
 Tigerpila.uo: Tigerpila.ui 
 Tigertrans.uo: Tigertrans.ui Tigerabs.uo Tigertree.uo Tigerframe.ui \
     Tigerpila.ui Tigerit.uo Tigertemp.ui 
