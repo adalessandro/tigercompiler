@@ -72,7 +72,7 @@ depend: Tigerabs.sml Tigergrm.sml Tigerlex.sml Tigermain.sml \
 ### DO NOT DELETE THIS LINE
 Tigermain.uo: Tigerseman.ui Tigerlex.uo Tigerpp.ui Tigerescap.ui \
     Tigerinterp.ui Tigerframe.ui Tigercanon.ui Tigerassem.ui Tigergrm.ui \
-    Tigertrans.ui CantPrints.ui 
+    Tigertrans.ui CantPrints.ui Tigerflow.uo 
 Tigertemp.uo: Tigertemp.ui 
 Tigersimpleregalloc.ui: Tigerframe.ui Tigerassem.ui 
 CantPrints.uo: CantPrints.ui Tigerabs.uo 
@@ -89,7 +89,7 @@ Tigercanon.ui: Tigertree.uo Tigerframe.ui Tigertemp.ui
 Tigerseman.ui: Tigerabs.uo 
 Tigerframe.ui: Tigertree.uo Tigertemp.ui 
 Tigerpp.ui: Tigerabs.uo 
-Tigerflow.uo: Tigergraph.ui Tigertemp.ui 
+Tigerflow.uo: Tigergraph.ui Tigertab.ui Tigerassem.ui Tigertemp.ui 
 Tigerlex.uo: Tigergrm.ui Tigernlin.uo 
 Tigerescap.uo: Tigerescap.ui Tigerabs.uo Tigertab.ui 
 Tigerseman.uo: Tigerseman.ui Tigerabs.uo Tigersres.uo Tigerpila.ui \

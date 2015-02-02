@@ -18,6 +18,14 @@ datatype instr =
              dest: temp list,
              src: temp list}
     
+fun labelpos x [] = NONE
+  | labelpos x (y::ys) =
+         case y of
+              LABEL {lab=x, ...} => SOME 0
+            | _ => case labelpos x ys of
+                        NONE => NONE
+                      | SOME n => SOME (n+1) 
+
 (*fun format f i = ""*)
 fun const i = "#" ^ Int.toString(i)
 fun flabel l = "=" ^ l
@@ -148,7 +156,7 @@ fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
                           | T.ULE => "ls"
                           | T.UGT => "hi"
                           | T.UGE => "hs"
-            in  emits (OPER {assem = "b"^cond^"     `j0", dest = [], src = [], jump = SOME [l1]});
+            in  emits (OPER {assem = "b"^cond^"     `j0", dest = [], src = [], jump = SOME [l1, "DEF_LABEL"]});
                 emits (OPER {assem = "b       `j0", dest = [], src = [], jump = SOME [l2]})
             end
   | munchStm (T.SEQ (s1, s2)) =

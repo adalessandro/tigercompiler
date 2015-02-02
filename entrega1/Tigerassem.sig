@@ -23,4 +23,7 @@ sig
     val munchStm : Tigertree.stm -> unit
     val munchStmP : Tigertree.stm -> unit
     val munchExp : Tigertree.exp -> temp
+
+    val labelpos : label -> instr list -> int option
+
 end

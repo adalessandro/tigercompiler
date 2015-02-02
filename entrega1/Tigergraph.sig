@@ -1,7 +1,7 @@
 signature Tigergraph =
 sig
     type graph
-    type node
+    type node = int
 
     val nodes : graph -> node list
     val succ : graph -> node -> node list
@@ -18,4 +18,7 @@ sig
     type 'a table
 
     val nodename : node -> string
+    
+    val printGraph : graph -> unit list
+
 end
