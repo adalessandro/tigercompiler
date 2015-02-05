@@ -15,6 +15,9 @@ datatype igraph =
 
 fun makeIGraph (FGRAPH fgraph) =
     let val allnodes = tabClaves (#nodes fgraph)
+        val tnode = Tigertemp.getTempNum
+        val gtemp = Tigertemp.getTempName
+
         fun liveness inTab outTab =
             let fun liveness2 inTab2 outTab2 [] = (inTab2, outTab2)
                   | liveness2 inTab2 outTab2 (n::ns) =
@@ -40,8 +43,44 @@ fun makeIGraph (FGRAPH fgraph) =
                 then (inTab, outTab)
                 else liveness inTab' outTab'
             end
+
+        fun build outTab =
+            let val init_workListMoves = Splayset.empty Int.compare
+                val init_graph = newGraph ()
+                (* moveList : (Tigergraph.node list) table :: temp_node -> instr_node list *)
+                val init_moveList = tabNueva () 
+                fun buildinstr (n, (graph, moveList, workListMoves)) =
+                    let val live = tabSaca(n, outTab)
+                        val ismove = tabSaca(n, (#ismove fgraph))
+                        val use = tabSaca(n, (#use fgraph))
+                        val def = tabSaca(n, (#def fgraph))
+                        val (live', moveList', workListMoves') =
+                            if ismove
+                            then let val live' = restadelist live use
+                                     fun foralln (t, mvlst) = case tabBusca(t, mvlst) of
+                                                                   NONE => tabRInserta(t, [n], mvlst)
+                                                                 | SOME ns => tabRInserta(t, unionsinrep [n] ns, mvlst)
+                                     val mvlst' = List.foldr foralln moveList (unionsinrep def use)
+                                     val workListMoves' = Splayset.add (workListMoves, n)
+                                 in
+                                     (live', mvlst', workListMoves')
+                                 end
+                            else
+                                 (live, moveList, workListMoves)
+                        val live'' = unionsinrep live' def
+                        fun foralld (d, gra1) =
+                            let fun foralll (l, gra2) = addEdge(gra2, d, l)
+                            in  List.foldr foralll gra1 live''
+                            end
+                        val graph' = List.foldr foralld graph def
+                        (* val live''' = unionsinrep use (restadelist live'' def) *)
+                    in
+                        (graph', moveList', workListMoves')
+                    end
+            in
+                ()
+            end
     in
         ()
     end
-
 end

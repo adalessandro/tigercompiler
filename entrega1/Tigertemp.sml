@@ -26,4 +26,10 @@ in
         end
 end
 
+fun getTempNum t = case Int.fromString (String.extract (t, 1, NONE)) of
+                    NONE => raise Fail "getNum bad val"
+                  | SOME x => x
+
+fun getTempName n = "T"^Int.toString(n)
+
 end
