@@ -25,8 +25,9 @@ fun main(args) =
         val (flow, l6) = arg(l5, "-flow") 
         val (inter, l7) = arg(l6, "-inter") 
         val (cantprints, l8) = arg(l7, "-cantprints") 
+        val (interference, l9) = arg(l8, "-interference") 
         val entrada =
-            case l8 of
+            case l9 of
                 [n] => ((open_in n)
                     handle _ => raise Fail (n^" no existe!"))
               | [] => std_in
@@ -58,7 +59,9 @@ fun main(args) =
         val _ = if code then List.map ((List.map Tigerassem.munchStmP) o (#1)) b else []
         val _ = if code then (print "*************** Assembler CODE! ***************\n";
                  List.map (fn x => (print (Tigerassem.format x); print "\n")) (List.rev (!Tigerassem.ilist))) else []
-        val _ = if flow then (Tigerflow.makeFGraph Tigerflow.ej1; ()) else ()
+        val ej1flow = Tigerflow.makeFGraph Tigerflow.ej1
+        val _ = if flow then (((fn (Tigerflow.FGRAPH x) => Tigergraph.printGraph (#control x)) ej1flow); ()) else ()
+        val _ = if interference then (Tigergraph.printGraph (Tigerinterference.makeIGraph ej1flow); ()) else ()
     in
         print "yes!!\n"
     end handle Fail s => print("Fail: "^s^"\n")

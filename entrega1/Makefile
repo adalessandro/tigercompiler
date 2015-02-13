@@ -70,9 +70,10 @@ depend: Tigerabs.sml Tigergrm.sml Tigerlex.sml Tigermain.sml \
 	$(MOSMLTOOLS)/mosmldep >> Makefile
 
 ### DO NOT DELETE THIS LINE
-Tigermain.uo: Tigerseman.ui Tigerlex.uo Tigerpp.ui Tigerescap.ui \
-    Tigerinterp.ui Tigerframe.ui Tigercanon.ui Tigerassem.ui Tigergrm.ui \
-    Tigertrans.ui CantPrints.ui Tigerflow.uo 
+Tigermain.uo: Tigerseman.ui Tigerlex.uo Tigerpp.ui Tigergraph.ui \
+    Tigerescap.ui Tigerinterp.ui Tigerframe.ui Tigercanon.ui Tigerassem.ui \
+    Tigergrm.ui Tigertrans.ui CantPrints.ui Tigerflow.uo \
+    Tigerinterference.uo 
 Tigertemp.uo: Tigertemp.ui 
 Tigersimpleregalloc.ui: Tigerframe.ui Tigerassem.ui 
 CantPrints.uo: CantPrints.ui Tigerabs.uo 
@@ -92,7 +93,8 @@ Tigerpp.ui: Tigerabs.uo
 Tigerflow.uo: Tigergraph.ui Tigertab.ui Tigerassem.ui Tigertemp.ui 
 Tigerlex.uo: Tigergrm.ui Tigernlin.uo 
 Tigerescap.uo: Tigerescap.ui Tigerabs.uo Tigertab.ui 
-Tigerinterference.uo: Tigergraph.ui Tigertab.ui Tigertemp.ui Tigerflow.uo 
+Tigerinterference.uo: Tigergraph.ui Tigerframe.ui Tigertab.ui Tigertemp.ui \
+    Tigerextras.uo Tigerflow.uo 
 Tigerseman.uo: Tigerseman.ui Tigerabs.uo Tigersres.uo Tigerpila.ui \
     Tigertab.ui Topsort.ui Tigertrans.ui 
 Tigerescap.ui: Tigerabs.uo 

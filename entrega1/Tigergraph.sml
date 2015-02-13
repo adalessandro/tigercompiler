@@ -10,7 +10,8 @@ type graph = (node, neighbours) Splaymap.dict
 fun printGraph g = let val glst = Splaymap.listItems g
                        fun ppnei {suc=suc, pred=pred} = "Suc: [" ^ String.concat (List.map (fn x => Int.toString x ^ ", ") suc) ^ "]; Pred: [" ^ String.concat (List.map (fn x => Int.toString x ^ ", ") pred) ^ "]"
                        fun pp (nod, nei) = "Nodo: " ^ Int.toString(nod) ^ "; " ^ ppnei nei ^ " \n"
-                   in List.map (print o pp) glst 
+                   in
+                      List.map (print o pp) glst 
                    end
 
 

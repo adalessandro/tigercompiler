@@ -14,6 +14,7 @@ sig
     exception GraphEdge
     val mk_edge : graph -> {from: node, to: node} -> graph
     val rm_edge : graph -> {from: node, to: node} -> graph
+    val areAdj : graph -> node -> node -> bool
 
     type 'a table = (node, 'a) Tigertab.Tabla
 
