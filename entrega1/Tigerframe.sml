@@ -91,9 +91,16 @@ datatype access = InFrame of int | InReg of Tigertemp.label
 datatype frag = PROC of {body: Tigertree.stm, frame: frame}
               | STRING of Tigertemp.label * string
 
+fun frag2str (PROC {body=b, frame=f}) = "PROC: " ^ Tigerit.tree(b) ^ "\n"
+  | frag2str (STRING (l, s)) = "STRING: " ^ l ^ ", " ^ s ^ "\n"
+
 (* frag despues de canonizarlo *)
 datatype canonfrag = CPROC of {body: Tigertree.stm list, frame: frame}
                    | CSTRING of Tigertemp.label * string (* ESTO NO DEBE USARSE NUNCA: ESTA MAL! *)
+
+fun canonfrag2str (CPROC {body=bs, frame=f}) = "CPROC: ---------------------\n" ^
+                                               (String.concat o List.map Tigerit.tree) bs
+  | canonfrag2str (CSTRING (l, s)) = "CSTRING: " ^ l ^ ", " ^ s ^ "\n"
 
 fun newFrame{name, formals} = {
     name=name,

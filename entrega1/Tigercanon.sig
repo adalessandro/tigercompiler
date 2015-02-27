@@ -34,5 +34,7 @@ val traceSchedule :
 val canonize :
     Tigerframe.frag list ->Tigerframe.canonfrag list
 
+val splitcanon : Tigerframe.canonfrag list -> (Tigertree.stm list*Tigerframe.frame) list * (Tigertemp.label*string) list
+
 end
 

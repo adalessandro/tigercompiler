@@ -170,4 +170,12 @@ fun canonize l =
         canon2 l
     end
  
+fun splitcanon [] = ([],[])
+  | splitcanon (x::xs) = 
+        let val (ls, rs) = splitcanon xs
+        in  case x of
+                 (Tigerframe.CSTRING s) => (ls, s::rs)
+               | (Tigerframe.CPROC {body,frame}) => ((body, frame)::ls, rs) 
+        end
+
 end

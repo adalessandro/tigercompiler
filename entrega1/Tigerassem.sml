@@ -18,13 +18,11 @@ datatype instr =
              dest: temp list,
              src: temp list}
     
-fun labelpos x [] = NONE
-  | labelpos x (y::ys) =
+fun labelpos x [] _ = NONE
+  | labelpos x (y::ys) n =
          case y of
-              LABEL {lab=x, ...} => SOME 0
-            | _ => case labelpos x ys of
-                        NONE => NONE
-                      | SOME n => SOME (n+1) 
+              LABEL {lab=lab, ...} => if lab = x then SOME n else labelpos x ys (n+1)
+            | _ => labelpos x ys (n+1) 
 
 (*fun format f i = ""*)
 fun const i = "#" ^ Int.toString(i)
@@ -57,6 +55,9 @@ val format =
         | MOVE{assem,dest,src} => speak("\t"^assem,dest,src,nil)
     end
 
+fun assemblock2str is = "ASSEM BLOCK: ----------------------\n" ^
+                        (String.concat o List.map (fn x => format x ^ "\n")) is
+
 fun memStr x e1' = case x of
                         (T.CONST _) => e1'
                       | (T.NAME _) => e1'
@@ -65,128 +66,132 @@ fun memStr x e1' = case x of
                       | (T.ESEQ (st, ex)) => memStr ex e1'
                       | _ => raise Fail "memStr undefined"
 
-fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
-  | munchStm (T.MOVE ((T.NAME _), _)) = raise Fail "MOVE dest = NAME"
-  | munchStm (T.MOVE ((T.TEMP d), (T.CONST i))) = 
-        emits (OPER {assem = "movs    `d0, "^const(i), dest = [d], src = [], jump = NONE})
-  | munchStm (T.MOVE ((T.TEMP d), (T.NAME l))) =
-        emits (OPER {assem = "ldr     `d0, "^flabel(l), dest = [d], src = [], jump = NONE})
-  | munchStm (T.MOVE ((T.TEMP d), (T.TEMP s))) =
-        emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [s]})
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.PLUS, e1, e2)))) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
-        in  emits (OPER {assem = "adds    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.MUL, e1, e2)))) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
-            val (e1'', e2'') = if (d = e1') then (e2', e1') else (e1', e2')
-        in  emits (OPER {assem = "muls    `d0, `s0, `s1", dest = [d], src = [e1'', e2''], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.MINUS, e1, e2)))) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
-        in  emits (OPER {assem = "subs    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.DIV, e1, e2)))) =
-        let val _ = munchStm (T.EXP (T.CALL (T.NAME "idiv", [e1, e2])))
-        in  emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [Tigerframe.rv]})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.AND, e1, e2)))) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
-        in  emits (OPER {assem = "ands    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.OR, e1, e2)))) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
-        in  emits (OPER {assem = "orrs    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.XOR, e1, e2)))) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
-        in  emits (OPER {assem = "eors    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.LSHIFT, e1, e2)))) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
-        in  emits (OPER {assem = "movs    `d0, `s0, lsl `s1", dest = [d], src = [e1', e2'], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.RSHIFT, e1, e2)))) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
-        in  emits (OPER {assem = "movs    `d0, `s0, lsr `s1", dest = [d], src = [e1', e2'], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.ARSHIFT, e1, e2)))) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
-        in  emits (OPER {assem = "movs    `d0, `s0, asr `s1", dest = [d], src = [e1', e2'], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.MEM e1))) =
-        let val e1' = munchExp e1
-        in  emits (OPER {assem = "ldr     `d0, "^(memStr e1 e1'), dest = [d], src = [e1'], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.CALL (ename, eargs)))) =
-        let val _ = munchStm (T.EXP(T.CALL (ename, eargs)))
-        in  emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [Tigerframe.rv]})
-        end
-  | munchStm (T.MOVE ((T.TEMP d), (T.ESEQ (s1, e1)))) =
-        let val _ = munchStm s1
-            val e1' = munchExp e1
-        in  emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [e1']})
-        end
-  | munchStm (T.MOVE ((T.BINOP _), _)) = raise Fail "MOVE dest = BINOP"
-  | munchStm (T.MOVE ((T.MEM e1), e2)) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
-        in  emits (OPER {assem = "str     `d0, "^(memStr e1 e1'), dest = [e2'], src = [e1'], jump = NONE})
-        end
-  | munchStm (T.MOVE ((T.CALL _), _)) = raise Fail "MOVE dest = CALL"
-  | munchStm (T.MOVE ((T.ESEQ (s1, e1), e2))) =
-        let val _ = munchStm s1
-        in  munchStm (T.MOVE (e1, e2))
-        end
-  | munchStm (T.EXP e1) =
-        (munchExp e1; ())
-  | munchStm (T.JUMP (e1, llst)) =
-        (*let val e1' = munchExp e1*)
-        emits (OPER {assem = "b       `j0", dest = [], src = [], jump = SOME llst})
-  | munchStm (T.CJUMP (op1, e1, e2, l1, l2)) =
-        let val (e1', e2') = (munchExp e1, munchExp e2)
-            val cond = case op1 of
-                            T.EQ => "eq"
-                          | T.NE => "ne"
-                          | T.LT => "lt"
-                          | T.GT => "gt"
-                          | T.LE => "le"
-                          | T.GE => "ge"
-                          | T.ULT => "lo"
-                          | T.ULE => "ls"
-                          | T.UGT => "hi"
-                          | T.UGE => "hs"
-            in  emits (OPER {assem = "b"^cond^"     `j0", dest = [], src = [], jump = SOME [l1, "DEF_LABEL"]});
-                emits (OPER {assem = "b       `j0", dest = [], src = [], jump = SOME [l2]})
-            end
-  | munchStm (T.SEQ (s1, s2)) =
-        (munchStm s1; munchStm s2)
-  | munchStm (T.LABEL l) =
-        emits (LABEL {assem = l^":", lab = l})
+fun munchStmBlock (ss, frame) = 
+    let fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
+          | munchStm (T.MOVE ((T.NAME _), _)) = raise Fail "MOVE dest = NAME"
+          | munchStm (T.MOVE ((T.TEMP d), (T.CONST i))) = 
+                emits (OPER {assem = "movs    `d0, "^const(i), dest = [d], src = [], jump = NONE})
+          | munchStm (T.MOVE ((T.TEMP d), (T.NAME l))) =
+                emits (OPER {assem = "ldr     `d0, "^flabel(l), dest = [d], src = [], jump = NONE})
+          | munchStm (T.MOVE ((T.TEMP d), (T.TEMP s))) =
+                emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [s]})
+          | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.PLUS, e1, e2)))) =
+                let val (e1', e2') = (munchExp e1, munchExp e2)
+                in  emits (OPER {assem = "adds    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.MUL, e1, e2)))) =
+                let val (e1', e2') = (munchExp e1, munchExp e2)
+                    val (e1'', e2'') = if (d = e1') then (e2', e1') else (e1', e2')
+                in  emits (OPER {assem = "muls    `d0, `s0, `s1", dest = [d], src = [e1'', e2''], jump = NONE})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.MINUS, e1, e2)))) =
+                let val (e1', e2') = (munchExp e1, munchExp e2)
+                in  emits (OPER {assem = "subs    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.DIV, e1, e2)))) =
+                let val _ = munchStm (T.EXP (T.CALL (T.NAME "idiv", [e1, e2])))
+                in  emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [Tigerframe.rv]})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.AND, e1, e2)))) =
+                let val (e1', e2') = (munchExp e1, munchExp e2)
+                in  emits (OPER {assem = "ands    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.OR, e1, e2)))) =
+                let val (e1', e2') = (munchExp e1, munchExp e2)
+                in  emits (OPER {assem = "orrs    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.XOR, e1, e2)))) =
+                let val (e1', e2') = (munchExp e1, munchExp e2)
+                in  emits (OPER {assem = "eors    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.LSHIFT, e1, e2)))) =
+                let val (e1', e2') = (munchExp e1, munchExp e2)
+                in  emits (OPER {assem = "movs    `d0, `s0, lsl `s1", dest = [d], src = [e1', e2'], jump = NONE})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.RSHIFT, e1, e2)))) =
+                let val (e1', e2') = (munchExp e1, munchExp e2)
+                in  emits (OPER {assem = "movs    `d0, `s0, lsr `s1", dest = [d], src = [e1', e2'], jump = NONE})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.ARSHIFT, e1, e2)))) =
+                let val (e1', e2') = (munchExp e1, munchExp e2)
+                in  emits (OPER {assem = "movs    `d0, `s0, asr `s1", dest = [d], src = [e1', e2'], jump = NONE})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.MEM e1))) =
+                let val e1' = munchExp e1
+                in  emits (OPER {assem = "ldr     `d0, "^(memStr e1 e1'), dest = [d], src = [e1'], jump = NONE})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.CALL (ename, eargs)))) =
+                let val _ = munchStm (T.EXP(T.CALL (ename, eargs)))
+                in  emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [Tigerframe.rv]})
+                end
+          | munchStm (T.MOVE ((T.TEMP d), (T.ESEQ (s1, e1)))) =
+                let val _ = munchStm s1
+                    val e1' = munchExp e1
+                in  emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [e1']})
+                end
+          | munchStm (T.MOVE ((T.BINOP _), _)) = raise Fail "MOVE dest = BINOP"
+          | munchStm (T.MOVE ((T.MEM e1), e2)) =
+                let val (e1', e2') = (munchExp e1, munchExp e2)
+                in  emits (OPER {assem = "str     `d0, "^(memStr e1 e1'), dest = [e2'], src = [e1'], jump = NONE})
+                end
+          | munchStm (T.MOVE ((T.CALL _), _)) = raise Fail "MOVE dest = CALL"
+          | munchStm (T.MOVE ((T.ESEQ (s1, e1), e2))) =
+                let val _ = munchStm s1
+                in  munchStm (T.MOVE (e1, e2))
+                end
+          | munchStm (T.EXP e1) =
+                (munchExp e1; ())
+          | munchStm (T.JUMP (e1, llst)) =
+                (*let val e1' = munchExp e1*)
+                emits (OPER {assem = "b       `j0", dest = [], src = [], jump = SOME llst})
+          | munchStm (T.CJUMP (op1, e1, e2, l1, l2)) =
+                let val (e1', e2') = (munchExp e1, munchExp e2)
+                    val cond = case op1 of
+                                    T.EQ => "eq"
+                                  | T.NE => "ne"
+                                  | T.LT => "lt"
+                                  | T.GT => "gt"
+                                  | T.LE => "le"
+                                  | T.GE => "ge"
+                                  | T.ULT => "lo"
+                                  | T.ULE => "ls"
+                                  | T.UGT => "hi"
+                                  | T.UGE => "hs"
+                    in  emits (OPER {assem = "b"^cond^"     `j0", dest = [], src = [], jump = SOME [l1, "FALSE_LABEL"]});
+                        emits (OPER {assem = "b       `j0", dest = [], src = [], jump = SOME [l2]})
+                    end
+          | munchStm (T.SEQ (s1, s2)) =
+                (munchStm s1; munchStm s2)
+          | munchStm (T.LABEL l) =
+                emits (LABEL {assem = l^":", lab = l})
+                (* emits (LABEL {assem = (Tigerframe.name frame)^":", lab = (Tigerframe.name frame)}) *)
 
-and munchStmP s = (print "---------------------- Begin MunchStm -----------------------\n";
-                   print (Tigerit.tree s);
-                   munchStm(s))
+        and munchExp (T.CONST i) = 
+                result (fn x => munchStm (T.MOVE (T.TEMP x, T.CONST i)))
+          | munchExp (T.NAME l) = l
+          | munchExp (T.TEMP t) = t
+          | munchExp (T.BINOP (op1, e1, e2)) =
+                result (fn x => munchStm (T.MOVE (T.TEMP x, T.BINOP (op1, e1, e2))))
+          | munchExp (T.MEM e1) = munchExp e1
+          | munchExp (T.CALL (ename, eargs)) =
+                let val len = List.length eargs
+                    val ename' = munchExp ename
+                    fun str y = T.BINOP (T.PLUS, T.TEMP Tigerframe.sp, T.CONST((y-Tigerframe.argregslen)*Tigerframe.wSz))
+                    val indexes = List.tabulate (len, (fn x => x))
+                    val eargs' = ListPair.zip(eargs, indexes)
+                    fun aux (x,y) = if y < Tigerframe.argregslen then munchStm (T.MOVE (T.TEMP (List.nth((Tigerframe.argregs), y)), x))
+                                             else munchStm (T.MOVE ((T.MEM (str y)), x))
+                    val _ = if len < Tigerframe.argregslen then () else munchStm (T.MOVE(T.TEMP Tigerframe.sp, (T.BINOP (T.MINUS, T.TEMP Tigerframe.sp, T.CONST((len - Tigerframe.argregslen)*Tigerframe.wSz)))))
+                    val eargs'' = List.map aux eargs'
+                    val _ = emits (OPER {assem = "bl      `j0", dest = [], src = [], jump = SOME [ename']})
+                in Tigerframe.rv
+                end
+          | munchExp _ = raise Fail "munchExp undefined"
 
-and munchExp (T.CONST i) = 
-        result (fn x => munchStm (T.MOVE (T.TEMP x, T.CONST i)))
-  | munchExp (T.NAME l) = l
-  | munchExp (T.TEMP t) = t
-  | munchExp (T.BINOP (op1, e1, e2)) =
-        result (fn x => munchStm (T.MOVE (T.TEMP x, T.BINOP (op1, e1, e2))))
-  | munchExp (T.MEM e1) = munchExp e1
-  | munchExp (T.CALL (ename, eargs)) =
-        let val len = List.length eargs
-            val ename' = munchExp ename
-            fun str y = T.BINOP (T.PLUS, T.TEMP Tigerframe.sp, T.CONST((y-Tigerframe.argregslen)*Tigerframe.wSz))
-            val indexes = List.tabulate (len, (fn x => x))
-            val eargs' = ListPair.zip(eargs, indexes)
-            fun aux (x,y) = if y < Tigerframe.argregslen then munchStm (T.MOVE (T.TEMP (List.nth((Tigerframe.argregs), y)), x))
-                                     else munchStm (T.MOVE ((T.MEM (str y)), x))
-            val _ = if len < Tigerframe.argregslen then () else munchStm (T.MOVE(T.TEMP Tigerframe.sp, (T.BINOP (T.MINUS, T.TEMP Tigerframe.sp, T.CONST((len - Tigerframe.argregslen)*Tigerframe.wSz)))))
-            val eargs'' = List.map aux eargs'
-            val _ = emits (OPER {assem = "bl     `j0", dest = [], src = [], jump = SOME [ename']})
-            in Tigerframe.rv
-        end
-  | munchExp _ = raise Fail "munchExp undefined"
+    in
+        (ilist := [];
+        List.map munchStm ss;
+        !ilist)
+    end
 
 end

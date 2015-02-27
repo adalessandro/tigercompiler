@@ -20,10 +20,10 @@ sig
     (*val format : (temp -> string) -> instr -> string*)
     val format : instr -> string
 
-    val munchStm : Tigertree.stm -> unit
-    val munchStmP : Tigertree.stm -> unit
-    val munchExp : Tigertree.exp -> temp
+    val assemblock2str : instr list -> string
 
-    val labelpos : label -> instr list -> int option
+    val munchStmBlock : Tigertree.stm list * Tigerframe.frame -> instr list
+
+    val labelpos : label -> instr list -> int -> int option
 
 end

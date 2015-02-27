@@ -1,0 +1,61 @@
+bien!
+ASSEM BLOCK: ----------------------
+	L3:
+	movs    T10, #8
+	subs    sp, sp, T10
+	movs    T12, #4
+	adds    T11, sp, T12
+	str     lr, [T11]
+	str     fp, [sp]
+	movs    T13, #4
+	adds    fp, sp, T13
+	movs    T15, #8
+	adds    T14, T15, fp
+	ldr     r0, [T14]
+	movs    r1, #93
+	bl      do_nothing1.3.0
+	movs    T0, r0
+	movs    T16, #1
+	adds    r0, T0, T16
+	movs    T17, #4
+	subs    sp, fp, T17
+	ldr     fp, [sp]
+	movs    T19, #4
+	adds    T18, sp, T19
+	ldr     lr, [T18]
+	movs    T20, #8
+	adds    sp, sp, T20
+	movs    pc, lr
+	b       L2
+	L2:
+LABEL: L3
+LABPOS = 0LABEL: L3
+LABPOS = 0Nodo: 0; Suc: [1, ]; Pred: [26, 13, ] 
+Nodo: 1; Suc: [2, ]; Pred: [0, ] 
+Nodo: 2; Suc: [3, ]; Pred: [1, ] 
+Nodo: 3; Suc: [4, ]; Pred: [2, ] 
+Nodo: 4; Suc: [5, ]; Pred: [3, ] 
+Nodo: 5; Suc: [6, ]; Pred: [4, ] 
+Nodo: 6; Suc: [7, ]; Pred: [5, ] 
+Nodo: 7; Suc: [8, ]; Pred: [6, ] 
+Nodo: 8; Suc: [9, ]; Pred: [7, ] 
+Nodo: 9; Suc: [10, ]; Pred: [8, ] 
+Nodo: 10; Suc: [11, ]; Pred: [9, ] 
+Nodo: 11; Suc: [12, ]; Pred: [10, ] 
+Nodo: 12; Suc: [13, ]; Pred: [11, ] 
+Nodo: 13; Suc: [0, ]; Pred: [12, ] 
+Nodo: 14; Suc: [15, ]; Pred: [] 
+Nodo: 15; Suc: [16, ]; Pred: [14, ] 
+Nodo: 16; Suc: [17, ]; Pred: [15, ] 
+Nodo: 17; Suc: [18, ]; Pred: [16, ] 
+Nodo: 18; Suc: [19, ]; Pred: [17, ] 
+Nodo: 19; Suc: [20, ]; Pred: [18, ] 
+Nodo: 20; Suc: [21, ]; Pred: [19, ] 
+Nodo: 21; Suc: [22, ]; Pred: [20, ] 
+Nodo: 22; Suc: [23, ]; Pred: [21, ] 
+Nodo: 23; Suc: [24, ]; Pred: [22, ] 
+Nodo: 24; Suc: [25, ]; Pred: [23, ] 
+Nodo: 25; Suc: [26, ]; Pred: [24, ] 
+Nodo: 26; Suc: [0, ]; Pred: [25, ] 
+Nodo: 27; Suc: []; Pred: [] 
+yes!!

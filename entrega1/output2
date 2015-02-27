@@ -1,0 +1,1518 @@
+bien!
+Begin MunchBlock
+LABEL L32
+MOVE(
+ TEMP sp,
+ BINOP(MINUS,
+  TEMP sp,
+  CONST 8))
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP sp,
+   CONST 4)),
+ TEMP lr)
+MOVE(
+ MEM(
+  TEMP sp),
+ TEMP fp)
+MOVE(
+ TEMP fp,
+ BINOP(PLUS,
+  TEMP sp,
+  CONST 4))
+MOVE(
+ TEMP T0,
+ CONST 0)
+MOVE(
+ TEMP T8,
+ CONST 0)
+MOVE(
+ TEMP T9,
+ BINOP(MINUS,
+  MEM(
+   BINOP(PLUS,
+    MEM(
+     BINOP(PLUS,
+      CONST 8,
+      TEMP fp)),
+    CONST ~4)),
+  CONST 1))
+LABEL L10
+CJUMP(GT,
+ TEMP T0,
+ TEMP T9,
+ L0,L11)
+LABEL L11
+MOVE(
+ TEMP T1,
+ CONST 0)
+MOVE(
+ TEMP T6,
+ CONST 0)
+MOVE(
+ TEMP T7,
+ BINOP(MINUS,
+  MEM(
+   BINOP(PLUS,
+    MEM(
+     BINOP(PLUS,
+      CONST 8,
+      TEMP fp)),
+    CONST ~4)),
+  CONST 1))
+LABEL L7
+CJUMP(GT,
+ TEMP T1,
+ TEMP T7,
+ L1,L8)
+LABEL L8
+MOVE(
+ TEMP T2,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~12)))
+MOVE(
+ TEMP T3,
+ TEMP T0)
+EXP(
+ CALL(
+  NAME _checkindex,
+   TEMP T2,
+   TEMP T3))
+CJUMP(EQ,
+ MEM(
+  BINOP(PLUS,
+   TEMP T2,
+   BINOP(MUL,
+    TEMP T3,
+    CONST 4))),
+ TEMP T1,
+ L4,L5)
+LABEL L5
+MOVE(
+ TEMP T4,
+ NAME L3)
+LABEL L6
+MOVE(
+ TEMP T5,
+ TEMP T4)
+EXP(
+ CALL(
+  NAME print,
+   TEMP T5))
+MOVE(
+ TEMP T1,
+ BINOP(PLUS,
+  CONST 1,
+  TEMP T1))
+JUMP( NAME L7)
+LABEL L4
+MOVE(
+ TEMP T4,
+ NAME L2)
+JUMP( NAME L6)
+LABEL L1
+EXP(
+ CALL(
+  NAME print,
+   NAME L9))
+MOVE(
+ TEMP T0,
+ BINOP(PLUS,
+  CONST 1,
+  TEMP T0))
+JUMP( NAME L10)
+LABEL L0
+EXP(
+ CALL(
+  NAME print,
+   NAME L12))
+MOVE(
+ TEMP sp,
+ BINOP(MINUS,
+  TEMP fp,
+  CONST 4))
+MOVE(
+ TEMP fp,
+ MEM(
+  TEMP sp))
+MOVE(
+ TEMP lr,
+ MEM(
+  BINOP(PLUS,
+   TEMP sp,
+   CONST 4)))
+MOVE(
+ TEMP sp,
+ BINOP(PLUS,
+  TEMP sp,
+  CONST 8))
+MOVE(
+ TEMP pc,
+ TEMP lr)
+JUMP( NAME L31)
+LABEL L31
+LABEL L34
+MOVE(
+ TEMP sp,
+ BINOP(MINUS,
+  TEMP sp,
+  CONST 8))
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP sp,
+   CONST 4)),
+ TEMP lr)
+MOVE(
+ MEM(
+  TEMP sp),
+ TEMP fp)
+MOVE(
+ TEMP fp,
+ BINOP(PLUS,
+  TEMP sp,
+  CONST 4))
+CJUMP(EQ,
+ TEMP r1,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~4)),
+ L28,L29)
+LABEL L29
+MOVE(
+ TEMP T10,
+ CONST 0)
+MOVE(
+ TEMP T36,
+ CONST 0)
+MOVE(
+ TEMP T37,
+ BINOP(MINUS,
+  MEM(
+   BINOP(PLUS,
+    MEM(
+     BINOP(PLUS,
+      CONST 8,
+      TEMP fp)),
+    CONST ~4)),
+  CONST 1))
+LABEL L26
+CJUMP(GT,
+ TEMP T10,
+ TEMP T37,
+ L13,L27)
+LABEL L27
+MOVE(
+ TEMP T11,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~8)))
+MOVE(
+ TEMP T12,
+ TEMP T10)
+EXP(
+ CALL(
+  NAME _checkindex,
+   TEMP T11,
+   TEMP T12))
+CJUMP(EQ,
+ MEM(
+  BINOP(PLUS,
+   TEMP T11,
+   BINOP(MUL,
+    TEMP T12,
+    CONST 4))),
+ CONST 0,
+ L16,L17)
+LABEL L17
+MOVE(
+ TEMP T16,
+ CONST 0)
+LABEL L18
+CJUMP(NE,
+ TEMP T16,
+ CONST 0,
+ L21,L22)
+LABEL L22
+MOVE(
+ TEMP T20,
+ CONST 0)
+LABEL L23
+CJUMP(NE,
+ TEMP T20,
+ CONST 0,
+ L24,L25)
+LABEL L25
+MOVE(
+ TEMP T10,
+ BINOP(PLUS,
+  CONST 1,
+  TEMP T10))
+JUMP( NAME L26)
+LABEL L28
+LABEL L30
+MOVE(
+ TEMP sp,
+ BINOP(MINUS,
+  TEMP fp,
+  CONST 4))
+MOVE(
+ TEMP fp,
+ MEM(
+  TEMP sp))
+MOVE(
+ TEMP lr,
+ MEM(
+  BINOP(PLUS,
+   TEMP sp,
+   CONST 4)))
+MOVE(
+ TEMP sp,
+ BINOP(PLUS,
+  TEMP sp,
+  CONST 8))
+MOVE(
+ TEMP pc,
+ TEMP lr)
+JUMP( NAME L33)
+LABEL L35
+EXP(
+ CALL(
+  NAME printboard.20.0,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp))))
+JUMP( NAME L29)
+LABEL L16
+MOVE(
+ TEMP T15,
+ CONST 1)
+MOVE(
+ TEMP T13,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~16)))
+MOVE(
+ TEMP T14,
+ BINOP(PLUS,
+  TEMP T10,
+  TEMP r1))
+EXP(
+ CALL(
+  NAME _checkindex,
+   TEMP T13,
+   TEMP T14))
+CJUMP(EQ,
+ MEM(
+  BINOP(PLUS,
+   TEMP T13,
+   BINOP(MUL,
+    TEMP T14,
+    CONST 4))),
+ CONST 0,
+ L14,L15)
+LABEL L15
+MOVE(
+ TEMP T15,
+ CONST 0)
+LABEL L14
+MOVE(
+ TEMP T16,
+ TEMP T15)
+JUMP( NAME L18)
+LABEL L21
+MOVE(
+ TEMP T19,
+ CONST 1)
+MOVE(
+ TEMP T17,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~20)))
+MOVE(
+ TEMP T18,
+ BINOP(MINUS,
+  BINOP(PLUS,
+   TEMP T10,
+   CONST 7),
+  TEMP r1))
+EXP(
+ CALL(
+  NAME _checkindex,
+   TEMP T17,
+   TEMP T18))
+CJUMP(EQ,
+ MEM(
+  BINOP(PLUS,
+   TEMP T17,
+   BINOP(MUL,
+    TEMP T18,
+    CONST 4))),
+ CONST 0,
+ L19,L20)
+LABEL L20
+MOVE(
+ TEMP T19,
+ CONST 0)
+LABEL L19
+MOVE(
+ TEMP T20,
+ TEMP T19)
+JUMP( NAME L23)
+LABEL L24
+MOVE(
+ TEMP T21,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~8)))
+MOVE(
+ TEMP T22,
+ TEMP T10)
+EXP(
+ CALL(
+  NAME _checkindex,
+   TEMP T21,
+   TEMP T22))
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP T21,
+   BINOP(MUL,
+    TEMP T22,
+    CONST 4))),
+ CONST 1)
+MOVE(
+ TEMP T23,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~16)))
+MOVE(
+ TEMP T24,
+ BINOP(PLUS,
+  TEMP T10,
+  TEMP r1))
+EXP(
+ CALL(
+  NAME _checkindex,
+   TEMP T23,
+   TEMP T24))
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP T23,
+   BINOP(MUL,
+    TEMP T24,
+    CONST 4))),
+ CONST 1)
+MOVE(
+ TEMP T25,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~20)))
+MOVE(
+ TEMP T26,
+ BINOP(MINUS,
+  BINOP(PLUS,
+   TEMP T10,
+   CONST 7),
+  TEMP r1))
+EXP(
+ CALL(
+  NAME _checkindex,
+   TEMP T25,
+   TEMP T26))
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP T25,
+   BINOP(MUL,
+    TEMP T26,
+    CONST 4))),
+ CONST 1)
+MOVE(
+ TEMP T27,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~12)))
+MOVE(
+ TEMP T28,
+ TEMP r1)
+EXP(
+ CALL(
+  NAME _checkindex,
+   TEMP T27,
+   TEMP T28))
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP T27,
+   BINOP(MUL,
+    TEMP T28,
+    CONST 4))),
+ TEMP T10)
+MOVE(
+ TEMP T29,
+ BINOP(PLUS,
+  TEMP r1,
+  CONST 1))
+EXP(
+ CALL(
+  NAME try.32.1,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   TEMP T29))
+MOVE(
+ TEMP T30,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~8)))
+MOVE(
+ TEMP T31,
+ TEMP T10)
+EXP(
+ CALL(
+  NAME _checkindex,
+   TEMP T30,
+   TEMP T31))
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP T30,
+   BINOP(MUL,
+    TEMP T31,
+    CONST 4))),
+ CONST 0)
+MOVE(
+ TEMP T32,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~16)))
+MOVE(
+ TEMP T33,
+ BINOP(PLUS,
+  TEMP T10,
+  TEMP r1))
+EXP(
+ CALL(
+  NAME _checkindex,
+   TEMP T32,
+   TEMP T33))
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP T32,
+   BINOP(MUL,
+    TEMP T33,
+    CONST 4))),
+ CONST 0)
+MOVE(
+ TEMP T34,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST ~20)))
+MOVE(
+ TEMP T35,
+ BINOP(MINUS,
+  BINOP(PLUS,
+   TEMP T10,
+   CONST 7),
+  TEMP r1))
+EXP(
+ CALL(
+  NAME _checkindex,
+   TEMP T34,
+   TEMP T35))
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP T34,
+   BINOP(MUL,
+    TEMP T35,
+    CONST 4))),
+ CONST 0)
+JUMP( NAME L25)
+LABEL L13
+JUMP( NAME L30)
+LABEL L33
+LABEL L37
+MOVE(
+ TEMP sp,
+ BINOP(MINUS,
+  TEMP sp,
+  CONST 8))
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP sp,
+   CONST 4)),
+ TEMP lr)
+MOVE(
+ MEM(
+  TEMP sp),
+ TEMP fp)
+MOVE(
+ TEMP fp,
+ BINOP(PLUS,
+  TEMP sp,
+  CONST 4))
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP fp,
+   CONST ~4)),
+ CONST 8)
+MOVE(
+ TEMP T39,
+ BINOP(PLUS,
+  TEMP fp,
+  CONST ~8))
+MOVE(
+ TEMP T38,
+ CALL(
+  NAME allocArray,
+   MEM(
+    BINOP(PLUS,
+     TEMP fp,
+     CONST ~4)),
+   CONST 0))
+MOVE(
+ MEM(
+  TEMP T39),
+ TEMP T38)
+MOVE(
+ TEMP T41,
+ BINOP(PLUS,
+  TEMP fp,
+  CONST ~12))
+MOVE(
+ TEMP T40,
+ CALL(
+  NAME allocArray,
+   MEM(
+    BINOP(PLUS,
+     TEMP fp,
+     CONST ~4)),
+   CONST 0))
+MOVE(
+ MEM(
+  TEMP T41),
+ TEMP T40)
+MOVE(
+ TEMP T43,
+ BINOP(PLUS,
+  TEMP fp,
+  CONST ~16))
+MOVE(
+ TEMP T42,
+ CALL(
+  NAME allocArray,
+   BINOP(MINUS,
+    BINOP(PLUS,
+     MEM(
+      BINOP(PLUS,
+       TEMP fp,
+       CONST ~4)),
+     MEM(
+      BINOP(PLUS,
+       TEMP fp,
+       CONST ~4))),
+    CONST 1),
+   CONST 0))
+MOVE(
+ MEM(
+  TEMP T43),
+ TEMP T42)
+MOVE(
+ TEMP T45,
+ BINOP(PLUS,
+  TEMP fp,
+  CONST ~20))
+MOVE(
+ TEMP T44,
+ CALL(
+  NAME allocArray,
+   BINOP(MINUS,
+    BINOP(PLUS,
+     MEM(
+      BINOP(PLUS,
+       TEMP fp,
+       CONST ~4)),
+     MEM(
+      BINOP(PLUS,
+       TEMP fp,
+       CONST ~4))),
+    CONST 1),
+   CONST 0))
+MOVE(
+ MEM(
+  TEMP T45),
+ TEMP T44)
+EXP(
+ CALL(
+  NAME try.32.1,
+   MEM(
+    BINOP(PLUS,
+     CONST 8,
+     TEMP fp)),
+   CONST 0))
+MOVE(
+ TEMP r0,
+ CONST 0)
+MOVE(
+ TEMP sp,
+ BINOP(MINUS,
+  TEMP fp,
+  CONST 4))
+MOVE(
+ TEMP fp,
+ MEM(
+  TEMP sp))
+MOVE(
+ TEMP lr,
+ MEM(
+  BINOP(PLUS,
+   TEMP sp,
+   CONST 4)))
+MOVE(
+ TEMP sp,
+ BINOP(PLUS,
+  TEMP sp,
+  CONST 8))
+MOVE(
+ TEMP pc,
+ TEMP lr)
+JUMP( NAME L36)
+LABEL L36
+*************** Assembler CODE! ***************
+	L32:
+	movs    T46, #8
+	subs    sp, sp, T46
+	movs    T48, #4
+	adds    T47, sp, T48
+	str     lr, [T47]
+	str     fp, [sp]
+	movs    T49, #4
+	adds    fp, sp, T49
+	movs    T0, #0
+	movs    T8, #0
+	movs    T52, #8
+	adds    T51, T52, fp
+	movs    T53, #~4
+	adds    T50, T51, T53
+	movs    T54, #1
+	subs    T9, T50, T54
+	L10:
+	bgt     L0
+	b       L11
+	L11:
+	movs    T1, #0
+	movs    T6, #0
+	movs    T57, #8
+	adds    T56, T57, fp
+	movs    T58, #~4
+	adds    T55, T56, T58
+	movs    T59, #1
+	subs    T7, T55, T59
+	L7:
+	bgt     L1
+	b       L8
+	L8:
+	movs    T62, #8
+	adds    T61, T62, fp
+	movs    T63, #~12
+	adds    T60, T61, T63
+	ldr     T2, [T60]
+	movs    T3, T0
+	movs    r0, T2
+	movs    r1, T3
+	bl     _checkindex
+	movs    T66, #4
+	muls    T65, T3, T66
+	adds    T64, T2, T65
+	beq     L4
+	b       L5
+	L5:
+	ldr     T4, =L3
+	L6:
+	movs    T5, T4
+	movs    r0, T5
+	bl     print
+	movs    T67, #1
+	adds    T1, T67, T1
+	b       L7
+	L4:
+	ldr     T4, =L2
+	b       L6
+	L1:
+	ldr     r0, =L9
+	bl     print
+	movs    T68, #1
+	adds    T0, T68, T0
+	b       L10
+	L0:
+	ldr     r0, =L12
+	bl     print
+	movs    T69, #4
+	subs    sp, fp, T69
+	ldr     fp, [sp]
+	movs    T71, #4
+	adds    T70, sp, T71
+	ldr     lr, [T70]
+	movs    T72, #8
+	adds    sp, sp, T72
+	movs    pc, lr
+	b       L31
+	L31:
+	L34:
+	movs    T73, #8
+	subs    sp, sp, T73
+	movs    T75, #4
+	adds    T74, sp, T75
+	str     lr, [T74]
+	str     fp, [sp]
+	movs    T76, #4
+	adds    fp, sp, T76
+	movs    T79, #8
+	adds    T78, T79, fp
+	movs    T80, #~4
+	adds    T77, T78, T80
+	beq     L28
+	b       L29
+	L29:
+	movs    T10, #0
+	movs    T36, #0
+	movs    T83, #8
+	adds    T82, T83, fp
+	movs    T84, #~4
+	adds    T81, T82, T84
+	movs    T85, #1
+	subs    T37, T81, T85
+	L26:
+	bgt     L13
+	b       L27
+	L27:
+	movs    T88, #8
+	adds    T87, T88, fp
+	movs    T89, #~8
+	adds    T86, T87, T89
+	ldr     T11, [T86]
+	movs    T12, T10
+	movs    r0, T11
+	movs    r1, T12
+	bl     _checkindex
+	movs    T92, #4
+	muls    T91, T12, T92
+	adds    T90, T11, T91
+	movs    T93, #0
+	beq     L16
+	b       L17
+	L17:
+	movs    T16, #0
+	L18:
+	movs    T94, #0
+	bne     L21
+	b       L22
+	L22:
+	movs    T20, #0
+	L23:
+	movs    T95, #0
+	bne     L24
+	b       L25
+	L25:
+	movs    T96, #1
+	adds    T10, T96, T10
+	b       L26
+	L28:
+	L30:
+	movs    T97, #4
+	subs    sp, fp, T97
+	ldr     fp, [sp]
+	movs    T99, #4
+	adds    T98, sp, T99
+	ldr     lr, [T98]
+	movs    T100, #8
+	adds    sp, sp, T100
+	movs    pc, lr
+	b       L33
+	L35:
+	movs    T102, #8
+	adds    T101, T102, fp
+	ldr     r0, [T101]
+	bl     printboard.20.0
+	b       L29
+	L16:
+	movs    T15, #1
+	movs    T105, #8
+	adds    T104, T105, fp
+	movs    T106, #~16
+	adds    T103, T104, T106
+	ldr     T13, [T103]
+	adds    T14, T10, r1
+	movs    r0, T13
+	movs    r1, T14
+	bl     _checkindex
+	movs    T109, #4
+	muls    T108, T14, T109
+	adds    T107, T13, T108
+	movs    T110, #0
+	beq     L14
+	b       L15
+	L15:
+	movs    T15, #0
+	L14:
+	movs    T16, T15
+	b       L18
+	L21:
+	movs    T19, #1
+	movs    T113, #8
+	adds    T112, T113, fp
+	movs    T114, #~20
+	adds    T111, T112, T114
+	ldr     T17, [T111]
+	movs    T116, #7
+	adds    T115, T10, T116
+	subs    T18, T115, r1
+	movs    r0, T17
+	movs    r1, T18
+	bl     _checkindex
+	movs    T119, #4
+	muls    T118, T18, T119
+	adds    T117, T17, T118
+	movs    T120, #0
+	beq     L19
+	b       L20
+	L20:
+	movs    T19, #0
+	L19:
+	movs    T20, T19
+	b       L23
+	L24:
+	movs    T123, #8
+	adds    T122, T123, fp
+	movs    T124, #~8
+	adds    T121, T122, T124
+	ldr     T21, [T121]
+	movs    T22, T10
+	movs    r0, T21
+	movs    r1, T22
+	bl     _checkindex
+	movs    T127, #4
+	muls    T126, T22, T127
+	adds    T125, T21, T126
+	movs    T128, #1
+	str     T128, [T125]
+	movs    T131, #8
+	adds    T130, T131, fp
+	movs    T132, #~16
+	adds    T129, T130, T132
+	ldr     T23, [T129]
+	adds    T24, T10, r1
+	movs    r0, T23
+	movs    r1, T24
+	bl     _checkindex
+	movs    T135, #4
+	muls    T134, T24, T135
+	adds    T133, T23, T134
+	movs    T136, #1
+	str     T136, [T133]
+	movs    T139, #8
+	adds    T138, T139, fp
+	movs    T140, #~20
+	adds    T137, T138, T140
+	ldr     T25, [T137]
+	movs    T142, #7
+	adds    T141, T10, T142
+	subs    T26, T141, r1
+	movs    r0, T25
+	movs    r1, T26
+	bl     _checkindex
+	movs    T145, #4
+	muls    T144, T26, T145
+	adds    T143, T25, T144
+	movs    T146, #1
+	str     T146, [T143]
+	movs    T149, #8
+	adds    T148, T149, fp
+	movs    T150, #~12
+	adds    T147, T148, T150
+	ldr     T27, [T147]
+	movs    T28, r1
+	movs    r0, T27
+	movs    r1, T28
+	bl     _checkindex
+	movs    T153, #4
+	muls    T152, T28, T153
+	adds    T151, T27, T152
+	str     T10, [T151]
+	movs    T154, #1
+	adds    T29, r1, T154
+	movs    T156, #8
+	adds    T155, T156, fp
+	ldr     r0, [T155]
+	movs    r1, T29
+	bl     try.32.1
+	movs    T159, #8
+	adds    T158, T159, fp
+	movs    T160, #~8
+	adds    T157, T158, T160
+	ldr     T30, [T157]
+	movs    T31, T10
+	movs    r0, T30
+	movs    r1, T31
+	bl     _checkindex
+	movs    T163, #4
+	muls    T162, T31, T163
+	adds    T161, T30, T162
+	movs    T164, #0
+	str     T164, [T161]
+	movs    T167, #8
+	adds    T166, T167, fp
+	movs    T168, #~16
+	adds    T165, T166, T168
+	ldr     T32, [T165]
+	adds    T33, T10, r1
+	movs    r0, T32
+	movs    r1, T33
+	bl     _checkindex
+	movs    T171, #4
+	muls    T170, T33, T171
+	adds    T169, T32, T170
+	movs    T172, #0
+	str     T172, [T169]
+	movs    T175, #8
+	adds    T174, T175, fp
+	movs    T176, #~20
+	adds    T173, T174, T176
+	ldr     T34, [T173]
+	movs    T178, #7
+	adds    T177, T10, T178
+	subs    T35, T177, r1
+	movs    r0, T34
+	movs    r1, T35
+	bl     _checkindex
+	movs    T181, #4
+	muls    T180, T35, T181
+	adds    T179, T34, T180
+	movs    T182, #0
+	str     T182, [T179]
+	b       L25
+	L13:
+	b       L30
+	L33:
+	L37:
+	movs    T183, #8
+	subs    sp, sp, T183
+	movs    T185, #4
+	adds    T184, sp, T185
+	str     lr, [T184]
+	str     fp, [sp]
+	movs    T186, #4
+	adds    fp, sp, T186
+	movs    T188, #~4
+	adds    T187, fp, T188
+	movs    T189, #8
+	str     T189, [T187]
+	movs    T190, #~8
+	adds    T39, fp, T190
+	movs    T192, #~4
+	adds    T191, fp, T192
+	ldr     r0, [T191]
+	movs    r1, #0
+	bl     allocArray
+	movs    T38, r0
+	str     T38, [T39]
+	movs    T193, #~12
+	adds    T41, fp, T193
+	movs    T195, #~4
+	adds    T194, fp, T195
+	ldr     r0, [T194]
+	movs    r1, #0
+	bl     allocArray
+	movs    T40, r0
+	str     T40, [T41]
+	movs    T196, #~16
+	adds    T43, fp, T196
+	movs    T199, #~4
+	adds    T198, fp, T199
+	movs    T201, #~4
+	adds    T200, fp, T201
+	adds    T197, T198, T200
+	movs    T202, #1
+	subs    r0, T197, T202
+	movs    r1, #0
+	bl     allocArray
+	movs    T42, r0
+	str     T42, [T43]
+	movs    T203, #~20
+	adds    T45, fp, T203
+	movs    T206, #~4
+	adds    T205, fp, T206
+	movs    T208, #~4
+	adds    T207, fp, T208
+	adds    T204, T205, T207
+	movs    T209, #1
+	subs    r0, T204, T209
+	movs    r1, #0
+	bl     allocArray
+	movs    T44, r0
+	str     T44, [T45]
+	movs    T211, #8
+	adds    T210, T211, fp
+	ldr     r0, [T210]
+	movs    r1, #0
+	bl     try.32.1
+	movs    r0, #0
+	movs    T212, #4
+	subs    sp, fp, T212
+	ldr     fp, [sp]
+	movs    T214, #4
+	adds    T213, sp, T214
+	ldr     lr, [T213]
+	movs    T215, #8
+	adds    sp, sp, T215
+	movs    pc, lr
+	b       L36
+	L36:
+Nodo: 0; Suc: [1, ]; Pred: [387, 376, 369, 356, 343, 334, 313, 311, 305, 289, 275, 266, 255, 241, 225, 211, 201, 196, 195, 190, 177, 172, 171, 166, 155, 154, 149, 137, 133, 132, 127, 126, 121, 120, 115, 105, 104, 93, 92, 77, 67, 64, 61, 58, 55, 52, 46, 45, 41, 31, 30, 19, 18, ] 
+Nodo: 1; Suc: [2, ]; Pred: [0, ] 
+Nodo: 2; Suc: [3, ]; Pred: [1, ] 
+Nodo: 3; Suc: [4, ]; Pred: [2, ] 
+Nodo: 4; Suc: [5, ]; Pred: [3, ] 
+Nodo: 5; Suc: [6, ]; Pred: [4, ] 
+Nodo: 6; Suc: [7, ]; Pred: [5, ] 
+Nodo: 7; Suc: [8, ]; Pred: [6, ] 
+Nodo: 8; Suc: [9, ]; Pred: [7, ] 
+Nodo: 9; Suc: [10, ]; Pred: [8, ] 
+Nodo: 10; Suc: [11, ]; Pred: [9, ] 
+Nodo: 11; Suc: [12, ]; Pred: [10, ] 
+Nodo: 12; Suc: [13, ]; Pred: [11, ] 
+Nodo: 13; Suc: [14, ]; Pred: [12, ] 
+Nodo: 14; Suc: [15, ]; Pred: [13, ] 
+Nodo: 15; Suc: [16, ]; Pred: [14, ] 
+Nodo: 16; Suc: [17, ]; Pred: [15, ] 
+Nodo: 17; Suc: [18, ]; Pred: [16, ] 
+Nodo: 18; Suc: [0, 19, ]; Pred: [17, ] 
+Nodo: 19; Suc: [0, ]; Pred: [18, ] 
+Nodo: 20; Suc: [21, ]; Pred: [] 
+Nodo: 21; Suc: [22, ]; Pred: [20, ] 
+Nodo: 22; Suc: [23, ]; Pred: [21, ] 
+Nodo: 23; Suc: [24, ]; Pred: [22, ] 
+Nodo: 24; Suc: [25, ]; Pred: [23, ] 
+Nodo: 25; Suc: [26, ]; Pred: [24, ] 
+Nodo: 26; Suc: [27, ]; Pred: [25, ] 
+Nodo: 27; Suc: [28, ]; Pred: [26, ] 
+Nodo: 28; Suc: [29, ]; Pred: [27, ] 
+Nodo: 29; Suc: [30, ]; Pred: [28, ] 
+Nodo: 30; Suc: [0, 31, ]; Pred: [29, ] 
+Nodo: 31; Suc: [0, ]; Pred: [30, ] 
+Nodo: 32; Suc: [33, ]; Pred: [] 
+Nodo: 33; Suc: [34, ]; Pred: [32, ] 
+Nodo: 34; Suc: [35, ]; Pred: [33, ] 
+Nodo: 35; Suc: [36, ]; Pred: [34, ] 
+Nodo: 36; Suc: [37, ]; Pred: [35, ] 
+Nodo: 37; Suc: [38, ]; Pred: [36, ] 
+Nodo: 38; Suc: [39, ]; Pred: [37, ] 
+Nodo: 39; Suc: [40, ]; Pred: [38, ] 
+Nodo: 40; Suc: [41, ]; Pred: [39, ] 
+Nodo: 41; Suc: [0, ]; Pred: [40, ] 
+Nodo: 42; Suc: [43, ]; Pred: [] 
+Nodo: 43; Suc: [44, ]; Pred: [42, ] 
+Nodo: 44; Suc: [45, ]; Pred: [43, ] 
+Nodo: 45; Suc: [0, 46, ]; Pred: [44, ] 
+Nodo: 46; Suc: [0, ]; Pred: [45, ] 
+Nodo: 47; Suc: [48, ]; Pred: [] 
+Nodo: 48; Suc: [49, ]; Pred: [47, ] 
+Nodo: 49; Suc: [50, ]; Pred: [48, ] 
+Nodo: 50; Suc: [51, ]; Pred: [49, ] 
+Nodo: 51; Suc: [52, ]; Pred: [50, ] 
+Nodo: 52; Suc: [0, ]; Pred: [51, ] 
+Nodo: 53; Suc: [54, ]; Pred: [] 
+Nodo: 54; Suc: [55, ]; Pred: [53, ] 
+Nodo: 55; Suc: [0, ]; Pred: [54, ] 
+Nodo: 56; Suc: [57, ]; Pred: [] 
+Nodo: 57; Suc: [58, ]; Pred: [56, ] 
+Nodo: 58; Suc: [0, ]; Pred: [57, ] 
+Nodo: 59; Suc: [60, ]; Pred: [] 
+Nodo: 60; Suc: [61, ]; Pred: [59, ] 
+Nodo: 61; Suc: [0, ]; Pred: [60, ] 
+Nodo: 62; Suc: [63, ]; Pred: [] 
+Nodo: 63; Suc: [64, ]; Pred: [62, ] 
+Nodo: 64; Suc: [0, ]; Pred: [63, ] 
+Nodo: 65; Suc: [66, ]; Pred: [] 
+Nodo: 66; Suc: [67, ]; Pred: [65, ] 
+Nodo: 67; Suc: [0, ]; Pred: [66, ] 
+Nodo: 68; Suc: [69, ]; Pred: [] 
+Nodo: 69; Suc: [70, ]; Pred: [68, ] 
+Nodo: 70; Suc: [71, ]; Pred: [69, ] 
+Nodo: 71; Suc: [72, ]; Pred: [70, ] 
+Nodo: 72; Suc: [73, ]; Pred: [71, ] 
+Nodo: 73; Suc: [74, ]; Pred: [72, ] 
+Nodo: 74; Suc: [75, ]; Pred: [73, ] 
+Nodo: 75; Suc: [76, ]; Pred: [74, ] 
+Nodo: 76; Suc: [77, ]; Pred: [75, ] 
+Nodo: 77; Suc: [0, ]; Pred: [76, ] 
+Nodo: 78; Suc: [79, ]; Pred: [] 
+Nodo: 79; Suc: [80, ]; Pred: [78, ] 
+Nodo: 80; Suc: [81, ]; Pred: [79, ] 
+Nodo: 81; Suc: [82, ]; Pred: [80, ] 
+Nodo: 82; Suc: [83, ]; Pred: [81, ] 
+Nodo: 83; Suc: [84, ]; Pred: [82, ] 
+Nodo: 84; Suc: [85, ]; Pred: [83, ] 
+Nodo: 85; Suc: [86, ]; Pred: [84, ] 
+Nodo: 86; Suc: [87, ]; Pred: [85, ] 
+Nodo: 87; Suc: [88, ]; Pred: [86, ] 
+Nodo: 88; Suc: [89, ]; Pred: [87, ] 
+Nodo: 89; Suc: [90, ]; Pred: [88, ] 
+Nodo: 90; Suc: [91, ]; Pred: [89, ] 
+Nodo: 91; Suc: [92, ]; Pred: [90, ] 
+Nodo: 92; Suc: [0, 93, ]; Pred: [91, ] 
+Nodo: 93; Suc: [0, ]; Pred: [92, ] 
+Nodo: 94; Suc: [95, ]; Pred: [] 
+Nodo: 95; Suc: [96, ]; Pred: [94, ] 
+Nodo: 96; Suc: [97, ]; Pred: [95, ] 
+Nodo: 97; Suc: [98, ]; Pred: [96, ] 
+Nodo: 98; Suc: [99, ]; Pred: [97, ] 
+Nodo: 99; Suc: [100, ]; Pred: [98, ] 
+Nodo: 100; Suc: [101, ]; Pred: [99, ] 
+Nodo: 101; Suc: [102, ]; Pred: [100, ] 
+Nodo: 102; Suc: [103, ]; Pred: [101, ] 
+Nodo: 103; Suc: [104, ]; Pred: [102, ] 
+Nodo: 104; Suc: [0, 105, ]; Pred: [103, ] 
+Nodo: 105; Suc: [0, ]; Pred: [104, ] 
+Nodo: 106; Suc: [107, ]; Pred: [] 
+Nodo: 107; Suc: [108, ]; Pred: [106, ] 
+Nodo: 108; Suc: [109, ]; Pred: [107, ] 
+Nodo: 109; Suc: [110, ]; Pred: [108, ] 
+Nodo: 110; Suc: [111, ]; Pred: [109, ] 
+Nodo: 111; Suc: [112, ]; Pred: [110, ] 
+Nodo: 112; Suc: [113, ]; Pred: [111, ] 
+Nodo: 113; Suc: [114, ]; Pred: [112, ] 
+Nodo: 114; Suc: [115, ]; Pred: [113, ] 
+Nodo: 115; Suc: [0, ]; Pred: [114, ] 
+Nodo: 116; Suc: [117, ]; Pred: [] 
+Nodo: 117; Suc: [118, ]; Pred: [116, ] 
+Nodo: 118; Suc: [119, ]; Pred: [117, ] 
+Nodo: 119; Suc: [120, ]; Pred: [118, ] 
+Nodo: 120; Suc: [0, 121, ]; Pred: [119, ] 
+Nodo: 121; Suc: [0, ]; Pred: [120, ] 
+Nodo: 122; Suc: [123, ]; Pred: [] 
+Nodo: 123; Suc: [124, ]; Pred: [122, ] 
+Nodo: 124; Suc: [125, ]; Pred: [123, ] 
+Nodo: 125; Suc: [126, ]; Pred: [124, ] 
+Nodo: 126; Suc: [0, 127, ]; Pred: [125, ] 
+Nodo: 127; Suc: [0, ]; Pred: [126, ] 
+Nodo: 128; Suc: [129, ]; Pred: [] 
+Nodo: 129; Suc: [130, ]; Pred: [128, ] 
+Nodo: 130; Suc: [131, ]; Pred: [129, ] 
+Nodo: 131; Suc: [132, ]; Pred: [130, ] 
+Nodo: 132; Suc: [0, 133, ]; Pred: [131, ] 
+Nodo: 133; Suc: [0, ]; Pred: [132, ] 
+Nodo: 134; Suc: [135, ]; Pred: [] 
+Nodo: 135; Suc: [136, ]; Pred: [134, ] 
+Nodo: 136; Suc: [137, ]; Pred: [135, ] 
+Nodo: 137; Suc: [0, ]; Pred: [136, ] 
+Nodo: 138; Suc: [139, ]; Pred: [] 
+Nodo: 139; Suc: [140, ]; Pred: [138, ] 
+Nodo: 140; Suc: [141, ]; Pred: [139, ] 
+Nodo: 141; Suc: [142, ]; Pred: [140, ] 
+Nodo: 142; Suc: [143, ]; Pred: [141, ] 
+Nodo: 143; Suc: [144, ]; Pred: [142, ] 
+Nodo: 144; Suc: [145, ]; Pred: [143, ] 
+Nodo: 145; Suc: [146, ]; Pred: [144, ] 
+Nodo: 146; Suc: [147, ]; Pred: [145, ] 
+Nodo: 147; Suc: [148, ]; Pred: [146, ] 
+Nodo: 148; Suc: [149, ]; Pred: [147, ] 
+Nodo: 149; Suc: [0, ]; Pred: [148, ] 
+Nodo: 150; Suc: [151, ]; Pred: [] 
+Nodo: 151; Suc: [152, ]; Pred: [150, ] 
+Nodo: 152; Suc: [153, ]; Pred: [151, ] 
+Nodo: 153; Suc: [154, ]; Pred: [152, ] 
+Nodo: 154; Suc: [0, ]; Pred: [153, ] 
+Nodo: 155; Suc: [0, ]; Pred: [] 
+Nodo: 156; Suc: [157, ]; Pred: [] 
+Nodo: 157; Suc: [158, ]; Pred: [156, ] 
+Nodo: 158; Suc: [159, ]; Pred: [157, ] 
+Nodo: 159; Suc: [160, ]; Pred: [158, ] 
+Nodo: 160; Suc: [161, ]; Pred: [159, ] 
+Nodo: 161; Suc: [162, ]; Pred: [160, ] 
+Nodo: 162; Suc: [163, ]; Pred: [161, ] 
+Nodo: 163; Suc: [164, ]; Pred: [162, ] 
+Nodo: 164; Suc: [165, ]; Pred: [163, ] 
+Nodo: 165; Suc: [166, ]; Pred: [164, ] 
+Nodo: 166; Suc: [0, ]; Pred: [165, ] 
+Nodo: 167; Suc: [168, ]; Pred: [] 
+Nodo: 168; Suc: [169, ]; Pred: [167, ] 
+Nodo: 169; Suc: [170, ]; Pred: [168, ] 
+Nodo: 170; Suc: [171, ]; Pred: [169, ] 
+Nodo: 171; Suc: [0, 172, ]; Pred: [170, ] 
+Nodo: 172; Suc: [0, ]; Pred: [171, ] 
+Nodo: 173; Suc: [174, ]; Pred: [] 
+Nodo: 174; Suc: [175, ]; Pred: [173, ] 
+Nodo: 175; Suc: [176, ]; Pred: [174, ] 
+Nodo: 176; Suc: [177, ]; Pred: [175, ] 
+Nodo: 177; Suc: [0, ]; Pred: [176, ] 
+Nodo: 178; Suc: [179, ]; Pred: [] 
+Nodo: 179; Suc: [180, ]; Pred: [178, ] 
+Nodo: 180; Suc: [181, ]; Pred: [179, ] 
+Nodo: 181; Suc: [182, ]; Pred: [180, ] 
+Nodo: 182; Suc: [183, ]; Pred: [181, ] 
+Nodo: 183; Suc: [184, ]; Pred: [182, ] 
+Nodo: 184; Suc: [185, ]; Pred: [183, ] 
+Nodo: 185; Suc: [186, ]; Pred: [184, ] 
+Nodo: 186; Suc: [187, ]; Pred: [185, ] 
+Nodo: 187; Suc: [188, ]; Pred: [186, ] 
+Nodo: 188; Suc: [189, ]; Pred: [187, ] 
+Nodo: 189; Suc: [190, ]; Pred: [188, ] 
+Nodo: 190; Suc: [0, ]; Pred: [189, ] 
+Nodo: 191; Suc: [192, ]; Pred: [] 
+Nodo: 192; Suc: [193, ]; Pred: [191, ] 
+Nodo: 193; Suc: [194, ]; Pred: [192, ] 
+Nodo: 194; Suc: [195, ]; Pred: [193, ] 
+Nodo: 195; Suc: [0, 196, ]; Pred: [194, ] 
+Nodo: 196; Suc: [0, ]; Pred: [195, ] 
+Nodo: 197; Suc: [198, ]; Pred: [] 
+Nodo: 198; Suc: [199, ]; Pred: [197, ] 
+Nodo: 199; Suc: [200, ]; Pred: [198, ] 
+Nodo: 200; Suc: [201, ]; Pred: [199, ] 
+Nodo: 201; Suc: [0, ]; Pred: [200, ] 
+Nodo: 202; Suc: [203, ]; Pred: [] 
+Nodo: 203; Suc: [204, ]; Pred: [202, ] 
+Nodo: 204; Suc: [205, ]; Pred: [203, ] 
+Nodo: 205; Suc: [206, ]; Pred: [204, ] 
+Nodo: 206; Suc: [207, ]; Pred: [205, ] 
+Nodo: 207; Suc: [208, ]; Pred: [206, ] 
+Nodo: 208; Suc: [209, ]; Pred: [207, ] 
+Nodo: 209; Suc: [210, ]; Pred: [208, ] 
+Nodo: 210; Suc: [211, ]; Pred: [209, ] 
+Nodo: 211; Suc: [0, ]; Pred: [210, ] 
+Nodo: 212; Suc: [213, ]; Pred: [] 
+Nodo: 213; Suc: [214, ]; Pred: [212, ] 
+Nodo: 214; Suc: [215, ]; Pred: [213, ] 
+Nodo: 215; Suc: [216, ]; Pred: [214, ] 
+Nodo: 216; Suc: [217, ]; Pred: [215, ] 
+Nodo: 217; Suc: [218, ]; Pred: [216, ] 
+Nodo: 218; Suc: [219, ]; Pred: [217, ] 
+Nodo: 219; Suc: [220, ]; Pred: [218, ] 
+Nodo: 220; Suc: [221, ]; Pred: [219, ] 
+Nodo: 221; Suc: [222, ]; Pred: [220, ] 
+Nodo: 222; Suc: [223, ]; Pred: [221, ] 
+Nodo: 223; Suc: [224, ]; Pred: [222, ] 
+Nodo: 224; Suc: [225, ]; Pred: [223, ] 
+Nodo: 225; Suc: [0, ]; Pred: [224, ] 
+Nodo: 226; Suc: [227, ]; Pred: [] 
+Nodo: 227; Suc: [228, ]; Pred: [226, ] 
+Nodo: 228; Suc: [229, ]; Pred: [227, ] 
+Nodo: 229; Suc: [230, ]; Pred: [228, ] 
+Nodo: 230; Suc: [231, ]; Pred: [229, ] 
+Nodo: 231; Suc: [232, ]; Pred: [230, ] 
+Nodo: 232; Suc: [233, ]; Pred: [231, ] 
+Nodo: 233; Suc: [234, ]; Pred: [232, ] 
+Nodo: 234; Suc: [235, ]; Pred: [233, ] 
+Nodo: 235; Suc: [236, ]; Pred: [234, ] 
+Nodo: 236; Suc: [237, ]; Pred: [235, ] 
+Nodo: 237; Suc: [238, ]; Pred: [236, ] 
+Nodo: 238; Suc: [239, ]; Pred: [237, ] 
+Nodo: 239; Suc: [240, ]; Pred: [238, ] 
+Nodo: 240; Suc: [241, ]; Pred: [239, ] 
+Nodo: 241; Suc: [0, ]; Pred: [240, ] 
+Nodo: 242; Suc: [243, ]; Pred: [] 
+Nodo: 243; Suc: [244, ]; Pred: [242, ] 
+Nodo: 244; Suc: [245, ]; Pred: [243, ] 
+Nodo: 245; Suc: [246, ]; Pred: [244, ] 
+Nodo: 246; Suc: [247, ]; Pred: [245, ] 
+Nodo: 247; Suc: [248, ]; Pred: [246, ] 
+Nodo: 248; Suc: [249, ]; Pred: [247, ] 
+Nodo: 249; Suc: [250, ]; Pred: [248, ] 
+Nodo: 250; Suc: [251, ]; Pred: [249, ] 
+Nodo: 251; Suc: [252, ]; Pred: [250, ] 
+Nodo: 252; Suc: [253, ]; Pred: [251, ] 
+Nodo: 253; Suc: [254, ]; Pred: [252, ] 
+Nodo: 254; Suc: [255, ]; Pred: [253, ] 
+Nodo: 255; Suc: [0, ]; Pred: [254, ] 
+Nodo: 256; Suc: [257, ]; Pred: [] 
+Nodo: 257; Suc: [258, ]; Pred: [256, ] 
+Nodo: 258; Suc: [259, ]; Pred: [257, ] 
+Nodo: 259; Suc: [260, ]; Pred: [258, ] 
+Nodo: 260; Suc: [261, ]; Pred: [259, ] 
+Nodo: 261; Suc: [262, ]; Pred: [260, ] 
+Nodo: 262; Suc: [263, ]; Pred: [261, ] 
+Nodo: 263; Suc: [264, ]; Pred: [262, ] 
+Nodo: 264; Suc: [265, ]; Pred: [263, ] 
+Nodo: 265; Suc: [266, ]; Pred: [264, ] 
+Nodo: 266; Suc: [0, ]; Pred: [265, ] 
+Nodo: 267; Suc: [268, ]; Pred: [] 
+Nodo: 268; Suc: [269, ]; Pred: [267, ] 
+Nodo: 269; Suc: [270, ]; Pred: [268, ] 
+Nodo: 270; Suc: [271, ]; Pred: [269, ] 
+Nodo: 271; Suc: [272, ]; Pred: [270, ] 
+Nodo: 272; Suc: [273, ]; Pred: [271, ] 
+Nodo: 273; Suc: [274, ]; Pred: [272, ] 
+Nodo: 274; Suc: [275, ]; Pred: [273, ] 
+Nodo: 275; Suc: [0, ]; Pred: [274, ] 
+Nodo: 276; Suc: [277, ]; Pred: [] 
+Nodo: 277; Suc: [278, ]; Pred: [276, ] 
+Nodo: 278; Suc: [279, ]; Pred: [277, ] 
+Nodo: 279; Suc: [280, ]; Pred: [278, ] 
+Nodo: 280; Suc: [281, ]; Pred: [279, ] 
+Nodo: 281; Suc: [282, ]; Pred: [280, ] 
+Nodo: 282; Suc: [283, ]; Pred: [281, ] 
+Nodo: 283; Suc: [284, ]; Pred: [282, ] 
+Nodo: 284; Suc: [285, ]; Pred: [283, ] 
+Nodo: 285; Suc: [286, ]; Pred: [284, ] 
+Nodo: 286; Suc: [287, ]; Pred: [285, ] 
+Nodo: 287; Suc: [288, ]; Pred: [286, ] 
+Nodo: 288; Suc: [289, ]; Pred: [287, ] 
+Nodo: 289; Suc: [0, ]; Pred: [288, ] 
+Nodo: 290; Suc: [291, ]; Pred: [] 
+Nodo: 291; Suc: [292, ]; Pred: [290, ] 
+Nodo: 292; Suc: [293, ]; Pred: [291, ] 
+Nodo: 293; Suc: [294, ]; Pred: [292, ] 
+Nodo: 294; Suc: [295, ]; Pred: [293, ] 
+Nodo: 295; Suc: [296, ]; Pred: [294, ] 
+Nodo: 296; Suc: [297, ]; Pred: [295, ] 
+Nodo: 297; Suc: [298, ]; Pred: [296, ] 
+Nodo: 298; Suc: [299, ]; Pred: [297, ] 
+Nodo: 299; Suc: [300, ]; Pred: [298, ] 
+Nodo: 300; Suc: [301, ]; Pred: [299, ] 
+Nodo: 301; Suc: [302, ]; Pred: [300, ] 
+Nodo: 302; Suc: [303, ]; Pred: [301, ] 
+Nodo: 303; Suc: [304, ]; Pred: [302, ] 
+Nodo: 304; Suc: [305, ]; Pred: [303, ] 
+Nodo: 305; Suc: [0, ]; Pred: [304, ] 
+Nodo: 306; Suc: [307, ]; Pred: [] 
+Nodo: 307; Suc: [308, ]; Pred: [306, ] 
+Nodo: 308; Suc: [309, ]; Pred: [307, ] 
+Nodo: 309; Suc: [310, ]; Pred: [308, ] 
+Nodo: 310; Suc: [311, ]; Pred: [309, ] 
+Nodo: 311; Suc: [0, ]; Pred: [310, ] 
+Nodo: 312; Suc: [313, ]; Pred: [] 
+Nodo: 313; Suc: [0, ]; Pred: [312, ] 
+Nodo: 314; Suc: [315, ]; Pred: [] 
+Nodo: 315; Suc: [316, ]; Pred: [314, ] 
+Nodo: 316; Suc: [317, ]; Pred: [315, ] 
+Nodo: 317; Suc: [318, ]; Pred: [316, ] 
+Nodo: 318; Suc: [319, ]; Pred: [317, ] 
+Nodo: 319; Suc: [320, ]; Pred: [318, ] 
+Nodo: 320; Suc: [321, ]; Pred: [319, ] 
+Nodo: 321; Suc: [322, ]; Pred: [320, ] 
+Nodo: 322; Suc: [323, ]; Pred: [321, ] 
+Nodo: 323; Suc: [324, ]; Pred: [322, ] 
+Nodo: 324; Suc: [325, ]; Pred: [323, ] 
+Nodo: 325; Suc: [326, ]; Pred: [324, ] 
+Nodo: 326; Suc: [327, ]; Pred: [325, ] 
+Nodo: 327; Suc: [328, ]; Pred: [326, ] 
+Nodo: 328; Suc: [329, ]; Pred: [327, ] 
+Nodo: 329; Suc: [330, ]; Pred: [328, ] 
+Nodo: 330; Suc: [331, ]; Pred: [329, ] 
+Nodo: 331; Suc: [332, ]; Pred: [330, ] 
+Nodo: 332; Suc: [333, ]; Pred: [331, ] 
+Nodo: 333; Suc: [334, ]; Pred: [332, ] 
+Nodo: 334; Suc: [0, ]; Pred: [333, ] 
+Nodo: 335; Suc: [336, ]; Pred: [] 
+Nodo: 336; Suc: [337, ]; Pred: [335, ] 
+Nodo: 337; Suc: [338, ]; Pred: [336, ] 
+Nodo: 338; Suc: [339, ]; Pred: [337, ] 
+Nodo: 339; Suc: [340, ]; Pred: [338, ] 
+Nodo: 340; Suc: [341, ]; Pred: [339, ] 
+Nodo: 341; Suc: [342, ]; Pred: [340, ] 
+Nodo: 342; Suc: [343, ]; Pred: [341, ] 
+Nodo: 343; Suc: [0, ]; Pred: [342, ] 
+Nodo: 344; Suc: [345, ]; Pred: [] 
+Nodo: 345; Suc: [346, ]; Pred: [344, ] 
+Nodo: 346; Suc: [347, ]; Pred: [345, ] 
+Nodo: 347; Suc: [348, ]; Pred: [346, ] 
+Nodo: 348; Suc: [349, ]; Pred: [347, ] 
+Nodo: 349; Suc: [350, ]; Pred: [348, ] 
+Nodo: 350; Suc: [351, ]; Pred: [349, ] 
+Nodo: 351; Suc: [352, ]; Pred: [350, ] 
+Nodo: 352; Suc: [353, ]; Pred: [351, ] 
+Nodo: 353; Suc: [354, ]; Pred: [352, ] 
+Nodo: 354; Suc: [355, ]; Pred: [353, ] 
+Nodo: 355; Suc: [356, ]; Pred: [354, ] 
+Nodo: 356; Suc: [0, ]; Pred: [355, ] 
+Nodo: 357; Suc: [358, ]; Pred: [] 
+Nodo: 358; Suc: [359, ]; Pred: [357, ] 
+Nodo: 359; Suc: [360, ]; Pred: [358, ] 
+Nodo: 360; Suc: [361, ]; Pred: [359, ] 
+Nodo: 361; Suc: [362, ]; Pred: [360, ] 
+Nodo: 362; Suc: [363, ]; Pred: [361, ] 
+Nodo: 363; Suc: [364, ]; Pred: [362, ] 
+Nodo: 364; Suc: [365, ]; Pred: [363, ] 
+Nodo: 365; Suc: [366, ]; Pred: [364, ] 
+Nodo: 366; Suc: [367, ]; Pred: [365, ] 
+Nodo: 367; Suc: [368, ]; Pred: [366, ] 
+Nodo: 368; Suc: [369, ]; Pred: [367, ] 
+Nodo: 369; Suc: [0, ]; Pred: [368, ] 
+Nodo: 370; Suc: [371, ]; Pred: [] 
+Nodo: 371; Suc: [372, ]; Pred: [370, ] 
+Nodo: 372; Suc: [373, ]; Pred: [371, ] 
+Nodo: 373; Suc: [374, ]; Pred: [372, ] 
+Nodo: 374; Suc: [375, ]; Pred: [373, ] 
+Nodo: 375; Suc: [376, ]; Pred: [374, ] 
+Nodo: 376; Suc: [0, ]; Pred: [375, ] 
+Nodo: 377; Suc: [378, ]; Pred: [] 
+Nodo: 378; Suc: [379, ]; Pred: [377, ] 
+Nodo: 379; Suc: [380, ]; Pred: [378, ] 
+Nodo: 380; Suc: [381, ]; Pred: [379, ] 
+Nodo: 381; Suc: [382, ]; Pred: [380, ] 
+Nodo: 382; Suc: [383, ]; Pred: [381, ] 
+Nodo: 383; Suc: [384, ]; Pred: [382, ] 
+Nodo: 384; Suc: [385, ]; Pred: [383, ] 
+Nodo: 385; Suc: [386, ]; Pred: [384, ] 
+Nodo: 386; Suc: [387, ]; Pred: [385, ] 
+Nodo: 387; Suc: [0, ]; Pred: [386, ] 
+Nodo: 388; Suc: []; Pred: [] 
+yes!!
