@@ -23,9 +23,9 @@ fun makeFGraph (instrsblocks:(Tigerassem.instr list list)) =
         val def = tabNueva ()
         val use = tabNueva ()
         val isMove = tabNueva ()
-        fun jumppp NONE = "jump = NONE"
-          | jumppp (SOME [x]) = "jump = [" ^ x ^ "]"
-          | jumppp (SOME [x, y]) = "jump = [" ^ x ^ ", " ^ y ^ "]"
+        fun jumppp NONE = "jump = NONE\n"
+          | jumppp (SOME [x]) = "jump = [" ^ x ^ "]\n"
+          | jumppp (SOME [x, y]) = "jump = [" ^ x ^ ", " ^ y ^ "]\n"
         fun genEdges cgraph [] _ = cgraph
           | genEdges cgraph (i::is) pos = 
                 let val cgraph' = 
@@ -52,8 +52,8 @@ fun makeFGraph (instrsblocks:(Tigerassem.instr list list)) =
                                                         end
                                                     else if l2 = Tigerassem.CALL_LABEL then
                                                         mk_edge cgraph {from=pos, to=pos+1}
-                                                    else raise Fail "makeFGraph: jump malformado"
-                                 | _ => raise Fail "makeFGraph: jump malformado")
+                                                    else raise Fail "makeFGraph: jump malformado (1)"
+                                 | _ => raise Fail "makeFGraph: jump malformado (2)")
                        | Tigerassem.LABEL {assem=assem, lab=lab} =>
                              (case is of
                                    [] => cgraph
