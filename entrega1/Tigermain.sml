@@ -47,7 +47,7 @@ fun main(args) =
         val (b,c) = Tigercanon.splitcanon canonfraglist 
             (*b: (Tigertree.stm list*Tigerframe.frame) list*)
             (*c: (Tigertemp.label*string) list*)
-        val _ = print (String.concat (List.map (fn (x,y) => "(" ^ x ^ ", " ^ y ^ ")\n") c))
+        (* val _ = print (String.concat (List.map (fn (x,y) => "(" ^ x ^ ", " ^ y ^ ")\n") c)) *)
         (* Interpreter *)
         val _ = if interp then Tigerinterp.inter true b c else () (* arg1 indica si el interprete ejecuta con debug *)
         

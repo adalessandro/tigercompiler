@@ -18,7 +18,6 @@ datatype flowgraph =
 *)
 fun makeFGraph (instrsblocks:(Tigerassem.instr list list)) =
     let val instrs = (List.concat o List.map List.rev) instrsblocks
-        val _ = (print o Tigerassem.assemblock2str) instrs
         val nodes = #1 (List.foldr (fn (i, (t, n)) => (tabInserta (n, i, t),  n+1)) (tabNueva(), 0) instrs)
         val control = #1 (List.foldr (fn (_, (gra, n)) => (newNode gra n,  n+1)) (newGraph(), 0) instrs)
         val def = tabNueva ()
@@ -36,17 +35,24 @@ fun makeFGraph (instrsblocks:(Tigerassem.instr list list)) =
                                    NONE => (case is of
                                                  [] => cgraph
                                                | x::xs => mk_edge cgraph {from=pos, to=pos+1})
-                                 | SOME [l] => let val labpos = Tigerassem.labelpos l instrs 0
-                                               in (case labpos of
-                                                        NONE => raise Fail "makeFGraph: label no encontrada"
-                                                      | SOME p => mk_edge cgraph {from=pos, to=p})
-                                               end
-                                 | SOME [l, "FALSE_LABEL"] => let val labpos = Tigerassem.labelpos l instrs 0
-                                                                val cgnext = mk_edge cgraph {from=pos, to=pos+1}
-                                                            in (case labpos of
-                                                                     NONE => raise Fail "makeFGraph: label no encontrada"
-                                                                   | SOME p => mk_edge cgnext {from=pos, to=p})
-                                                            end
+                                 | SOME [l] => if l = Tigerassem.RET_LABEL
+                                               then cgraph
+                                               else let val labpos = Tigerassem.labelpos l instrs 0
+                                                    in (case labpos of
+                                                             NONE => raise Fail "makeFGraph: label no encontrada"
+                                                           | SOME p => mk_edge cgraph {from=pos, to=p})
+                                                    end
+                                 | SOME [l1, l2] => 
+                                                    if l2 = Tigerassem.FALSE_LABEL then
+                                                        let val labpos = Tigerassem.labelpos l1 instrs 0
+                                                            val cgnext = mk_edge cgraph {from=pos, to=pos+1}
+                                                        in (case labpos of
+                                                                 NONE => raise Fail "makeFGraph: label no encontrada"
+                                                               | SOME p => mk_edge cgnext {from=pos, to=p})
+                                                        end
+                                                    else if l2 = Tigerassem.CALL_LABEL then
+                                                        mk_edge cgraph {from=pos, to=pos+1}
+                                                    else raise Fail "makeFGraph: jump malformado"
                                  | _ => raise Fail "makeFGraph: jump malformado")
                        | Tigerassem.LABEL {assem=assem, lab=lab} =>
                              (case is of

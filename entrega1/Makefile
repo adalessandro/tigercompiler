@@ -72,18 +72,17 @@ depend: Tigerabs.sml Tigergrm.sml Tigerlex.sml Tigermain.sml \
 ### DO NOT DELETE THIS LINE
 Tigermain.uo: Tigerseman.ui Tigerlex.uo Tigerpp.ui Tigergraph.ui \
     Tigerescap.ui Tigerinterp.ui Tigerframe.ui Tigercanon.ui Tigerassem.ui \
-    Tigergrm.ui Tigertrans.ui CantPrints.ui Tigerflow.uo \
-    Tigerinterference.uo 
+    Tigergrm.ui Tigertrans.ui CantPrints.ui Tigerflow.uo 
 Tigertemp.uo: Tigertemp.ui 
 Tigersimpleregalloc.ui: Tigerframe.ui Tigerassem.ui 
 CantPrints.uo: CantPrints.ui Tigerabs.uo 
 Tigergrm.ui: Tigerabs.uo 
 Tigersimpleregalloc.uo: Tigersimpleregalloc.ui Tigerassem.ui 
 CantPrints.ui: Tigerabs.uo 
-Tigerassem.uo: Tigerassem.ui Tigerframe.ui Tigerit.uo Tigertemp.ui 
+Tigerassem.uo: Tigerassem.ui Tigerframe.ui Tigertemp.ui 
 Tigersres.uo: Tigerabs.uo Tigertips.uo Tigertab.ui Tigertemp.ui \
     Tigertrans.ui 
-Tigerassem.ui: Tigertree.uo Tigertemp.ui 
+Tigerassem.ui: Tigertree.uo Tigerframe.ui Tigertemp.ui 
 Topsort.uo: Topsort.ui Tigerabs.uo Tigersres.uo Tigertips.uo Tigertab.ui 
 Tigerpp.uo: Tigerpp.ui Tigerabs.uo 
 Tigercanon.ui: Tigertree.uo Tigerframe.ui Tigertemp.ui 
@@ -107,7 +106,7 @@ Tigertrans.uo: Tigertrans.ui Tigerabs.uo Tigertree.uo Tigerframe.ui \
 Tigergraph.ui: Tigertab.ui 
 Tigergrm.uo: Tigergrm.ui Tigerabs.uo Tigernlin.uo 
 Tigerinterp.ui: Tigertree.uo Tigerframe.ui Tigertemp.ui 
-Tigerframe.uo: Tigerframe.ui Tigertree.uo Tigertemp.ui 
+Tigerframe.uo: Tigerframe.ui Tigertree.uo Tigerit.uo Tigertemp.ui 
 Tigerit.uo: Tigertree.uo Tigertab.ui 
 Tigercanon.uo: Tigercanon.ui Tigertree.uo Tigerframe.ui Tigertab.ui \
     Tigertemp.ui 

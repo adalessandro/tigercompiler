@@ -16,6 +16,8 @@ val formals : frame -> access list
 val allocArg : frame -> bool -> access
 val allocLocal : frame -> bool -> access
 val sp : Tigertemp.temp
+val pc : Tigertemp.temp
+val lr : Tigertemp.temp
 val maxRegFrame : frame -> int
 val wSz : int
 val log2WSz : int

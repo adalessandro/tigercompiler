@@ -105,6 +105,7 @@ fun basicBlocks stms =
                     :: stms, thisblock)
                 | next(s::rest, thisblock) = next(rest, s::thisblock)
                 | next(nil, thisblock) = 
+                    (* endblock([], thisblock) *)
                     next([JUMP(NAME done, [done])],
                         thisblock)
 

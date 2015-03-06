@@ -17,7 +17,11 @@ datatype instr =
   | MOVE of {assem: string,
              dest: temp list,
              src: temp list}
-    
+   
+val FALSE_LABEL = "__FALSE_LABEL__"
+val RET_LABEL = "__RET_LABEL__"
+val CALL_LABEL = "__CALL_LABEL__" 
+
 fun labelpos x [] _ = NONE
   | labelpos x (y::ys) n =
          case y of
@@ -74,7 +78,9 @@ fun munchStmBlock (ss, frame) =
           | munchStm (T.MOVE ((T.TEMP d), (T.NAME l))) =
                 emits (OPER {assem = "ldr     `d0, "^flabel(l), dest = [d], src = [], jump = NONE})
           | munchStm (T.MOVE ((T.TEMP d), (T.TEMP s))) =
-                emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [s]})
+                if d = Tigerframe.pc andalso s = Tigerframe.lr
+                then emits (OPER {assem = "movs    `d0, `s0", dest = [d], src = [s], jump = SOME [RET_LABEL]})
+                else emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [s]})
           | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.PLUS, e1, e2)))) =
                 let val (e1', e2') = (munchExp e1, munchExp e2)
                 in  emits (OPER {assem = "adds    `d0, `s0, `s1", dest = [d], src = [e1', e2'], jump = NONE})
@@ -164,7 +170,11 @@ fun munchStmBlock (ss, frame) =
                 (munchStm s1; munchStm s2)
           | munchStm (T.LABEL l) =
                 emits (LABEL {assem = l^":", lab = l})
-                (* emits (LABEL {assem = (Tigerframe.name frame)^":", lab = (Tigerframe.name frame)}) *)
+        
+        and munchBlockLabel x =
+                case x of
+                     T.LABEL l => emits (LABEL {assem = (Tigerframe.name frame)^":", lab = (Tigerframe.name frame)})
+                   | _ => raise Fail "Tigerassem: Bloque básico no empieza con un LABEL"
 
         and munchExp (T.CONST i) = 
                 result (fn x => munchStm (T.MOVE (T.TEMP x, T.CONST i)))
@@ -183,14 +193,15 @@ fun munchStmBlock (ss, frame) =
                                              else munchStm (T.MOVE ((T.MEM (str y)), x))
                     val _ = if len < Tigerframe.argregslen then () else munchStm (T.MOVE(T.TEMP Tigerframe.sp, (T.BINOP (T.MINUS, T.TEMP Tigerframe.sp, T.CONST((len - Tigerframe.argregslen)*Tigerframe.wSz)))))
                     val eargs'' = List.map aux eargs'
-                    val _ = emits (OPER {assem = "bl      `j0", dest = [], src = [], jump = SOME [ename']})
+                    val _ = emits (OPER {assem = "bl      `j0", dest = [], src = [], jump = SOME [ename', CALL_LABEL]})
                 in Tigerframe.rv
                 end
           | munchExp _ = raise Fail "munchExp undefined"
 
     in
         (ilist := [];
-        List.map munchStm ss;
+        munchBlockLabel (hd ss);
+        List.map munchStm (tl ss);
         !ilist)
     end
 
