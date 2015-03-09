@@ -22,4 +22,7 @@ sig
     
     val printGraph : graph -> unit list
 
+    val entry2pp : string -> unit
+    val entrypp : node * string list -> unit
+    val entryppbool : node * bool -> unit
 end

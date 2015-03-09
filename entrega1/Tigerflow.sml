@@ -12,10 +12,6 @@ datatype flowgraph =
                ismove: bool Tigergraph.table,
                nodes: Tigerassem.instr Tigergraph.table}
 
-(*
-        val t = tabNueva ()
-        val t' = List.foldr (fn ((tab, n), ins) => (tabInserta (n, ins, tab), n+1)) (t, 0) instrs
-*)
 fun makeFGraph (instrsblocks:(Tigerassem.instr list list)) =
     let val instrs = (List.concat o List.map List.rev) instrsblocks
         val nodes = #1 (List.foldr (fn (i, (t, n)) => (tabInserta (n, i, t),  n+1)) (tabNueva(), 0) instrs)
@@ -23,9 +19,7 @@ fun makeFGraph (instrsblocks:(Tigerassem.instr list list)) =
         val def = tabNueva ()
         val use = tabNueva ()
         val isMove = tabNueva ()
-        fun jumppp NONE = "jump = NONE\n"
-          | jumppp (SOME [x]) = "jump = [" ^ x ^ "]\n"
-          | jumppp (SOME [x, y]) = "jump = [" ^ x ^ ", " ^ y ^ "]\n"
+        
         fun genEdges cgraph [] _ = cgraph
           | genEdges cgraph (i::is) pos = 
                 let val cgraph' = 
@@ -64,6 +58,7 @@ fun makeFGraph (instrsblocks:(Tigerassem.instr list list)) =
                                  | x::xs => mk_edge cgraph {from=pos, to=pos+1})
                 in  genEdges cgraph' is (pos+1)
                 end
+
         fun genMoves moveTab [] _ = moveTab
           | genMoves moveTab (i::is) pos =
                 let val boolMove = case i of 
@@ -71,6 +66,7 @@ fun makeFGraph (instrsblocks:(Tigerassem.instr list list)) =
                                       | _      => false
                 in  genMoves (tabInserta(pos, boolMove, moveTab)) is (pos+1)
                 end
+
         fun genDefUse (defT, useT) [] _ = (defT, useT)
           | genDefUse (defT, useT) (i::is) pos =
                 let val (dest, src) = case i of
@@ -81,22 +77,20 @@ fun makeFGraph (instrsblocks:(Tigerassem.instr list list)) =
                     val useT' = tabInserta(pos, src, useT)
                 in  genDefUse (defT', useT') is (pos+1)
                 end
+
+        fun genEdgesbyBlock (is, (ctrl, n)) = (genEdges ctrl is n, n + List.length is)
+
+        val (control', _) = List.foldl genEdgesbyBlock (control, 0) (List.map List.rev instrsblocks)
+
         val (def', use') = genDefUse (def, use) instrs 0
-    in  FGRAPH {control = genEdges control instrs 0,
+
+        val ismove' = genMoves isMove instrs 0
+
+    in  FGRAPH {control = control',
                 def = def',
                 use = use',
-                ismove = genMoves isMove instrs 0,
+                ismove = ismove',
                 nodes = nodes}
     end
-
-val ej1 = [
-    Tigerassem.OPER {assem="", dest=[], src=[], jump=NONE},
-    Tigerassem.LABEL{assem="", lab="l1"},
-    Tigerassem.OPER {assem="", dest=[], src=[], jump=NONE},
-    Tigerassem.OPER {assem="", dest=[], src=[], jump=NONE},
-    Tigerassem.OPER {assem="", dest=[], src=[], jump=NONE},
-    Tigerassem.OPER {assem="", dest=[], src=[], jump=SOME["l1", "DEF_LABEL"]},
-    Tigerassem.OPER {assem="", dest=[], src=[], jump=NONE}
-    ]
 
 end

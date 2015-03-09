@@ -22,7 +22,7 @@ fun main(args) =
         val (interp, l4) = arg(l3, "-interp") 
         val (code, l5) = arg(l4, "-code") 
         val (flow, l6) = arg(l5, "-flow") 
-        val (interference, l7) = arg(l6, "-interference") 
+        val (interf, l7) = arg(l6, "-interf") 
         val entrada =
             case l7 of
                 [n] => ((open_in n)
@@ -57,8 +57,12 @@ fun main(args) =
 
         (* Liveness analisys *)
         val fgraph = Tigerflow.makeFGraph assemblocklist
-        val _ = if flow then (((fn (Tigerflow.FGRAPH x) => Tigergraph.printGraph (#control x)) fgraph); ()) else ()
-(*        val _ = if interference then (Tigergraph.printGraph (Tigerinterference.makeIGraph ej1flow); ()) else () *)
+        val _ = if flow then (((fn (Tigerflow.FGRAPH x) => Tigergraph.printGraph (#control x)) fgraph)) else []
+        val _ = if flow then (((fn (Tigerflow.FGRAPH x) => List.map Tigergraph.entryppbool (Tigertab.tabAList (#ismove x))) fgraph)) else []
+(*        val igraph = Tigerinterference.makeIGraph fgraph *)
+        val (intab, outtab) = (Tigerinterference.makeIGraph fgraph assemblocklist)
+        val _ = List.map Tigergraph.entrypp (Tigertab.tabAList intab) 
+(*        val _ = if interf then Tigergraph.printGraph igraph else [] *)
 
     in
         print "yes!!\n"

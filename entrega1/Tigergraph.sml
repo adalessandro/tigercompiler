@@ -61,4 +61,19 @@ fun areAdj g x y = List.exists (fn z => x = z) (adj g y)
 
 type 'a table = (node, 'a) Tigertab.Tabla
 
+fun entry2pp y = 
+    print (y ^ ",")
+
+fun entrypp (x, ys) = (
+    print ( "( " ^ (Int.toString x) ^ ", [");
+    List.map entry2pp ys;
+    print "] )\n"
+    )
+
+fun entryppbool (x, b) = (
+    print ( "( " ^ (Int.toString x) ^ ", ");
+    if b then print "true" else print "false";
+    print ")\n"
+    )
+
 end
