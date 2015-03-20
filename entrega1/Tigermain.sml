@@ -58,7 +58,7 @@ fun main(args) =
         (* Liveness analisys *)
         val fgraph = Tigerflow.makeFGraph assemblocklist
         val _ = if flow then (((fn (Tigerflow.FGRAPH x) => Tigergraph.printGraph (#control x)) fgraph)) else []
-        val _ = if flow then (((fn (Tigerflow.FGRAPH x) => List.map Tigergraph.entryppbool (Tigertab.tabAList (#ismove x))) fgraph)) else []
+
 (*        val igraph = Tigerinterference.makeIGraph fgraph *)
         val (intab, outtab) = (Tigerinterference.makeIGraph fgraph assemblocklist)
         val _ = List.map Tigergraph.entrypp (Tigertab.tabAList intab) 

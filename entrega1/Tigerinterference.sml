@@ -24,21 +24,25 @@ val nodetempmap = ref (tabNueva())
 val precolored = Tigerframe.specialregs @ Tigerframe.argregs
 
 fun makeIGraph (FGRAPH fgraph) (instrsblocks:(Tigerassem.instr list list)) =
-
     let val allinstr = tabClaves (#nodes fgraph)
+
         fun foo1 (bs, (a, p)) =
                 let val newlst = List.rev (List.tabulate (List.length bs, (fn x => x + p)))
                 in  (a @ [newlst], p + List.length bs)
                 end
         fun foo bss = List.foldl foo1 ([], 0) bss
-        fun tnode x = #1 (tabPrimer ((fn y => x = y), !nodetempmap))
-        fun gtemp x = tabSaca (x, !nodetempmap)
+        val instrspos = #1 (foo instrsblocks)
+
         val allnodes = let val deflst = List.concat (List.map (#2) (tabAList(#def fgraph)))
                            val uselst = List.concat (List.map (#2) (tabAList(#use fgraph)))
                        in  unionsinrep deflst uselst
                        end
 
-        val _ = List.foldr (fn (x, n) => (nodetempmap := (tabInserta (n, x, !nodetempmap)); n + 1)) 0 allnodes
+        val _ = List.foldl (fn (x, n) => (nodetempmap := (tabInserta (n, x, !nodetempmap)); n + 1)) 0 allnodes
+
+        fun tnode x = #1 (tabPrimer ((fn y => x = y), !nodetempmap))
+        fun gtemp x = tabSaca (x, !nodetempmap)
+
         val _ = List.map (fn x => adjList := tabInserta (tnode x, [], !adjList)) allnodes
         val _ = List.map (fn x => degree := tabInserta (tnode x, 0, !degree)) allnodes
 
@@ -72,34 +76,42 @@ fun makeIGraph (FGRAPH fgraph) (instrsblocks:(Tigerassem.instr list list)) =
             end
         
         val graph = ref (newGraph ())
+        val _ = List.map (fn x => graph := (newNode (!graph) (#1 x))) (tabAList (!nodetempmap))
 
         (* moveList : (Tigergraph.node list) table :: temp_node -> instr_node list *)
         val movelist = ref (tabNueva ())
         val workListMoves = ref (Splayset.empty Int.compare)
         
-        fun buildblock outTab blockinstrs pos =
+        fun buildblock outTab blockinstrs =
             let fun addEdge(u, v) =
+                    (print "ADDEDGE\n";
                     if (areAdj (!graph) u v andalso u <> v)
                     then let val _ = graph := mk_edge (mk_edge (!graph) {from=u, to=v}) {from=v, to=u}
                              val _ = if List.exists (fn x => x = gtemp u) precolored
-                                     then (adjList := tabRInserta (u, unionsinrep (tabSaca (u, !adjList)) [v], !adjList);
+                                     then (print "ADDEDGE: primer if";
+                                           adjList := tabRInserta (u, unionsinrep (tabSaca (u, !adjList)) [v], !adjList);
                                            degree := tabRInserta (u, 1 + tabSaca (u, !degree), !degree))
                                      else ()
                              val _ = if List.exists (fn x => x = gtemp v) precolored
-                                     then (adjList := tabRInserta (v, unionsinrep (tabSaca (v, !adjList)) [u], !adjList);
+                                     then (print "ADDEDGE: segundo if";
+                                           adjList := tabRInserta (v, unionsinrep (tabSaca (v, !adjList)) [u], !adjList);
                                            degree := tabRInserta (v, 1 + tabSaca (v, !degree), !degree))
                                      else ()
                          in ()
                          end
                     else ()
+                    )
 
+                val _ = print "ENTRE1\n"
                 (* el liveout del bloque es el liveout de la última instrucción *)
                 val live = ref (tabSaca(hd blockinstrs, outTab))
+                val _ = print "ENTRE2\n"
 
                 fun foralli n =
                     let val ismove = tabSaca(n, (#ismove fgraph))
                         val use = tabSaca(n, (#use fgraph))
                         val def = tabSaca(n, (#def fgraph))
+                        val _ = print "ENTRE3\n"
                         fun foralln t = 
                                 case tabBusca(t, !movelist) of
                                      NONE    => movelist := tabRInserta(t, [n], !movelist)
@@ -125,6 +137,8 @@ fun makeIGraph (FGRAPH fgraph) (instrsblocks:(Tigerassem.instr list list)) =
 
         val (inres, outres) = liveness init_inTab init_outTab
 
+        val _ = List.map (fn x => buildblock outres x) instrspos 
+
         (*val _ = (print "def = [\n";
                  List.map entrypp (tabAList (#def fgraph));
                  print "]")
@@ -136,7 +150,8 @@ fun makeIGraph (FGRAPH fgraph) (instrsblocks:(Tigerassem.instr list list)) =
                  print "]")
         val _ = (print "outTab = [\n";
                  List.map entrypp (tabAList outres);
-                 print "]")*)
+                 print "]")
+*)
     in
         (*#1 (build outres)*)
         (inres, outres)

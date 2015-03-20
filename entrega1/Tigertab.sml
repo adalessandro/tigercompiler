@@ -74,4 +74,9 @@ fun tabClaves t = List.map (fn(x, y) => x) (listItems t)
 fun tabEqRange t1 t2 range eqval =
     List.foldr (fn (x, b) => if b then eqval (tabSaca (x, t1), tabSaca (x, t2)) else false) true range
 
+fun tablepp f g t =
+    let val tlst = tabAList t
+    in  String.concat (List.map (fn (a,b) => f a ^ "->"  ^ g b ^ "\n") tlst)
+    end
+
 end

@@ -22,5 +22,6 @@ val tabFiltra : ('b -> bool) * (''a, 'b) Tabla -> (''a, 'b) Tabla
 val tabPrimer : ('b -> bool) * ('a, 'b) Tabla -> ('a * 'b)
 val tabClaves : ('a, 'b) Tabla -> 'a list
 val tabEqRange : ('a, 'b) Tabla -> ('a, 'c) Tabla -> 'a list -> ('b * 'c -> bool) -> bool
+val tablepp : ('a -> string) -> ('b -> string) -> ('a, 'b) Tabla -> string
 
 end

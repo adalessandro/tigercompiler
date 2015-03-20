@@ -23,7 +23,8 @@ fun succ g = (#suc o (findNode g))
 
 fun pred g = (#pred o (findNode g))
 
-fun adj g n = let val {suc=suc, pred=pred} = findNode g n
+fun adj g n = let  val _ = print ("adj node= " ^ Int.toString n ^ "\n")
+                   val {suc=suc, pred=pred} = findNode g n
               in  unionsinrep suc pred
               end
 
