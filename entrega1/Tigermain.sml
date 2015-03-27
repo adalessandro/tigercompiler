@@ -22,9 +22,10 @@ fun main(args) =
         val (interp, l4) = arg(l3, "-interp") 
         val (code, l5) = arg(l4, "-code") 
         val (flow, l6) = arg(l5, "-flow") 
-        val (interf, l7) = arg(l6, "-interf") 
+        val (liveness, l7) = arg(l6, "-liveness") 
+        val (interf, l8) = arg(l7, "-interf") 
         val entrada =
-            case l7 of
+            case l8 of
                 [n] => ((open_in n)
                     handle _ => raise Fail (n^" no existe!"))
               | [] => std_in
@@ -55,13 +56,13 @@ fun main(args) =
         val assemblocklist = List.map Tigerassem.munchStmBlock b 
         val _ = if code then (print o String.concat o List.map (Tigerassem.assemblock2str o List.rev)) assemblocklist else ()
 
-        (* Liveness analisys *)
+        (* Flow analisys *)
         val fgraph = Tigerflow.makeFGraph assemblocklist
-        val _ = if flow then (((fn (Tigerflow.FGRAPH x) => Tigergraph.printGraph (#control x)) fgraph)) else []
+        val _ = if flow then (((fn (Tigerflow.FGRAPH x) => Tigergraph.printGraph (#control x) (Int.toString)) fgraph)) else []
 
-(*        val igraph = Tigerinterference.makeIGraph fgraph *)
-        val (intab, outtab) = (Tigerinterference.makeIGraph fgraph assemblocklist)
-        val _ = List.map Tigergraph.entrypp (Tigertab.tabAList intab) 
+        (* Liveness analisys *)
+        val (igraph, outtab) = Tigerinterference.makeIGraph fgraph assemblocklist
+        val _ = if liveness then List.map Tigergraph.entrypp (Tigertab.tabAList outtab) else []
 (*        val _ = if interf then Tigergraph.printGraph igraph else [] *)
 
     in

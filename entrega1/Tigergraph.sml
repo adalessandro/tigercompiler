@@ -7,13 +7,16 @@ type node = int
 type neighbours = {suc : node list, pred : node list}
 type graph = (node, neighbours) Splaymap.dict 
 
-fun printGraph g = let val glst = Splaymap.listItems g
-                       fun ppnei {suc=suc, pred=pred} = "Suc: [" ^ String.concat (List.map (fn x => Int.toString x ^ ", ") suc) ^ "]; Pred: [" ^ String.concat (List.map (fn x => Int.toString x ^ ", ") pred) ^ "]"
-                       fun pp (nod, nei) = "Nodo: " ^ Int.toString(nod) ^ "; " ^ ppnei nei ^ " \n"
-                   in
-                      List.map (print o pp) glst 
-                   end
-
+fun printGraph g nodepp = let val glst = Splaymap.listItems g
+                              fun ppnei {suc=suc, pred=pred} = "Suc: [" ^ 
+                                                               String.concat (List.map (fn x => nodepp x ^ ", ") suc) ^ 
+                                                               "]; Pred: [" ^ 
+                                                               String.concat (List.map (fn x => nodepp x ^ ", ") pred) ^ 
+                                                               "]"
+                              fun pp (nod, nei) = "Nodo: " ^ nodepp (nod) ^ "; " ^ ppnei nei ^ " \n"
+                          in
+                              List.map (print o pp) glst 
+                          end
 
 fun findNode g n : neighbours = Splaymap.find (g, n)
 
@@ -23,8 +26,7 @@ fun succ g = (#suc o (findNode g))
 
 fun pred g = (#pred o (findNode g))
 
-fun adj g n = let  val _ = print ("adj node= " ^ Int.toString n ^ "\n")
-                   val {suc=suc, pred=pred} = findNode g n
+fun adj g n = let val {suc=suc, pred=pred} = findNode g n
               in  unionsinrep suc pred
               end
 

@@ -20,7 +20,7 @@ sig
 
     val nodename : node -> string
     
-    val printGraph : graph -> unit list
+    val printGraph : graph -> (int -> string) -> unit list
 
     val entry2pp : string -> unit
     val entrypp : node * string list -> unit

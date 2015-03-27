@@ -40,6 +40,7 @@ val r9 = "r9"
 val r10 = "r10"
 val r12 = "r12"
 val generalregs = [r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r12]
+val genregslen = List.length generalregs
 
 val wSz = 4                 (* word size in bytes *)
 val log2WSz = 2             (* base two logarithm of word size in bytes *)
