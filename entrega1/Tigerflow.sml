@@ -93,4 +93,11 @@ fun makeFGraph (instrsblocks:(Tigerassem.instr list list)) =
                 nodes = nodes}
     end
 
+fun getMove n (FGRAPH fgraph) =
+	let val i = tabSaca (n, (#nodes fgraph))
+		in  case i of
+				 Tigerassem.MOVE m => ((hd o #dest) m, (hd o #src) m)
+			   | _ => raise Fail "getMove: imposible!"
+		end
+
 end

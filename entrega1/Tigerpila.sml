@@ -10,5 +10,6 @@ fun popPila pila =
     let val ret = hd(!pila)
     in pila:=tl(!pila) end
 fun topPila pila = hd(!pila)
+fun toList pila = (!pila)
 
 end
