@@ -12,6 +12,13 @@ datatype flowgraph =
                ismove: bool Tigergraph.table,
                nodes: Tigerassem.instr Tigergraph.table}
 
+fun init_fgraph () = 
+    {control = newGraph (),
+    def = tabNueva(),
+    use = tabNueva(),
+    ismove = tabNueva(),
+    nodes = tabNueva()}
+
 fun makeFGraph (instrsblocks:(Tigerassem.instr list list)) =
     let val instrs = (List.concat o List.map List.rev) instrsblocks
         val nodes = #1 (List.foldr (fn (i, (t, n)) => (tabInserta (n, i, t),  n+1)) (tabNueva(), 0) instrs)
