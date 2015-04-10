@@ -11,5 +11,6 @@ fun popPila pila =
     in pila:=tl(!pila) end
 fun topPila pila = hd(!pila)
 fun toList pila = (!pila)
+fun isEmpty pila = List.null (!pila)
 
 end

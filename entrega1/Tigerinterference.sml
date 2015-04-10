@@ -27,15 +27,18 @@ val gigraph = ref (IGRAPH (init_igraph()))
 
 val gfgraph = ref (FGRAPH (init_fgraph()))
 
-val precolored = Tigerframe.specialregs @ Tigerframe.argregs
+val coloredNodes = ref (Splayset.empty String.compare)
+val precolored_temps = Tigerframe.specialregs @ Tigerframe.argregs
+val precolored = Splayset.addList (Splayset.empty String.compare, precolored_temps)
+fun isprecolored x = Splayset.member (precolored, x)
 
-(* adjList : (Tigergraph.node, Tigergraph.node List) Tabla *)
+(* adjList : (Tigergraph.node, Tigergraph.node Set) Tabla *)
 val adjList = ref (tabNueva())
 (* degree : (Tigergraph.node, int) Tabla *)
 val degree = ref (tabNueva())
 (* nodetempmap : (Tigergraph.node, Tigertemp.temp) Tabla *)
 val nodetempmap = ref (tabNueva())
-(* moveList : (Tigergraph.node list) table :: temp_node -> instr_node set *)
+(* moveList : (Tigergraph.node list) table :: temp_node -> instr_node Set *)
 val movelist = ref (tabNueva ())
 val workListMoves = ref (Splayset.empty Int.compare)
 
@@ -47,11 +50,11 @@ fun addEdge(u, v) =
     in
 		(if (not (areAdj (!graph) u v) andalso u <> v)
 		 then let val _ = graph := mk_edge (mk_edge (!graph) {from=u, to=v}) {from=v, to=u}
-	 			  val _ = if not (List.exists (fn x => x = gtemp u) precolored)
+	 			  val _ = if not (isprecolored (gtemp u))
 						  then (adjList := tabRInserta (u, Splayset.union ((tabSaca (u, !adjList)), (Splayset.singleton Int.compare v)), !adjList);
 							    degree := tabRInserta (u, 1 + tabSaca (u, !degree), !degree))
 						  else ()
-				  val _ = if not (List.exists (fn x => x = gtemp v) precolored)
+				  val _ = if not (isprecolored (gtemp v))
 						  then (adjList := tabRInserta (v, Splayset.union ((tabSaca (v, !adjList)), (Splayset.singleton Int.compare u)), !adjList);
 							    degree := tabRInserta (v, 1 + tabSaca (v, !degree), !degree))
 						  else ()
@@ -183,7 +186,8 @@ val activeMoves = ref (Splayset.empty Int.compare) (* estado inicial correcto? *
 
 fun makeWorkList () =
     let val tnode = (#tnode o getigraph) (!gigraph)
-		val initial = restadelist ((quitarreps o tabImagen) (!nodetempmap)) precolored
+		val pre_initial = Splayset.addList (Splayset.empty String.compare, tabImagen (!nodetempmap))
+		val initial = Splayset.difference (pre_initial, precolored)
         fun foralln n =
             if tabSaca(n, (!degree)) >= Tigerframe.genregslen then
                spillWorkList := Splayset.add (!spillWorkList, n)
@@ -191,7 +195,7 @@ fun makeWorkList () =
                freezeWorkList := Splayset.add (!freezeWorkList, n)
             else
                simplifyWorkList := Splayset.add (!simplifyWorkList, n)
-    in  List.map (foralln o tnode) initial
+    in  Splayset.app (foralln o tnode) initial
     end
 
 and isMoveRelated n = Splayset.isEmpty (nodeMoves n)
@@ -239,12 +243,12 @@ fun decrementDegree m =
 	end
 
 val simplify =
-	let fun foralln n =
+	let fun forone n =
 			(simplifyWorkList := Splayset.delete (!simplifyWorkList, n);
 			 Tigerpila.pushPila selectStack n;
 			 Splayset.app decrementDegree (adjacent n))
 	in
-		Splayset.app foralln (!simplifyWorkList)
+		forone (getone_fromset (!simplifyWorkList))
 	end
 
 (* alias : (Tigergraph.node, Tigergraph.node) Tabla *)
@@ -261,7 +265,7 @@ fun getAlias n =
 fun addWorkList u =
 	let val gtemp = #gtemp (getigraph (!gigraph))
 	in
-		if (not (List.exists (fn p => p = gtemp u) precolored) andalso
+		if (not (isprecolored (gtemp u)) andalso
 			not (isMoveRelated(u)) andalso
 			tabSaca(u, (!degree)) < Tigerframe.genregslen)
 		then (freezeWorkList := Splayset.delete(!freezeWorkList, u);
@@ -273,7 +277,7 @@ fun ok_fun (t, r) =
 	let val gtemp = #gtemp (getigraph (!gigraph))
 		val graph = #graph (getigraph (!gigraph))
         val a = tabSaca(t, (!degree)) < Tigerframe.genregslen
-		val b = List.exists (fn p => p = gtemp t) precolored
+		val b = isprecolored(gtemp t)
 		val c = areAdj graph t r
 	in
 		a orelse b orelse c
@@ -312,11 +316,11 @@ fun coalesce () =
 		val gtemp = #gtemp (getigraph (!gigraph))
 		val graph = #graph (getigraph (!gigraph))
 		fun tnodepair (a, b) = (tnode  a, tnode b)
-		fun forallm m =
+		fun forone m =
 			let val copy = tnodepair(Tigerflow.getMove m (!gfgraph))
 				val x = getAlias(#1 copy)
 				val y = getAlias(#2 copy)
-				val (u, v) = if List.exists (fn p => p = gtemp y) precolored
+				val (u, v) = if isprecolored(gtemp y)
 							 then (y, x)
 							 else (x, y)
 				val _ = workListMoves := Splayset.delete (!workListMoves, m)
@@ -324,14 +328,14 @@ fun coalesce () =
 				if (u = v) then
 					(coalescedMoves := Splayset.add (!coalescedMoves, m);
 					 addWorkList u)
-				else if ((List.exists (fn p => p = gtemp v) precolored) orelse (areAdj graph u v)) then
+				else if ((isprecolored(gtemp v)) orelse (areAdj graph u v)) then
 					(constrainedMoves := Splayset.add (!constrainedMoves, m);
 					 addWorkList u;
 					 addWorkList v)
-				else if (   (   (List.exists (fn p => p = gtemp u) precolored) andalso
+				else if (   (   (isprecolored(gtemp u)) andalso
 						        (Splayset.find (fn t => not (ok_fun (t, u))) (adjacent(v))) = NONE
 						    ) orelse
-						    (   not (List.exists (fn p => p = gtemp u) precolored) andalso
+						    (   not (isprecolored(gtemp u)) andalso
 							    (conservative (Splayset.union (adjacent(u), adjacent(v))))
 						    )
 						) then
@@ -342,7 +346,103 @@ fun coalesce () =
 					activeMoves := Splayset.add (!activeMoves, m)
 			end
 	in
-		()
+		forone (getone_fromset (!workListMoves))
+	end
+
+val frozenMoves = ref (Splayset.empty Int.compare)
+
+fun freeze () =
+	let fun forone u =
+		(freezeWorkList := Splayset.delete (!freezeWorkList, u);
+		 simplifyWorkList := Splayset.add (!simplifyWorkList, u);
+		 freezeMoves u)
+	in
+		forone (getone_fromset (!freezeWorkList))
+	end
+
+and freezeMoves u =
+	let fun forallm m =
+		let val tnode = #tnode (getigraph (!gigraph))
+			fun tnodepair (a, b) = (tnode  a, tnode b)
+			val copy = tnodepair(Tigerflow.getMove m (!gfgraph))
+			val v = if (getAlias(#2 copy) = getAlias(u)) then
+						getAlias(#1 copy)
+					else
+						getAlias(#2 copy)
+			val _ = activeMoves := Splayset.delete (!activeMoves, m)
+			val _ = frozenMoves := Splayset.add (!frozenMoves, m)
+			val cond = Splayset.isEmpty(nodeMoves(v)) andalso 
+					   tabSaca(v, (!degree)) < Tigerframe.genregslen
+		in
+			if cond then
+				(freezeWorkList := Splayset.delete (!freezeWorkList, v);
+				 simplifyWorkList := Splayset.add (!simplifyWorkList, v))
+			else
+				()
+		end
+	in
+		Splayset.app forallm (nodeMoves u)
+	end
+
+fun selectSpill () =
+	let val heuristic = getone_fromset
+		fun forone m =
+		(spillWorkList := Splayset.delete (!spillWorkList, m);
+		 simplifyWorkList := Splayset.add (!simplifyWorkList, m);
+		 freezeMoves m)
+	in
+		forone (heuristic (!spillWorkList))
+	end
+
+(* color : ref (Tigergraph.node, int) Tabla *)
+val color = let val tnode = #tnode (getigraph (!gigraph))
+				val color_tab = ref (tabNueva())
+				fun precolorear (t, n) =
+						(color_tab := tabRInserta (tnode t, n, (!color_tab));
+						 n + 1)
+			in (List.foldl precolorear 0 precolored_temps;
+			    color_tab)
+			end
+
+val okColors = let val okColorsList = List.tabulate(Tigerframe.genregslen, (fn x => x))
+			   in ref (Splayset.addList (Splayset.empty Int.compare, okColorsList))
+			   end
+
+val spilledNodes = ref (Splayset.empty Int.compare)
+
+fun assignColors_while () =
+	while (not (Tigerpila.isEmpty selectStack)) do
+		let val gtemp = #gtemp (getigraph (!gigraph))
+			val n = let val ret = Tigerpila.topPila selectStack
+					in (Tigerpila.popPila selectStack; ret)
+					end
+			fun forallw w =
+				let val cond = Splayset.member (Splayset.union (!coloredNodes, precolored), (gtemp o getAlias) w)
+					val w_color = tabSaca (getAlias w, !color)
+				in
+					if cond then
+						okColors := Splayset.delete ((!okColors), w_color)
+					else 
+						()
+				end
+		in
+			Splayset.app forallw (tabSaca (n, (!adjList)));
+			(if Splayset.isEmpty (!okColors) then
+				spilledNodes := Splayset.add (!spilledNodes, n)
+			 else
+				(coloredNodes := Splayset.add (!coloredNodes, gtemp n);
+				color := tabRInserta (n, getone_fromset (!okColors), (!color)))
+			)
+		end
+
+fun assignColors () =
+	let fun foralln n =
+		let val n_color = tabSaca (getAlias n, !color)
+		in color := tabRInserta (n, n_color, !color)
+		end
+	in 
+		assignColors_while ();
+		Splayset.app foralln (!coalescedNodes)
 	end
 
 end

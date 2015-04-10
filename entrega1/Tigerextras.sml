@@ -21,4 +21,8 @@ fun list2set xs = Splayset.addList ((Splayset.empty String.compare), xs)
 
 fun listpp f xs = "[" ^ String.concat (List.map (fn x => f x ^ ", ") xs) ^ "]"
 
+fun getone_fromset s = case (Splayset.find (fn x => true) s) of
+							NONE => raise Fail "getone_fromset ERROR: empty set"
+						  | SOME x => x
+
 end
