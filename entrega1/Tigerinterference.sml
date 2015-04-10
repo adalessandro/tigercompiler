@@ -21,7 +21,7 @@ val adjList = ref (tabNueva())
 val degree = ref (tabNueva())
 (* nodetempmap : (Tigergraph.node, Tigertemp.temp) Tabla *)
 val nodetempmap = ref (tabNueva())
-(* moveList : (Tigergraph.node list) table :: temp_node -> instr_node list *)
+(* moveList : (Tigergraph.node list) table :: temp_node -> instr_node set *)
 val movelist = ref (tabNueva ())
 val workListMoves = ref (Splayset.empty Int.compare)
 
@@ -254,11 +254,36 @@ fun addWorkList (u, (IGRAPH igraph)) =
 		else ()
 	end
 
-fun ok_fun (t, r) = true
+fun ok_fun (IGRAPH igraph) (t, r) = 
+	let val gtemp = #gtemp igraph
+		val graph = #graph igraph
+        val a = tabSaca(t, (!degree)) < Tigerframe.genregslen
+		val b = List.exists (fn p => p = gtemp t) precolored
+		val c = areAdj graph t r
+	in
+		a orelse b orelse c
+	end
 
-fun conservative ns = true
-
-fun combine (u, v) = ()
+fun conservative ns =
+    let fun cond n = tabSaca(n, (!degree)) >= Tigerframe.genregslen
+		val foo = (fn (n, cont) => if (cond n) then cont + 1 else cont)
+	in  (Splayset.foldl foo 0 ns) < Tigerframe.genregslen
+	end
+    
+fun combine (u, v) =
+	let val _ = if Splayset.member ((!freezeWorkList), v) then
+					freezeWorkList := Splayset.delete(!freezeWorkList, v)
+				else
+					spillWorkList := Splayset.delete(!spillWorkList, v)
+		val _ = (coalescedNodes := Splayset.add(!coalescedNodes, v);
+				 alias := tabRInserta (v, u, (!alias)))
+		val nodemoves_u = tabSaca(u, (!movelist))
+		val nodemoves_v = tabSaca(v, (!movelist))
+		val _ = movelist := tabRInserta(u, Splayset.union(nodemoves_u, nodemoves_v), (!movelist))
+	in
+		()
+	end
+				 
 
 fun coalesce (FGRAPH fgraph) (IGRAPH igraph) =
 	let val tnode = #tnode igraph
@@ -282,7 +307,7 @@ fun coalesce (FGRAPH fgraph) (IGRAPH igraph) =
 					 addWorkList(u, IGRAPH igraph);
 					 addWorkList(v, IGRAPH igraph))
 				else if (   (   (List.exists (fn p => p = gtemp u) precolored) andalso
-						        (Splayset.find (fn t => not (ok_fun(t, u))) (adjacent(v))) = NONE
+						        (Splayset.find (fn t => not (ok_fun (IGRAPH igraph) (t, u))) (adjacent(v))) = NONE
 						    ) orelse
 						    (   not (List.exists (fn p => p = gtemp u) precolored) andalso
 							    (conservative (Splayset.union (adjacent(u), adjacent(v))))
