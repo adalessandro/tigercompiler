@@ -26,6 +26,8 @@ sig
 
     val labelpos : label -> instr list -> int -> int option
 
+	val getTemps : instr -> temp list
+
     val FALSE_LABEL : label
     val RET_LABEL : label
     val CALL_LABEL : label

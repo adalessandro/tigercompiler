@@ -206,4 +206,12 @@ fun munchStmBlock (ss, frame) =
         !ilist)
     end
 
+
+(* ----- Extras ----- *)
+fun getTemps instr =
+	case instr of
+    	 OPER {dest = dest, src = src, ...} => dest @ src
+  	   | LABEL _ => []
+       | MOVE {dest = dest, src = src, ...} => dest @ src
+
 end

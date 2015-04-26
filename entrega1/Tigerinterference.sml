@@ -1,6 +1,8 @@
 structure Tigerinterference =
 struct
 
+structure T = Tigertree
+
 open Tigergraph
 open Tigertab
 open Tigerflow
@@ -184,10 +186,11 @@ val freezeWorkList = ref (Splayset.empty Int.compare)
 val simplifyWorkList = ref (Splayset.empty Int.compare)
 val activeMoves = ref (Splayset.empty Int.compare) (* estado inicial correcto? *)
 
+val pre_initial = Splayset.addList (Splayset.empty String.compare, tabImagen (!nodetempmap))
+val initial = ref (Splayset.difference (pre_initial, precolored))
+
 fun makeWorkList () =
     let val tnode = (#tnode o getigraph) (!gigraph)
-		val pre_initial = Splayset.addList (Splayset.empty String.compare, tabImagen (!nodetempmap))
-		val initial = Splayset.difference (pre_initial, precolored)
         fun foralln n =
             if tabSaca(n, (!degree)) >= Tigerframe.genregslen then
                spillWorkList := Splayset.add (!spillWorkList, n)
@@ -195,7 +198,7 @@ fun makeWorkList () =
                freezeWorkList := Splayset.add (!freezeWorkList, n)
             else
                simplifyWorkList := Splayset.add (!simplifyWorkList, n)
-    in  Splayset.app (foralln o tnode) initial
+    in  Splayset.app (foralln o tnode) (!initial)
     end
 
 and isMoveRelated n = Splayset.isEmpty (nodeMoves n)
@@ -206,12 +209,12 @@ and nodeMoves n = let val a = tabSaca(n, (!movelist))
                   in Splayset.intersection (a, (Splayset.union (b, c)))
                   end
 
-val coalescedNodes = ref (Splayset.empty Int.compare)
-val selectStack: Tigergraph.node Tigerpila.Pila = Tigerpila.nuevaPila()
+val coalescedNodes = ref (Splayset.empty String.compare)
+val selectStack: string Tigerpila.Pila = Tigerpila.nuevaPila()
 
 fun adjacent n = let val a = tabSaca (n, (!adjList))
-					 val b = Splayset.addList (Splayset.empty Int.compare, Tigerpila.toList selectStack)
-					 val c = (!coalescedNodes)
+					 val b = Splayset.addList (Splayset.empty String.compare, List.map gtemp (Tigerpila.toList selectStack))
+					 val c =  Splayset.app((fn x => gtemp x ; ()) !coalescedNodes)
 				 in Splayset.difference (a, (Splayset.union (b, c)))
 				 end
 
@@ -242,10 +245,10 @@ fun decrementDegree m =
 			())
 	end
 
-val simplify =
+fun simplify () =
 	let fun forone n =
 			(simplifyWorkList := Splayset.delete (!simplifyWorkList, n);
-			 Tigerpila.pushPila selectStack n;
+			 Tigerpila.pushPila selectStack (gtemp n);
 			 Splayset.app decrementDegree (adjacent n))
 	in
 		forone (getone_fromset (!simplifyWorkList))
@@ -258,7 +261,7 @@ val constrainedMoves = ref (Splayset.empty Int.compare)
 val coalescedMoves = ref (Splayset.empty Int.compare)
 
 fun getAlias n =
-	if Splayset.member ((!coalescedNodes), n)
+	if Splayset.member ((!coalescedNodes), gtemp n)
 	then getAlias (tabSaca (n, (!alias)))
 	else n
 
@@ -294,7 +297,7 @@ fun combine (u, v) =
 					freezeWorkList := Splayset.delete(!freezeWorkList, v)
 				else
 					spillWorkList := Splayset.delete(!spillWorkList, v)
-		val _ = (coalescedNodes := Splayset.add(!coalescedNodes, v);
+		val _ = (coalescedNodes := Splayset.add(!coalescedNodes, gtemp v);
 				 alias := tabRInserta (v, u, (!alias)))
 		val nodemoves_u = tabSaca(u, (!movelist))
 		val nodemoves_v = tabSaca(v, (!movelist))
@@ -436,13 +439,42 @@ fun assignColors_while () =
 		end
 
 fun assignColors () =
-	let fun foralln n =
-		let val n_color = tabSaca (getAlias n, !color)
+	let fun foralln t =
+		let val n = gtemp t
+			val n_color = tabSaca (getAlias n, !color)
 		in color := tabRInserta (n, n_color, !color)
 		end
 	in 
 		assignColors_while ();
 		Splayset.app foralln (!coalescedNodes)
+	end
+
+fun rewriteProgram bframes (instrsblocks:(Tigerassem.instr list list)) =
+	let val gtemp = (#gtemp o getigraph) (!gigraph)
+		fun rewriteNode (n, instrsblocks') =
+			let val pares = ListPair.zip (instrsblocks', bframes)
+				fun isSpillInstr i =
+					let val temps = Tigerassem.getTemps  i
+					in
+						List.exists (fn x => x = gtemp n) temps
+					end
+				fun rewriteInstr f i =
+					if isSpillInstr i then
+						Tigersimpleregalloc.simpleregalloc f [i]
+					else [i]
+				fun rewriteBlock (is, f) =
+					List.concat (List.map (rewriteInstr f) is)
+			in
+				(List.map rewriteBlock pares)
+			end
+		val result = Splayset.foldr rewriteNode instrsblocks (!spilledNodes)
+		val newTemps = Splayset.empty String.compare (* simpleregalloc usa un registro en vez de temp *)
+	in
+		spilledNodes := Splayset.empty Int.compare;
+		initial := Splayset.union (Splayset.union (!coloredNodes, !coalescedNodes), newTemps);
+		coloredNodes := Splayset.empty Int.compare;
+		coalescedNodes := Splayset.empty String.compare;
+		result
 	end
 
 end

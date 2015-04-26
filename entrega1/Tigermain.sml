@@ -61,9 +61,10 @@ fun main(args) =
         val _ = if flow then (((fn (Tigerflow.FGRAPH x) => Tigergraph.printGraph (#control x) (Int.toString)) fgraph)) else []
 
         (* Liveness analisys *)
-        val (igraph, outtab) = Tigerinterference.makeIGraph fgraph assemblocklist
+		val bframes = List.map (#2) b
+        val (igraph, outtab) = Tigerinterference.makeIGraph fgraph assemblocklist 
         val _ = if liveness then List.map Tigergraph.entrypp (Tigertab.tabAList outtab) else []
-(*        val _ = if interf then Tigergraph.printGraph igraph else [] *)
+		(* val _ = if interf then Tigergraph.printGraph igraph else [] *)
 
     in
         print "yes!!\n"

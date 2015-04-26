@@ -94,7 +94,8 @@ Tigerflow.uo: Tigergraph.ui Tigertab.ui Tigerassem.ui Tigertemp.ui
 Tigerlex.uo: Tigergrm.ui Tigernlin.uo 
 Tigerescap.uo: Tigerescap.ui Tigerabs.uo Tigertab.ui 
 Tigerinterference.uo: Tigergraph.ui Tigerframe.ui Tigerpila.ui Tigertab.ui \
-    Tigerassem.ui Tigertemp.ui Tigerextras.uo Tigerflow.uo 
+    Tigerassem.ui Tigertemp.ui Tigerextras.uo Tigersimpleregalloc.ui \
+    Tigerflow.uo 
 Tigerseman.uo: Tigerseman.ui Tigerabs.uo Tigersres.uo Tigerpila.ui \
     Tigertab.ui Topsort.ui Tigertrans.ui 
 Tigerescap.ui: Tigerabs.uo 
