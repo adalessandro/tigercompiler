@@ -21,8 +21,15 @@ fun list2set xs = Splayset.addList ((Splayset.empty String.compare), xs)
 
 fun listpp f xs = "[" ^ String.concat (List.map (fn x => f x ^ ", ") xs) ^ "]"
 
-fun getone_fromset s = case (Splayset.find (fn x => true) s) of
-							NONE => raise Fail "getone_fromset ERROR: empty set"
-						  | SOME x => x
+fun list_eq ([], []) = true
+  | list_eq (x::xs, y::ys) =
+        if x = y then list_eq (xs, ys) else false
+  | list_eq _ = false
+
+fun pair_compare f g ((a, b), (c, d)) =
+        let val x = f (a, c)
+        in
+            if x = EQUAL then g (b, d) else x
+        end
 
 end

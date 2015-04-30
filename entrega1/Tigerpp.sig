@@ -1,4 +1,4 @@
 signature Tigerpp =
 sig
-	val exprAst: Tigerabs.exp -> unit
+	val exprAst: Abs.exp -> unit
 end

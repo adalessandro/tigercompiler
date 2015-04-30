@@ -1,5 +1,5 @@
 signature Topsort =
 sig
-    val fijaTipos : {name: Tigerabs.symbol, ty: Tigerabs.ty} list -> (string, Tigertips.Tipo) Tigertab.Tabla -> (string, Tigertips.Tipo) Tigertab.Tabla
+    val fijaTipos : {name: Abs.symbol, ty: Abs.ty} list -> (string, Tips.Tipo) Tab.Tabla -> (string, Tips.Tipo) Tab.Tabla
     exception Ciclo
 end

@@ -1,7 +1,7 @@
 structure Tigerpp :> Tigerpp = 
 struct
 
-open Tigerabs
+open Abs
 open PP
 
 fun ppexpr pps e0 = 

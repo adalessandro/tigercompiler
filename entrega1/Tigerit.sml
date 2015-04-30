@@ -1,8 +1,8 @@
 structure Tigerit =
 struct
 
-open Tigertab
-open Tigertree
+open Tab
+open Tree
 
 fun tree s0 =
 	let	fun say s = s

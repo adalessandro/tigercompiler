@@ -1,10 +1,10 @@
 structure Topsort :> Topsort =
 struct
 
-open Tigertips
-open Tigertab
-open Tigerabs
-open Tigersres
+open Tips
+open Tab
+open Abs
+open Sres
 
 infix -- ---
 infix rs ls
