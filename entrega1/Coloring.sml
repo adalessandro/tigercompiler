@@ -81,7 +81,7 @@ val frozenMoves = ref (Set.empty Int.compare)
 (* Moves enabled for possible coalescing. *)
 val worklistMoves = ref (Set.empty Int.compare)
 (* Moves not yet ready for coalescing. *)
-val activeMoves = ref (Set.empty Int.compare) (* estado inicial correcto? *)
+val activeMoves = ref (Set.empty Int.compare)
 
 
 (* OTHER DATA STRUCTURES. P.243 -------------------------------------------------------------------
@@ -125,25 +125,39 @@ fun makeIGraph (FGRAPH fgraph) =
             val _ = setgraph (newNodes (newGraph()) temps_indexes)
             val _ = settnode (fn t => #1 (tabPrimer ((fn y => t = y), temp_nodes_tab)))
             val _ = setgtemp (fn n => tabSaca(n, temp_nodes_tab))
-            val _ = setmoves (Set.empty (pair_compare Int.compare Int.compare))
-            val _ = setnodes (tabNueva())
+            val _ = setmoves (Set.empty (pair_compare Int.compare Int.compare)) (* No se está usando *)
+            val _ = setnodes (tabNueva()) (* No se está usando *)
 
             (* Initialize node work-lists, sets and stacks *)
             val precolored_nodes = List.map (tnode()) precolored_temps
             val _ = precolored := Set.addList (!precolored, precolored_nodes)
             val _ = initial := Set.difference (temp_nodes_set, !precolored)
+            val _ = simplifyWorkList := Set.empty Int.compare
+            val _ = freezeWorkList := Set.empty Int.compare
+            val _ = spillWorkList := Set.empty Int.compare
+            val _ = spilledNodes := Set.empty Int.compare
+            val _ = coalescedNodes := Set.empty Int.compare
+            val _ = coloredNodes := Set.empty Int.compare
+            val _ = Pila.emptyPila selectStack
+
+            (* Initialize move sets *)
+            val _ = coalescedMoves := Set.empty Int.compare
+            val _ = constrainedMoves := Set.empty Int.compare
+            val _ = frozenMoves := Set.empty Int.compare
+            val _ = worklistMoves := Set.empty Int.compare
+            val _ = activeMoves := Set.empty Int.compare
 
             (* Initialize the other data structures *)
             val adj_init = List.tabulate (List.length temps_list, (fn x => (x, Set.empty Int.compare)))
-            val _ = adjList := tabInserList (!adjList, adj_init)
+            val _ = adjList := tabInserList (tabNueva(), adj_init)
             val degree_init = List.tabulate (List.length temps_list, (fn x => (x, 0)))
-            val _ = degree := tabInserList (!degree, degree_init)
+            val _ = degree := tabInserList (tabNueva(), degree_init)
             val move_init = List.tabulate (List.length temps_list, (fn x => (x, Set.empty Int.compare)))
-            val _ = movelist := tabInserList (!movelist, move_init)
+            val _ = movelist := tabInserList (tabNueva(), move_init)
             val alias_init = List.tabulate (List.length temps_list, (fn x => (x, x)))
-            val _ = alias := tabInserList (!alias, alias_init)
+            val _ = alias := tabInserList (tabNueva(), alias_init)
             val color_init = List.tabulate (List.length temps_list, (fn x => (x, "")))
-            val _ = color := tabInserList (!color, color_init)
+            val _ = color := tabInserList (tabNueva(), color_init)
             val _ = List.map (fn t => tabRInserta_ (tnode() t, t, color)) precolored_temps
 
             (* Liveness P.214 Algorithm 10.4 *)

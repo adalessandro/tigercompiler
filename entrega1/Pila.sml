@@ -22,4 +22,6 @@ fun toList pila = (!pila)
 
 fun isEmpty pila = List.null (!pila)
 
+fun emptyPila pila = pila := []
+
 end

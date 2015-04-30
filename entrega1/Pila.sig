@@ -9,5 +9,6 @@ val popPila : 'a Pila -> 'a
 val topPila : 'a Pila -> 'a
 val toList : 'a Pila -> 'a list
 val isEmpty : 'a Pila -> bool
+val emptyPila : 'a Pila -> unit
 
 end
