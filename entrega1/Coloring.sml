@@ -9,7 +9,6 @@ open Tab
 open Flow
 open Tigerextras
 
-(*structure Graph*)
 datatype igraph =
         IGRAPH of { graph: Graph.graph,
                     tnode: Temp.temp -> Graph.node,
@@ -21,70 +20,133 @@ datatype igraph =
 val gbl_graph = ref (NONE : Graph.graph option)
 val gbl_tnode = ref (NONE : (Temp.temp -> Graph.node) option)
 val gbl_gtemp = ref (NONE : (Graph.node -> Temp.temp) option)
-val gbl_moves = ref (NONE : (Graph.node * Graph.node) Set.set option)
-val gbl_nodes = ref (NONE : Temp.temp Graph.table option)
+val gbl_moves = ref (NONE : (Graph.node * Graph.node) Set.set option) (* No se está usando *)
+val gbl_nodes = ref (NONE : Temp.temp Graph.table option) (* No se está usando *)
 
 fun graph() = valOf (!gbl_graph)
 fun tnode() = valOf (!gbl_tnode)
 fun gtemp() = valOf (!gbl_gtemp)
-fun moves() = valOf (!gbl_moves)
-fun nodes() = valOf (!gbl_nodes)
+fun moves() = valOf (!gbl_moves) (* No se está usando *)
+fun nodes() = valOf (!gbl_nodes) (* No se está usando *)
 
 fun setgraph x = gbl_graph := (SOME x)
 fun settnode x = gbl_tnode := (SOME x)
 fun setgtemp x = gbl_gtemp := (SOME x)
-fun setmoves x = gbl_moves := (SOME x)
-fun setnodes x = gbl_nodes := (SOME x)
+fun setmoves x = gbl_moves := (SOME x) (* No se está usando *)
+fun setnodes x = gbl_nodes := (SOME x) (* No se está usando *)
 
 (* Constantes globales *)
 val precolored_temps = Frame.specialregs @ Frame.argregs
-val precolored_nodes = List.map (tnode()) precolored_temps
+val k_colors = Frame.generalregs
 val k_len = Frame.genregslen
 
-(* Estructuras globales para el coloreo *)
-val movelist = ref (tabNueva())
-val worklistMoves = ref (Set.empty Int.compare)
-val adjList = ref (tabNueva())
+(* NODE WORK-LISTS, SETS AND STACKS. P.242 --------------------------------------------------------
+ * Structures to keep track of graph nodes and move edges.
+ * Mutually disjoint. 
+ * Initially (on entry to Main), and on exiting RewriteProgram, only sets
+ * precolored and initial are nonempty.
+ *)
 
-val precolored = Set.addList (Set.empty Int.compare, precolored_nodes)
-fun isprecolored x = Set.member (precolored, x)
-val degree = ref (tabNueva())
-val coloredNodes = ref (Set.empty Int.compare)
-
-val spillWorkList = ref (Set.empty Int.compare)
-val freezeWorkList = ref (Set.empty Int.compare)
-val simplifyWorkList = ref (Set.empty Int.compare)
-val activeMoves = ref (Set.empty Int.compare) (* estado inicial correcto? *)
-
+(* Machine registers, preassigned a color. *)
+val precolored = ref (Set.empty Int.compare)
+(* Temporary registers, not precolored and not yet processed. *)
 val initial = ref (Set.empty Int.compare)
-
+(* List of low-degree non-move-related nodes. *)
+val simplifyWorkList = ref (Set.empty Int.compare)
+(* Low-degree move-related nodes. *)
+val freezeWorkList = ref (Set.empty Int.compare)
+(* High-degree nodes. *)
+val spillWorkList = ref (Set.empty Int.compare)
+(* Nodes marked for spilling during this round; initially empty. *)
+val spilledNodes = ref (Set.empty Int.compare)
+(* Registers that have been coalesced; when u<-v is coalesced, v is added
+ * to this set and u put back on some work-list (or vice versa). *)
 val coalescedNodes = ref (Set.empty Int.compare)
+(* Nodes successfully colored. *)
+val coloredNodes = ref (Set.empty Int.compare)
+(* Stack containing temporaries removed from the graph. *)
 val selectStack: int Pila.Pila = Pila.nuevaPila ()
 
-val alias = ref (tabNueva())
-val constrainedMoves = ref (Set.empty Int.compare)
+
+(* MOVE SETS. P.243 -------------------------------------------------------------------------------
+ * Every move is in exactly one of these sets (after Build through the end of Main.
+ *)
+
+(* Moves that have been coalesced. *)
 val coalescedMoves = ref (Set.empty Int.compare)
-
+(* Moves whose source and target interfere. *)
+val constrainedMoves = ref (Set.empty Int.compare)
+(* Moves that will no longer be considered for coalescing. *)
 val frozenMoves = ref (Set.empty Int.compare)
+(* Moves enabled for possible coalescing. *)
+val worklistMoves = ref (Set.empty Int.compare)
+(* Moves not yet ready for coalescing. *)
+val activeMoves = ref (Set.empty Int.compare) (* estado inicial correcto? *)
 
+
+(* OTHER DATA STRUCTURES. P.243 -------------------------------------------------------------------
+ * Every move is in exactly one of these sets (after Build through the end of Main.
+ *)
+
+(* Adjacency list representation of the graph; for each non-precolored temporary u,
+ * adjList[u] is the set of nodes that interfere with u. *)
+val adjList = ref (tabNueva())
+(* An array containing the current degree of each node. *)
+val degree = ref (tabNueva())
+(* A mapping from a node to the list of moves it is associated with. *)
+val movelist = ref (tabNueva())
+(* When a move (u, v) has been coalesced, and v put in coalescedNodes, then alias(v) = u. *)
+val alias = ref (tabNueva())
+(* The color chosen by the algorithm for a node; for precolored nodes this is initialized
+ * to the given color *)
 val color = ref (tabNueva())
-val okColors = ref (Set.empty Int.compare)
-val spilledNodes = ref (Set.empty Int.compare)
 
-(* Graph coloring implementation algorithm *)
+
+(* Auxiliary functions *)
+fun isprecolored x = Set.member (!precolored, x)
+
+
+(* PROGRAM CODE P.244-250 -------------------------------------------------------------------------
+ * The algorithm is invoked using the procedure Main, which loops (via tail recursion)
+ * until no spills are generated.
+ *)
 
 (* LivenessAnalisys and Build *)
 fun makeIGraph (FGRAPH fgraph) =
         let
+            (* Initialize the interference graph *)
             val temps_set = getTempsSet (FGRAPH fgraph)
             val temps_list = Set.listItems temps_set
             val temps_indexes = List.tabulate (List.length temps_list, (fn x => x))
             val temps_pairs = ListPair.zip (temps_indexes, temps_list)
-            val temp_nodes = tabInserList(tabNueva(), temps_pairs)
+            val temp_nodes_tab = tabInserList (tabNueva(), temps_pairs)
+            val temp_nodes_set = Set.addList (Set.empty Int.compare, temps_indexes)
 
-            val _ = settnode (fn t => #1 (tabPrimer ((fn y => t = y), temp_nodes)))
-            val _ = setgtemp (fn n => tabSaca(n, temp_nodes))
+            val _ = setgraph (newNodes (newGraph()) temps_indexes)
+            val _ = settnode (fn t => #1 (tabPrimer ((fn y => t = y), temp_nodes_tab)))
+            val _ = setgtemp (fn n => tabSaca(n, temp_nodes_tab))
+            val _ = setmoves (Set.empty (pair_compare Int.compare Int.compare))
+            val _ = setnodes (tabNueva())
 
+            (* Initialize node work-lists, sets and stacks *)
+            val precolored_nodes = List.map (tnode()) precolored_temps
+            val _ = precolored := Set.addList (!precolored, precolored_nodes)
+            val _ = initial := Set.difference (temp_nodes_set, !precolored)
+
+            (* Initialize the other data structures *)
+            val adj_init = List.tabulate (List.length temps_list, (fn x => (x, Set.empty Int.compare)))
+            val _ = adjList := tabInserList (!adjList, adj_init)
+            val degree_init = List.tabulate (List.length temps_list, (fn x => (x, 0)))
+            val _ = degree := tabInserList (!degree, degree_init)
+            val move_init = List.tabulate (List.length temps_list, (fn x => (x, Set.empty Int.compare)))
+            val _ = movelist := tabInserList (!movelist, move_init)
+            val alias_init = List.tabulate (List.length temps_list, (fn x => (x, x)))
+            val _ = alias := tabInserList (!alias, alias_init)
+            val color_init = List.tabulate (List.length temps_list, (fn x => (x, "")))
+            val _ = color := tabInserList (!color, color_init)
+            val _ = List.map (fn t => tabRInserta_ (tnode() t, t, color)) precolored_temps
+
+            (* Liveness P.214 Algorithm 10.4 *)
             val instr_nodes_list = tabClaves (#nodes fgraph)
             val init_inout_pairs = List.map (fn x => (x, Set.empty String.compare)) instr_nodes_list
             val init_inout_tab = tabInserList (tabNueva(), init_inout_pairs)
@@ -94,7 +156,6 @@ fun makeIGraph (FGRAPH fgraph) =
             fun succ n = Graph.succ (#control fgraph) n
             fun ismove n = tabSaca(n, (#ismove fgraph))
 
-            (* Liveness P.214 Algorithm 10.4 *)
             fun liveness (inTab, outTab) =
                 let fun liveness' (inTab', outTab', []) = (inTab', outTab')
                       | liveness' (inTab', outTab', (n::ns)) =
@@ -118,14 +179,9 @@ fun makeIGraph (FGRAPH fgraph) =
             
             val (inTab, outTab) = liveness (init_inout_tab, init_inout_tab)
 
-            (* Initialization *)
-            val _ = setmoves (Set.empty (pair_compare Int.compare Int.compare))
-            val _ = setnodes (tabNueva())
-
             (* Build P.245 *)
             fun build i =
                 let fun liveout n = tabSaca (n, outTab)
-                    fun livein n = tabSaca (n, inTab)
                     val live = liveout i
                     fun foralln n = 
                             let val is = tabSaca (tnode() n, !movelist)
@@ -147,10 +203,8 @@ fun makeIGraph (FGRAPH fgraph) =
                 in
                     Set.app foralld (def i)
                 end
-
-            val init_graph = newNodes (newGraph ()) temps_indexes
         in
-            List.map build instr_nodes_list
+            List.map build (List.rev instr_nodes_list)
         end
 
 and addEdge(u, v) =
@@ -288,11 +342,6 @@ and addWorkList u =
             simplifyWorkList := Set.add (!simplifyWorkList, u)
         ) else ()
 
-and getAlias n =
-        if Set.member (!coalescedNodes, n) then
-            getAlias (tabSaca (n, (!alias)))
-        else n
-
 and ok_fun (t, r) = 
         let val a = tabSaca(t, (!degree)) < k_len
             val b = isprecolored t
@@ -307,7 +356,12 @@ and conservative ns =
         in
             (Set.foldl foo 0 ns) < k_len
         end
-    
+
+and getAlias n =
+        if Set.member (!coalescedNodes, n) then
+            getAlias (tabSaca (n, (!alias)))
+        else n
+
 and combine (u, v) =
         let fun forallt t = (addEdge(t, u); decrementDegree t)
         in
@@ -375,16 +429,16 @@ fun selectSpill (FGRAPH fgraph) =
 fun assignColors_while () =
     while (not (Pila.isEmpty selectStack)) do
         let val n = Pila.popPila selectStack
-            val okColorsList = List.tabulate (k_len, (fn x => x))
-            val _ = okColors := Set.addList (Set.empty Int.compare, okColorsList)
+            val okColorsList = k_colors
+            val okColors = ref (Set.empty String.compare)
+            val _ = okColors := Set.addList (!okColors, okColorsList)
             fun forallw w =
-                    let val cond = Set.member (Set.union (!coloredNodes, precolored), getAlias w)
-                        val w_color = tabSaca (getAlias w, !color)
-                    in
-                        if cond then
+                    if Set.member (Set.union (!coloredNodes, !precolored), getAlias w) then
+                        let val w_color = tabSaca (getAlias w, !color)
+                        in
                             okColors := Set.delete ((!okColors), w_color)
-                        else ()
-                    end
+                        end
+                    else ()
         in
             Set.app forallw (tabSaca (n, !adjList));
             if Set.isEmpty (!okColors) then
@@ -405,6 +459,7 @@ fun assignColors () =
             Set.app foralln (!coalescedNodes)
         end
 
+(* RewriteProgram *)
 fun rewriteProgram bframes (instrsblocks : (Assem.instr list list)) =
         let fun rewriteNode (n, instrsblocks') =
                     let val pares = ListPair.zip (instrsblocks', bframes)
