@@ -8,25 +8,7 @@ type node = int
 type neighbours = {suc : node Set.set, pred : node Set.set}
 type graph = (node, neighbours) Splaymap.dict 
 
-fun printGraph g nodepp =
-        let val glst = Splaymap.listItems g
-            fun ppnei {suc=suc, pred=pred} = (
-                    print "Suc: {";
-                    Set.app (fn x => (nodepp x; print ", ")) suc;
-                    print "}; Pred: {";
-                    Set.app (fn x => (nodepp x; print ", ")) pred;
-                    print "}"
-                )
-            fun pp (nod, nei) = (
-                    print "Nodo: ";
-                    nodepp nod;
-                    print "; ";
-                    ppnei nei;
-                    print "\n"
-                )
-        in
-            List.map pp glst 
-        end
+type 'a table = (node, 'a) Tab.Tabla
 
 fun findNode g n : neighbours = Splaymap.find (g, n)
 
@@ -83,8 +65,6 @@ fun nodename n = Int.toString n
 
 fun areAdj g x y = Set.member (adj g y, x)
 
-type 'a table = (node, 'a) Tab.Tabla
-
 fun entry2pp y = 
     print (y ^ ",")
 
@@ -99,5 +79,31 @@ fun entryppbool (x, b) = (
     if b then print "true" else print "false";
     print ")\n"
     )
+
+fun printSet nodepp s = (
+        print "{";
+        Set.app (fn x => (nodepp x; print ", ")) s;
+        print "}"
+    )
+
+fun printGraph nodepp g =
+        let val glst = Splaymap.listItems g
+            fun ppneig {suc=suc, pred=pred} = (
+                    print "Suc: ";
+                    printSet nodepp suc;
+                    print " Pred: ";
+                    printSet nodepp pred
+                )
+            fun pp (nod, neig) = (
+                    print "Nodo: ";
+                    nodepp nod;
+                    print "; ";
+                    ppneig neig;
+                    print "\n"
+                )
+        in
+            List.map pp glst;
+            ()
+        end
 
 end

@@ -95,9 +95,12 @@ fun tabEq eq (t1, t2) =
 fun tabEqRange t1 t2 range eqval =
     List.foldr (fn (x, b) => if b then eqval (tabSaca (x, t1), tabSaca (x, t2)) else false) true range
 
-fun tablepp f g t =
-    let val tlst = tabAList t
-    in  String.concat (List.map (fn (a,b) => f a ^ "->"  ^ g b ^ "\n") tlst)
-    end
+fun printTab f g t =
+        let val tlst = tabAList t
+            fun pp (a, b) = (f a; print " -> "; g b; print "\n")
+        in
+            List.map pp tlst;
+            ()
+        end
 
 end

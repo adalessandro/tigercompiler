@@ -26,6 +26,6 @@ val tabClaves : ('a, 'b) Tabla -> 'a list
 val tabImagen : ('a, 'b) Tabla -> 'b list
 val tabEq : ('b * 'b -> bool) -> ('a, 'b) Tabla * ('a, 'b) Tabla -> bool
 val tabEqRange : ('a, 'b) Tabla -> ('a, 'c) Tabla -> 'a list -> ('b * 'c -> bool) -> bool
-val tablepp : ('a -> string) -> ('b -> string) -> ('a, 'b) Tabla -> string
+val printTab : ('a -> unit) -> ('b -> unit) -> ('a, 'b) Tabla -> unit
 
 end

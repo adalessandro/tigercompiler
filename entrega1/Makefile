@@ -69,10 +69,10 @@ depend: Abs.sml Grm.sml Lex.sml Main.sml \
 	$(MOSMLTOOLS)/mosmldep >> Makefile
 
 ### DO NOT DELETE THIS LINE
-Frame.uo: Frame.ui Temp.ui Tigerit.uo Tree.uo 
+Frame.uo: Frame.ui Temp.ui Tigerit.uo Tree.uo Tigerextras.uo 
 Seman.uo: Seman.ui Trans.ui Tab.ui Topsort.ui Abs.uo Sres.uo Pila.ui 
 Main.uo: Lex.uo Escap.ui Grm.ui Canon.ui Interp.ui Flow.uo Seman.ui \
-    Frame.ui Trans.ui Assem.ui Graph.ui Tigerpp.ui 
+    Frame.ui Trans.ui Assem.ui Tigerpp.ui 
 Seman.ui: Abs.uo 
 Canon.uo: Canon.ui Tab.ui Temp.ui Frame.ui Tree.uo 
 Trans.ui: Temp.ui Frame.ui Abs.uo Tree.uo 

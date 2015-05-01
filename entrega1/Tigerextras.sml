@@ -21,6 +21,8 @@ fun list2set xs = Splayset.addList ((Splayset.empty String.compare), xs)
 
 fun listpp f xs = "[" ^ String.concat (List.map (fn x => f x ^ ", ") xs) ^ "]"
 
+fun printlist f xs = (print "["; List.map (fn x => (f x; print ", ")) xs; print "]")
+
 fun list_eq ([], []) = true
   | list_eq (x::xs, y::ys) =
         if x = y then list_eq (xs, ys) else false
@@ -31,5 +33,8 @@ fun pair_compare f g ((a, b), (c, d)) =
         in
             if x = EQUAL then g (b, d) else x
         end
+
+fun printbool true = print "T"
+  | printbool false = print "F"
 
 end

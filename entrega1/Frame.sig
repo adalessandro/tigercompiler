@@ -35,7 +35,9 @@ val procEntryExit1 : frame * Tree.stm -> Tree.stm
 datatype frag = PROC of {body: Tree.stm, frame: frame}
 	| STRING of Temp.label * string
 val frag2str : frag -> string
+val printfrag : frag -> unit
 datatype canonfrag = CPROC of {body: Tree.stm list, frame: frame}
     | CSTRING of Temp.label * string
 val canonfrag2str : canonfrag -> string
+val printcanonfrag : canonfrag -> unit
 end

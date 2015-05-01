@@ -18,6 +18,7 @@
 structure Frame :> Frame = struct
 
 open Tree
+open Tigerextras
 
 type level = int
 
@@ -68,23 +69,6 @@ type frame = {
     actualReg: int ref
 }
 
-fun printFrame (frame:frame) =
-    let val _ = print "\n"
-        val _ = (print ("name = " ^ (#name frame)))
-        val _ = print "\n"
-        val _ = (print "formals = " ; List.map (fn x => if x then print "T," else print "F,") (#formals frame))
-        val _ = print "\n"
-        val _ = (print "locals = " ; List.map (fn x => if x then print "T," else print "F,") (#locals frame))
-        val _ = print "\n"
-        val _ = (print "actualArg = " ; (print o Int.toString o ! o #actualArg) frame)
-        val _ = print "\n"
-        val _ = (print "actualLocal = " ; (print o Int.toString o ! o #actualArg) frame)
-        val _ = print "\n"
-        val _ = (print "actualReg = " ; (print o Int.toString o ! o #actualArg) frame)
-        val _ = print "\n"
-    in ()
-    end 
-
 type register = string
 
 datatype access = InFrame of int | InReg of Temp.label
@@ -92,16 +76,9 @@ datatype access = InFrame of int | InReg of Temp.label
 datatype frag = PROC of {body: Tree.stm, frame: frame}
               | STRING of Temp.label * string
 
-fun frag2str (PROC {body=b, frame=f}) = "PROC: " ^ Tigerit.tree(b) ^ "\n"
-  | frag2str (STRING (l, s)) = "STRING: " ^ l ^ ", " ^ s ^ "\n"
-
 (* frag despues de canonizarlo *)
 datatype canonfrag = CPROC of {body: Tree.stm list, frame: frame}
                    | CSTRING of Temp.label * string (* ESTO NO DEBE USARSE NUNCA: ESTA MAL! *)
-
-fun canonfrag2str (CPROC {body=bs, frame=f}) = "CPROC: ---------------------\n" ^
-                                               (String.concat o List.map Tigerit.tree) bs
-  | canonfrag2str (CSTRING (l, s)) = "CSTRING: " ^ l ^ ", " ^ s ^ "\n"
 
 fun newFrame{name, formals} = {
     name=name,
@@ -170,4 +147,26 @@ fun procEntryExit1 (frame, body) =
     in
         seq([prologo, body, epilogo])
     end
+
+fun printFrame (frame : frame) = (
+        print "FRAME:\n";
+        print "name: "; print (#name frame); print "\n";
+        print "formals: " ; printlist printbool (#formals frame); print "\n";
+        print "locals: "; printlist printbool (#locals frame); print "\n";
+        print "actualArg: "; (print o Int.toString o ! o #actualArg) frame; print "\n";
+        print "actualLocal: "; (print o Int.toString o ! o #actualLocal) frame; print "\n";
+        print "actualReg: "; (print o Int.toString o ! o #actualReg) frame; print "\n"
+    )
+
+fun frag2str (PROC {body=b, frame=f}) = "PROC: " ^ Tigerit.tree(b) ^ "\n"
+  | frag2str (STRING (l, s)) = "STRING: " ^ l ^ " - " ^ s ^ "\n"
+
+fun printfrag f = print (frag2str f)
+
+fun canonfrag2str (CPROC {body=bs, frame=f}) = "CPROC: ---------------------\n" ^
+                                               (String.concat o List.map Tigerit.tree) bs
+  | canonfrag2str (CSTRING (l, s)) = "CSTRING: " ^ l ^ " - " ^ s ^ "\n"
+
+fun printcanonfrag f = print (canonfrag2str f)
+
 end

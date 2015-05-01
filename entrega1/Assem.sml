@@ -65,6 +65,8 @@ val format =
 fun assemblock2str is = "ASSEM BLOCK: ----------------------\n" ^
                         (String.concat o List.map (fn x => format x ^ "\n")) is
 
+fun printAssem i = print (format i ^ "\n")
+
 fun memStr x e1' = case x of
                         (T.CONST _) => e1'
                       | (T.NAME _) => e1'
