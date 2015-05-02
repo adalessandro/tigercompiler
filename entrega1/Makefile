@@ -24,11 +24,33 @@ EXEFILE=
 .SUFFIXES :
 .SUFFIXES : .sig .sml .ui .uo
 
-GRALOBJS= Abs.uo Grm.uo Lex.uo Main.uo \
-	Nlin.uo Tigerpp.uo Escap.uo Tab.uo Seman.uo Temp.uo Topsort.uo \
-    Canon.uo Frame.uo Interp.uo Pila.uo Trans.uo Tree.uo \
-    Assem.uo Simpleregalloc.uo Graph.uo Flow.uo Coloring.uo \
- 	Tigerextras.uo
+GRALOBJS= \
+	Abs.uo \
+	Assem.uo \
+	Canon.uo \
+	Coloring.uo \
+	Escap.uo \
+	Flow.uo \
+	Frame.uo \
+	Graph.uo \
+	Grm.uo \
+	Interp.uo \
+	Lex.uo \
+	Main.uo \
+	Nlin.uo \
+	Pila.uo \
+	Seman.uo \
+	Simpleregalloc.uo \
+	Sres.uo \
+	Tab.uo \
+	Temp.uo \
+	Tigerextras.uo \
+	Tigerit.uo \
+	Tigerpp.uo \
+	Tips.uo \
+	Topsort.uo \
+    Trans.uo \
+	Tree.uo
 
 all: tiger
 
@@ -59,9 +81,33 @@ clean:
 .sml.uo:
 	$(MOSMLC) $<
 
-depend: Abs.sml Grm.sml Lex.sml Main.sml \
-	Nlin.sml Tigerpp.sml Topsort.sml \
-    Trans.sml Assem.sml
+depend: \
+	Abs.sml \
+	Assem.sml \
+	Canon.sml \
+	Coloring.sml \
+	Escap.sml \
+	Flow.sml \
+	Frame.sml \
+	Graph.sml \
+	Grm.sml \
+	Interp.sml \
+	Lex.sml \
+	Main.sml \
+	Nlin.sml \
+	Pila.sml \
+	Seman.sml \
+	Simpleregalloc.sml \
+	Sres.sml \
+	Tab.sml \
+	Temp.sml \
+	Tigerextras.sml \
+	Tigerit.sml \
+	Tigerpp.sml \
+	Tips.sml \
+	Topsort.sml \
+	Trans.sml \
+	Tree.sml
 
 	$(REMOVE) Makefile.bak
 	$(MOVE) Makefile Makefile.bak
