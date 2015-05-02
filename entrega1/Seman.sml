@@ -455,7 +455,7 @@ fun transProg ex =
                     body=UnitExp 0}, 0)
         val _ = transExp(tab_vars, tab_tipos) main
     in  
-        print "bien!\n" 
+        ()
     end
 
 end

@@ -211,10 +211,19 @@ val format =
             end 
     in fn OPER {assem, dest, src, jump=NONE} => speak("\t" ^ assem, dest, src, nil)
         | OPER {assem, dest, src, jump=SOME j} => speak("\t" ^ assem, dest, src, j)
-        | LABEL {assem, ...} => "\t" ^ assem
+        | LABEL {assem, ...} => assem
         | MOVE {assem, dest, src} => speak("\t" ^ assem, dest, src, nil)
     end
 
 fun printAssem i = print (format i ^ "\n")
+
+(* Reemplazar las ocurrencias del temp t por el registro r en una instrucción. *)
+fun replace (t, r) =
+        let fun rep ls = List.map (fn x => if x = t then r else x) ls
+        in
+            fn OPER {assem=a, dest=d, src=s, jump=j} => OPER {assem=a, dest=rep d, src=rep s, jump=j}
+             | LABEL {assem=a, lab=l} => LABEL {assem=a, lab=l}
+             | MOVE {assem=a, dest=d, src=s} => MOVE {assem=a, dest=rep d, src=rep s}
+        end
 
 end

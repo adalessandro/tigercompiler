@@ -118,7 +118,7 @@ depend: \
 Frame.uo: Frame.ui Temp.ui Tigerit.uo Tree.uo Tigerextras.uo 
 Seman.uo: Seman.ui Trans.ui Tab.ui Topsort.ui Abs.uo Sres.uo Pila.ui 
 Main.uo: Tigerpp.ui Trans.ui Interp.ui Seman.ui Grm.ui Temp.ui Escap.ui \
-    Frame.ui Canon.ui Lex.uo Tree.uo Assem.ui Coloring.uo 
+    Frame.ui Canon.ui Lex.uo Tree.uo Assem.ui Coloring.uo Tigerextras.uo 
 Seman.ui: Abs.uo 
 Canon.uo: Canon.ui Tab.ui Temp.ui Frame.ui Tree.uo 
 Trans.ui: Temp.ui Frame.ui Abs.uo Tree.uo 
@@ -140,7 +140,7 @@ Escap.ui: Abs.uo
 Sres.uo: Tab.ui Trans.ui Temp.ui Abs.uo Tips.uo 
 Assem.ui: Temp.ui Frame.ui Tree.uo 
 Escap.uo: Escap.ui Tab.ui Abs.uo 
-Flow.uo: Tab.ui Temp.ui Graph.ui Assem.ui 
+Flow.uo: Tab.ui Temp.ui Graph.ui Assem.ui Tigerextras.uo 
 Grm.ui: Abs.uo 
 Topsort.ui: Tab.ui Abs.uo Tips.uo 
 Frame.ui: Temp.ui Tree.uo 

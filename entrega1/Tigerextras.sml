@@ -37,4 +37,6 @@ fun pair_compare f g ((a, b), (c, d)) =
 fun printbool true = print "T"
   | printbool false = print "F"
 
+fun printint x = (print o Int.toString) x
+
 end

@@ -9,14 +9,19 @@ open Tab
 open Flow
 open Tigerextras
 
-datatype igraph =
+(* DEBUG *)
+val enable_debug = false
+
+fun debug x = if enable_debug then print x else ()
+
+(* Variables de IGRAPH globales y funciones para manejarlas *)
+datatype igraph = (* No se está usando *)
         IGRAPH of { graph: Graph.graph,
                     tnode: Temp.temp -> Graph.node,
                     gtemp: Graph.node -> Temp.temp,
                     moves: (Graph.node * Graph.node) Set.set,
                     nodes: Temp.temp Graph.table}
 
-(* Variables de IGRAPH globales y funciones para manejarlas *)
 val gbl_graph = ref (NONE : Graph.graph option)
 val gbl_tnode = ref (NONE : (Temp.temp -> Graph.node) option)
 val gbl_gtemp = ref (NONE : (Graph.node -> Temp.temp) option)
@@ -36,7 +41,7 @@ fun setmoves x = gbl_moves := (SOME x) (* No se está usando *)
 fun setnodes x = gbl_nodes := (SOME x) (* No se está usando *)
 
 (* Constantes globales *)
-val precolored_temps = Frame.specialregs @ Frame.argregs
+val precolored_temps = Frame.generalregs @ Frame.specialregs
 val k_colors = Frame.generalregs
 val k_len = Frame.genregslen
 
@@ -105,6 +110,30 @@ val color = ref (tabNueva())
 (* Auxiliary functions *)
 fun isprecolored x = Set.member (!precolored, x)
 
+fun set_getone s =
+        case (Set.find (fn x => true) s) of
+        NONE => raise Fail "getone_fromset ERROR: empty set"
+      | SOME x => x
+
+fun set_forall f s = (Set.find f s = NONE)
+
+fun set_safedelete (s, i) = (
+        Set.delete (s, i)
+        handle NotFound => s
+  )
+
+fun printIGraph ops =
+        let fun printnodepair (a, b) = (print "("; printint a; print ", "; printint b; print ")")
+            fun printIGraph' opt =            
+                    case opt of
+                    "graph" => Graph.printGraph printint (graph())
+                  | "moves" => Graph.printSet printnodepair (moves())
+                  | "nodes" => Tab.printTab printint print (nodes())
+                  | _ => raise Fail "printIGraph: opción desconocida"
+        in
+            List.map printIGraph' ops; ()
+        end
+
 
 (* PROGRAM CODE P.244-250 -------------------------------------------------------------------------
  * The algorithm is invoked using the procedure Main, which loops (via tail recursion)
@@ -115,7 +144,8 @@ fun isprecolored x = Set.member (!precolored, x)
 fun makeIGraph (FGRAPH fgraph) =
         let
             (* Initialize the interference graph *)
-            val temps_set = getTempsSet (FGRAPH fgraph)
+            val regs_set = Set.addList (Set.empty String.compare, Frame.generalregs) 
+            val temps_set = Set.union (getTempsSet (FGRAPH fgraph), regs_set)
             val temps_list = Set.listItems temps_set
             val temps_indexes = List.tabulate (List.length temps_list, (fn x => x))
             val temps_pairs = ListPair.zip (temps_indexes, temps_list)
@@ -126,7 +156,7 @@ fun makeIGraph (FGRAPH fgraph) =
             val _ = settnode (fn t => #1 (tabPrimer ((fn y => t = y), temp_nodes_tab)))
             val _ = setgtemp (fn n => tabSaca(n, temp_nodes_tab))
             val _ = setmoves (Set.empty (pair_compare Int.compare Int.compare)) (* No se está usando *)
-            val _ = setnodes (tabNueva()) (* No se está usando *)
+            val _ = setnodes temp_nodes_tab (* No se está usando *)
 
             (* Initialize node work-lists, sets and stacks *)
             val precolored_nodes = List.map (tnode()) precolored_temps
@@ -264,17 +294,11 @@ and nodeMoves n =
 
 and isMoveRelated n = Set.isEmpty (nodeMoves n)
 
-fun set_getone s =
-        case (Set.find (fn x => true) s) of
-        NONE => raise Fail "getone_fromset ERROR: empty set"
-      | SOME x => x
-
-fun set_forall f s = (Set.find f s = NONE)
-
 (* Simplify *)
 fun simplify () =
-        let fun forone n = (
-                    simplifyWorkList := Set.delete (!simplifyWorkList, n);
+        let val _ = debug "simplify()\n"
+            fun forone n = (
+                    simplifyWorkList := set_safedelete (!simplifyWorkList, n);
                     Pila.pushPila selectStack n;
                     Set.app decrementDegree (adjacent n)
                     )
@@ -288,7 +312,7 @@ and decrementDegree m =
             tabRInserta_ (m, (d-1), degree);
             if (d = k_len) then (
                 enableMoves (Set.add (adjacent m, m));
-                spillWorkList := Set.delete (!spillWorkList, m);
+                spillWorkList := set_safedelete (!spillWorkList, m);
                 if (isMoveRelated m) then
                     freezeWorkList := Set.add (!freezeWorkList, m)
                 else
@@ -310,7 +334,8 @@ and enableMoves ns =
 
 (* Coalesce *)
 fun coalesce (FGRAPH fgraph) =
-        let fun forone m =
+        let val _ = debug "coalesce()\n"
+            fun forone m =
                     let val m' = Flow.getMove (FGRAPH fgraph) m
                         val x = (tnode() o #1) m'
                         val y = (tnode() o #2) m'
@@ -352,7 +377,7 @@ and addWorkList u =
             not (isMoveRelated u) andalso
             tabSaca(u, (!degree)) < k_len
         ) then (
-            freezeWorkList := Set.delete (!freezeWorkList, u);
+            freezeWorkList := set_safedelete (!freezeWorkList, u);
             simplifyWorkList := Set.add (!simplifyWorkList, u)
         ) else ()
 
@@ -377,13 +402,15 @@ and getAlias n =
         else n
 
 and combine (u, v) =
-        let fun forallt t = (addEdge(t, u); decrementDegree t)
+        let val _ = debug "combine()\n"
+            fun forallt t = (addEdge(t, u); decrementDegree t)
         in
             (
-                if Set.member (!freezeWorkList, v) then
+                if Set.member (!freezeWorkList, v) then (
                     freezeWorkList := Set.delete (!freezeWorkList, v)
-                else
-                    spillWorkList := Set.delete (!spillWorkList, v)
+                ) else (
+                    spillWorkList := set_safedelete (!spillWorkList, v)
+                )
             );
             coalescedNodes := Set.add (!coalescedNodes, v);
             tabRInserta_ (v, u, alias);
@@ -397,7 +424,8 @@ and combine (u, v) =
 
 (* Freeze *)
 fun freeze (FGRAPH fgraph) =
-        let fun forone u = (
+        let val _ = debug "freeze()\n"
+            fun forone u = (
                         freezeWorkList := Set.delete (!freezeWorkList, u);
                         simplifyWorkList := Set.add (!simplifyWorkList, u);
                         freezeMoves (FGRAPH fgraph) u
@@ -416,10 +444,10 @@ and freezeMoves (FGRAPH fgraph) u =
                                 else
                                     getAlias y
                     in
-                        activeMoves := Set.delete (!activeMoves, m);
+                        activeMoves := set_safedelete (!activeMoves, m);
                         frozenMoves := Set.add (!frozenMoves, m);
                         if Set.isEmpty (nodeMoves v) andalso tabSaca(v, !degree) < k_len then (
-                            freezeWorkList := Set.delete (!freezeWorkList, v);
+                            freezeWorkList := set_safedelete (!freezeWorkList, v);
                             simplifyWorkList := Set.add (!simplifyWorkList, v)
                         ) else ()
                     end
@@ -429,7 +457,8 @@ and freezeMoves (FGRAPH fgraph) u =
 
 (* Select spill *)
 fun selectSpill (FGRAPH fgraph) =
-        let val heuristic = set_getone
+        let val _ = debug "selectSpill()\n"
+            val heuristic = set_getone
             fun forone m = (
                         spillWorkList := Set.delete (!spillWorkList, m);
                         simplifyWorkList := Set.add (!simplifyWorkList, m);
@@ -440,7 +469,8 @@ fun selectSpill (FGRAPH fgraph) =
         end
 
 (* AssignColors *)
-fun assignColors_while () =
+fun assignColors_while () = (
+    debug "assignColors_while()\n";
     while (not (Pila.isEmpty selectStack)) do
         let val n = Pila.popPila selectStack
             val okColorsList = k_colors
@@ -450,7 +480,7 @@ fun assignColors_while () =
                     if Set.member (Set.union (!coloredNodes, !precolored), getAlias w) then
                         let val w_color = tabSaca (getAlias w, !color)
                         in
-                            okColors := Set.delete ((!okColors), w_color)
+                            okColors := set_safedelete ((!okColors), w_color)
                         end
                     else ()
         in
@@ -461,9 +491,11 @@ fun assignColors_while () =
                 coloredNodes := Set.add (!coloredNodes, n);
                 tabRInserta_ (n, set_getone (!okColors), color)
         end
+    )
 
 fun assignColors () =
-        let fun foralln n =
+        let val _ = debug "assignColors()\n"
+            fun foralln n =
                     let val n_color = tabSaca (getAlias n, !color)
                     in
                         tabRInserta_ (n, n_color, color)
@@ -475,34 +507,66 @@ fun assignColors () =
 
 (* RewriteProgram *)
 fun rewriteProgram (blocks : (Assem.instr list * Frame.frame) list) =
-        let fun rewriteNode (n, (blocks' : (Assem.instr list * Frame.frame) list)) =
+        let val _ = debug "rewriteProgram()\n"
+            fun rewriteNode (n, (blocks' : (Assem.instr list * Frame.frame) list)) =
                     List.map (Simpleregalloc.simpleregalloc (gtemp() n)) blocks
         in
             Set.foldl rewriteNode blocks (!spilledNodes)
         end
 
 (* Main *)
-fun coloring_main (blocks : (Assem.instr list * Frame.frame) list) =
-        let val instrs = (List.concat o List.map (List.rev o #1)) blocks
+fun coloring_main opts (blocks : (Assem.instr list * Frame.frame) list) =
+        let (* For debugging *)
+            val opt_flow = List.nth (opts, 0)
+            val opt_interf = List.nth (opts, 1)
+            val opt_color = List.nth (opts, 2)
+            (* Process *)
+            val instrs = (List.concat o List.map (List.rev o #1)) blocks
             val fgraph = Flow.makeFGraph instrs
+            val _ = if opt_flow then Flow.printFlow ["control"] fgraph else ()
             val _ = makeIGraph fgraph
+            val _ = if opt_interf then printIGraph ["graph", "nodes"] else ()
             val _ = makeWorkList()
-            fun repeat() =
+            fun repeat() = (
+                    debug "repeat()\n";
                     if not (Set.isEmpty (!simplifyWorkList)) then (simplify(); repeat())
                     else if not (Set.isEmpty (!worklistMoves)) then (coalesce fgraph; repeat())
                     else if not (Set.isEmpty (!freezeWorkList)) then (freeze fgraph; repeat())
                     else if not (Set.isEmpty (!spillWorkList)) then (selectSpill fgraph; repeat())
                     else ()
+                )
             fun finish() = (
+                    debug "finish()\n";
                     assignColors();
                     if not (Set.isEmpty (!spilledNodes)) then
-                            (coloring_main o rewriteProgram) blocks
-                    else
-                            (blocks, !color) (* That's all folks! Return final assem and colors *)
+                            (coloring_main opts o rewriteProgram) blocks
+                    else (
+                        if opt_color then Tab.printTab (print o gtemp()) print (!color) else ();
+                        blocks (* That's all folks! Just return blocks. *)
+                    )
                 )
         in
             repeat();
             finish()
         end
+
+(* ReplaceTemps *)
+fun replaceTemps (blocks : (Assem.instr list * Frame.frame) list) =
+        let fun rep_block (is : Assem.instr list, frm : Frame.frame) =
+                    let val _ = debug "replace()\n"
+                        val color_lst = List.map (fn (a, b) => (gtemp() a, b)) (tabAList (!color))
+                        (* Lista de funciones. Cada una reemplaza un temp. *)
+                        val fn_lst = List.map Assem.replace color_lst
+                        (* Aplicar todos los reemplazos a una instr. *)
+                        fun rep_instr i = List.foldl (fn (f, i') => f i') i fn_lst
+                    in
+                        List.map rep_instr is
+                    end
+        in
+            List.map rep_block blocks
+        end
+
+fun coloring opts (blocks : (Assem.instr list * Frame.frame) list) =
+        (replaceTemps o coloring_main opts) blocks
 
 end

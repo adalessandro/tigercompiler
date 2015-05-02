@@ -2,6 +2,7 @@ open Lex
 open Grm
 open Escap
 open Seman
+open Tigerextras
 open BasicIO Nonstdio
 
 fun lexstream (is: instream) =
@@ -26,8 +27,8 @@ fun main args =
             val (interp, l4) = arg (l3, "-interp") 
             val (code, l5) = arg (l4, "-code") 
             val (flow, l6) = arg (l5, "-flow") 
-            val (liveness, l7) = arg (l6, "-liveness") 
-            val (interf, l8) = arg (l7, "-interf") 
+            val (interf, l7) = arg (l6, "-interf") 
+            val (color, l8) = arg (l7, "-color")
             val entrada =
                     case l8 of
                     [n] => ((open_in n) handle _ => raise Fail (n ^ " no existe!"))
@@ -67,10 +68,14 @@ fun main args =
                         List.map Assem.printAssem instrs; ()
                     ) else ()
 
-            (* Flow analisys *)
             (* Flow, Liveness analisys and Coloring *)
             val bframes = List.map (#2) blocks
-            val (final_assem, color_tab) = Coloring.coloring_main (ListPair.zip (assemblocklist, bframes))
+            val opts = [flow, interf, color]
+            val final_assemblocklist = Coloring.coloring opts (ListPair.zip (assemblocklist, bframes))
+            val final_instrs = (List.concat o List.map List.rev) final_assemblocklist
+
+            (* It's the final printing! *)
+            val _ = (List.map Assem.printAssem final_instrs; ())
         in
             print "Ultra yes!!!\n"
         end

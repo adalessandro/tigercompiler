@@ -5,6 +5,7 @@ structure Set = Splayset
 
 open Graph
 open Tab
+open Tigerextras
 
 (*structure Graph*)
 datatype flowgraph =
@@ -114,19 +115,17 @@ fun getTempsSet (FGRAPH fgraph) =
             Set.union (defset, useset)
         end
 
-fun printFlow [] (FGRAPH fgraph) = ()
-  | printFlow (opt::ops) (FGRAPH fgraph) =
-        let val intpp = print o Int.toString
-            val _ =
+fun printFlow ops (FGRAPH fgraph) =
+        let fun printFlow' opt =
                     case opt of
                     "control" => Graph.printGraph (print o Int.toString) (#control fgraph)
-                  | "def" => Tab.printTab intpp (Graph.printSet print) (#def fgraph)
-                  | "use" => Tab.printTab intpp (Graph.printSet print) (#def fgraph)
-                  | "ismove" => Tab.printTab intpp (print o Bool.toString) (#ismove fgraph)
-                  | "nodes" => Tab.printTab intpp (print o Assem.format) (#nodes fgraph)
+                  | "def" => Tab.printTab printint (Graph.printSet print) (#def fgraph)
+                  | "use" => Tab.printTab printint (Graph.printSet print) (#def fgraph)
+                  | "ismove" => Tab.printTab printint (print o Bool.toString) (#ismove fgraph)
+                  | "nodes" => Tab.printTab printint (print o Assem.format) (#nodes fgraph)
                   | _ => raise Fail "printFlow: opción desconocida"
         in
-            printFlow ops (FGRAPH fgraph)
+            List.map printFlow' ops; ()
         end
 
 end
