@@ -27,8 +27,6 @@ type access = Frame.access
 type frag = Frame.frag
 val fraglist = ref ([]: frag list)
 
-val debug = (fn x => print ("\n\n\nDEBUGTRANS: " ^ x ^ "\n\n\n"))
-
 val actualLevel = ref ~1 (* _Main debe tener level = 0. *)
 
 fun getActualLev() = !actualLevel

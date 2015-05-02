@@ -20,52 +20,21 @@ datatype instr =
              dest: temp list,
              src: temp list}
    
+val ilist = ref []
+fun emits x = ilist := x :: (!ilist)
+
 val FALSE_LABEL = "__FALSE_LABEL__"
 val RET_LABEL = "__RET_LABEL__"
 val CALL_LABEL = "__CALL_LABEL__" 
 
-fun labelpos x [] = raise Fail "labelpos: label not found"
-  | labelpos x (LABEL {lab=lab, ...} :: ys) =
-            if lab = x
-            then 0
-            else 1 + labelpos x ys
-  | labelpos x (_ :: ys) = 1 + labelpos x ys
-
-(*fun format f i = ""*)
 fun const i = "#" ^ Int.toString(i)
 fun flabel l = "=" ^ l
 
-val ilist = ref []
-fun emits x = ilist :=x::(!ilist)
-fun result gen = let val t = Temp.newtemp()
-                 in gen t; t end
-
-val format =
-    let fun speak(assem,dst,src,jump) =
-            let fun saylab s = s 
-                fun saytemp t = t 
-                fun f(#"`":: #"s":: i::rest) = 
-                        (explode(saytemp(List.nth(src,ord i - ord #"0"))) @ f rest)
-                  | f( #"`":: #"d":: i:: rest) = 
-                        (explode(saytemp(List.nth(dst,ord i - ord #"0"))) @ f rest)
-                  | f( #"`":: #"j":: i:: rest) = 
-                        (explode(saylab(List.nth(jump,ord i - ord #"0"))) @ f rest)
-                  (*| f( #"`":: #"`":: rest) = #"`" :: f rest*)
-                  | f( #"`":: _ :: rest) = raise Fail "bad Assem format"
-                  | f(c :: rest) = (c :: f rest)
-                  | f nil = nil 
-            in implode(f(explode assem))
-            end 
-    in fn OPER{assem,dest,src,jump=NONE} => speak("\t"^assem,dest,src,nil)
-        | OPER{assem,dest,src,jump=SOME j} => speak("\t"^assem,dest,src,j)
-        | LABEL{assem,...} => "\t"^assem
-        | MOVE{assem,dest,src} => speak("\t"^assem,dest,src,nil)
-    end
-
-fun assemblock2str is = "ASSEM BLOCK: ----------------------\n" ^
-                        (String.concat o List.map (fn x => format x ^ "\n")) is
-
-fun printAssem i = print (format i ^ "\n")
+fun result gen = 
+        let val t = Temp.newtemp()
+        in 
+            gen t; t
+        end
 
 fun memStr x e1' = case x of
                         (T.CONST _) => e1'
@@ -205,18 +174,47 @@ fun munchStmBlock (ss, frame) =
           | munchExp _ = raise Fail "munchExp undefined"
 
     in
-        (ilist := [];
+        ilist := [];
         munchBlockLabel (hd ss);
         List.map munchStm (tl ss);
-        !ilist)
+        !ilist
     end
 
 
 (* ----- Extras ----- *)
 fun getTemps instr =
-	case instr of
-    	 OPER {dest = dest, src = src, ...} => dest @ src
-  	   | LABEL _ => []
-       | MOVE {dest = dest, src = src, ...} => dest @ src
+        case instr of
+        OPER {dest = dest, src = src, ...} => dest @ src
+      | LABEL _ => []
+      | MOVE {dest = dest, src = src, ...} => dest @ src
+
+fun labelpos x [] = raise Fail "labelpos: label not found"
+  | labelpos x (LABEL {lab=lab, ...} :: ys) =
+            if lab = x then 0 else 1 + labelpos x ys
+  | labelpos x (_ :: ys) = 1 + labelpos x ys
+
+val format =
+    let fun speak(assem, dst, src, jump) =
+            let fun get_elem ls i = List.nth (ls, ord i - ord #"0")
+                fun saylab s = s 
+                fun saytemp t = t 
+                fun f(#"`" :: #"s" :: i ::rest) = 
+                        (saytemp o get_elem src) i ^ f rest
+                  | f( #"`":: #"d":: i:: rest) = 
+                        (saytemp o get_elem dst) i ^ f rest
+                  | f( #"`":: #"j":: i:: rest) = 
+                        (saylab o get_elem jump) i ^ f rest
+                  | f( #"`":: _ :: rest) = raise Fail "bad Assem format"
+                  | f(c :: rest) = (str c ^ f rest)
+                  | f nil = "" 
+            in (f o explode) assem
+            end 
+    in fn OPER {assem, dest, src, jump=NONE} => speak("\t" ^ assem, dest, src, nil)
+        | OPER {assem, dest, src, jump=SOME j} => speak("\t" ^ assem, dest, src, j)
+        | LABEL {assem, ...} => "\t" ^ assem
+        | MOVE {assem, dest, src} => speak("\t" ^ assem, dest, src, nil)
+    end
+
+fun printAssem i = print (format i ^ "\n")
 
 end

@@ -71,15 +71,15 @@ depend: Abs.sml Grm.sml Lex.sml Main.sml \
 ### DO NOT DELETE THIS LINE
 Frame.uo: Frame.ui Temp.ui Tigerit.uo Tree.uo Tigerextras.uo 
 Seman.uo: Seman.ui Trans.ui Tab.ui Topsort.ui Abs.uo Sres.uo Pila.ui 
-Main.uo: Lex.uo Escap.ui Grm.ui Canon.ui Interp.ui Flow.uo Seman.ui \
-    Frame.ui Trans.ui Assem.ui Tigerpp.ui 
+Main.uo: Tigerpp.ui Trans.ui Interp.ui Seman.ui Grm.ui Temp.ui Escap.ui \
+    Frame.ui Canon.ui Lex.uo Tree.uo Assem.ui Coloring.uo 
 Seman.ui: Abs.uo 
 Canon.uo: Canon.ui Tab.ui Temp.ui Frame.ui Tree.uo 
 Trans.ui: Temp.ui Frame.ui Abs.uo Tree.uo 
 Tree.uo: Temp.ui 
 Lex.uo: Nlin.uo Grm.ui 
 Pila.uo: Pila.ui 
-Simpleregalloc.ui: Frame.ui Assem.ui 
+Simpleregalloc.ui: Temp.ui Frame.ui Assem.ui 
 Trans.uo: Trans.ui Temp.ui Frame.ui Tigerit.uo Abs.uo Tree.uo Pila.ui 
 Temp.uo: Temp.ui 
 Interp.ui: Temp.ui Frame.ui Tree.uo 
@@ -88,7 +88,7 @@ Graph.uo: Graph.ui Tab.ui Tigerextras.uo
 Topsort.uo: Topsort.ui Tab.ui Abs.uo Sres.uo Tips.uo 
 Tigerpp.uo: Tigerpp.ui Abs.uo 
 Canon.ui: Temp.ui Frame.ui Tree.uo 
-Simpleregalloc.uo: Simpleregalloc.ui Assem.ui 
+Simpleregalloc.uo: Simpleregalloc.ui Temp.ui Frame.ui Assem.ui 
 Tigerpp.ui: Abs.uo 
 Escap.ui: Abs.uo 
 Sres.uo: Tab.ui Trans.ui Temp.ui Abs.uo Tips.uo 

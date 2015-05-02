@@ -53,33 +53,26 @@ fun main args =
                         List.map Frame.printcanonfrag canonfraglist; ()
                     ) else ()
 
-            val (b,c) = Canon.splitcanon canonfraglist 
-                (*b: (Tree.stm list*Frame.frame) list*)
-                (*c: (Temp.label*string) list*)
+            val (blocks : (Tree.stm list * Frame.frame) list, strs : (Temp.label * string) list) =
+                    Canon.splitcanon canonfraglist 
 
             (* Interpreter *)
                 (* arg1 indica si el interprete ejecuta con debug *)
-            val _ = if interp then Interp.inter true b c else ()
+            val _ = if interp then Interp.inter true blocks strs else ()
         
             (* Instruction selection *)
-            val assemblocklist = List.map Assem.munchStmBlock b 
+            val assemblocklist : Assem.instr list list = List.map Assem.munchStmBlock blocks 
             val instrs = (List.concat o List.map List.rev) assemblocklist
             val _ = if code then (
                         List.map Assem.printAssem instrs; ()
                     ) else ()
 
             (* Flow analisys *)
-            val fgraph = Flow.makeFGraph instrs
-            val _ = if flow then Flow.printFlow ["control"] fgraph else ()
-
-            (* Liveness analisys *)
-            val bframes = List.map (#2) b
-            (*val (igraph, outtab) = Interf.makeIGraph fgraph assemblocklist *)
-            (*val _ = if liveness then List.map Graph.entrypp (Tab.tabAList outtab) else []*)
-            (* val _ = if interf then Graph.printGraph igraph else [] *)
-
+            (* Flow, Liveness analisys and Coloring *)
+            val bframes = List.map (#2) blocks
+            val (final_assem, color_tab) = Coloring.coloring_main (ListPair.zip (assemblocklist, bframes))
         in
-            print "yes!!\n"
+            print "Ultra yes!!!\n"
         end
 
 handle Fail s => print("Fail: " ^ s ^ "\n")

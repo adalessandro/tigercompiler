@@ -1,127 +1,97 @@
 structure Simpleregalloc :> Simpleregalloc =
 struct
-	structure frame = Frame
-	open Assem
-	
-	fun simpleregalloc (frm:frame.frame) (body:instr list) =
-	let
-		(* Temporarios que ya tienen color asignado (p.ej, el temporario que representa a rax) *)
-		val precolored = frame.specialregs @ frame.argregs
-		(* Temporarios que se pueden usar (p.ej, el temporario que representa a rax. 
-			Diferencia con precolored: el temporario que representa a rbp no se puede usar) *)
-		val asignables = frame.generalregs
 
-		(* movaMem crea una instrucción que mueve un temporario a memoria. *)
-		fun movaMem(temp, mempos) =
-			let val desp = if mempos<0 then " - " ^ Int.toString(~mempos) 
-						   else if mempos>0 then " + " ^ Int.toString(mempos) else ""
-			in  OPER {assem="str     `s0, [`d0, #" ^ desp ^ "]", 
-					  src=[temp], 
-					  dest=[frame.fp], 
-					  jump=NONE}
-			end
+structure Set = Splayset
 
-		(* movaTemp, de memoria a un temporario.*)
-		fun movaTemp(mempos, temp) =
-			let	val desp = if mempos<0 then " - " ^ Int.toString(~mempos) 
-						   else if mempos>0 then " + " ^ Int.toString(mempos) else ""
-			in  OPER {assem="ldr     `d0, [`s0, #" ^ desp ^ "]", 
-					  src=[frame.fp], 
-					  dest=[temp], 
-					  jump=NONE}
-			end
+open Assem
 
-		val temps = (* Todos los temps de las instrs menos los precoloreados *)
-			let
-				val tempList = 
-					let
-						fun f (OPER r, tmplist) = List.concat [#dest r, #src r, tmplist]
-						| f (LABEL _, tmplist) = tmplist
-						| f (MOVE r, tmplist) = List.concat [#dest r, #src r, tmplist]
-					in
-						List.foldr f [] body
-					end
-				val s = Splayset.addList(Splayset.empty String.compare, tempList)
-				val precoloredSet = Splayset.addList(Splayset.empty String.compare, precolored)
-			in
-				Splayset.listItems(Splayset.difference(s, precoloredSet))
-			end
+(* movaTemp, de memoria a un temporario.*)
+fun movaTemp (mempos, temp) =
+        let val offset =
+                    if mempos < 0 then
+                        ", #-" ^ Int.toString (~mempos) 
+                    else if mempos > 0 then
+                        ", #" ^ Int.toString (mempos)
+                    else ""
+        in
+            OPER {assem = "ldr     `d0, [`s0" ^ offset ^ "]",
+                  src = [Frame.fp], 
+                  dest = [temp], 
+                  jump = NONE
+                 }
+        end
 
-		(* Lista de offsets en el frame de los temporarios *)
-		val accesses = map (fn t => let val offset = frame.allocLocal frm true 
-                                        val n = (case offset of
-                                                      frame.InFrame n => n
-                                                    | _ => raise Fail("No debería suceder. Simpleregalloc.accesses."))
-                                    in (t, n) end) temps
+(* movaMem crea una instrucción que mueve un temporario a memoria. *)
+fun movaMem (temp, mempos) =
+        let val offset =
+                    if mempos < 0 then
+                        ", #-" ^ Int.toString (~mempos) 
+                    else if mempos > 0 then
+                        ", #" ^ Int.toString (mempos)
+                    else ""
+        in
+            OPER {assem = "str     `s0, [`d0" ^ offset ^ "]",
+                  src = [temp], 
+                  dest = [Frame.fp], 
+                  jump = NONE
+                 }
+        end
 
-		(* Devuelve la posición del temp en el frame *)
-		fun getFramePos t =
-			let
-				fun gfp t [] = raise Fail("Temporario no encontrado: "^t)
-				| gfp t ((a,b)::xs) = if a=t then b else gfp t xs
-			in
-				gfp t accesses
-			end
+(* simpleregalloc body frm spilledTemp
+ *      Reemplaza todas las ocurrencias de spilledTemp por un nuevo temporario (o registro)
+ *      agregando un fetch y store, antes y después de cada instrucción correspondiente.
+ *      Hace esto para las instrucciones que tienen a spilledTemp en dest o src.
+ *
+ *      Requiere spilledTemp no debe ser precoloreado. Esto es un invariante previo?
+ *)
+fun simpleregalloc spilledTemp ((body : instr list), (frm : Frame.frame)) =
+        let (* Temporarios que se pueden usar (p.ej, el temporario que representa a rax. 
+             * Diferencia con precolored: el temporario que representa a rbp no se puede usar) *)
+            val asignables = Frame.generalregs
+            val asignablesSet = Set.addList (Set.empty String.compare, asignables)
 
-		(* Se le pasa la instrs a spillear *)
-		fun rewriteInstr (OPER {assem, dest, src, jump}) =
-			let
-				val eset = Splayset.empty String.compare
-				val precoloredSet = Splayset.addList(eset, precolored)
-				val asignablesSet = Splayset.addList(eset, asignables)
-				val dstset = Splayset.addList(eset, dest)
-				val srcset = Splayset.addList(eset, src)
-				val colores = Splayset.listItems(
-						Splayset.difference(asignablesSet, Splayset.union(dstset, srcset)))
-				val uncolored = Splayset.listItems(
-						Splayset.difference(Splayset.union(dstset, srcset), precoloredSet))
+            (* Lista de offsets en el frame de los temporarios *)
+            val framepos =
+                    let val access = Frame.allocLocal frm true
+                    in
+                        case access of
+                        Frame.InFrame n => n
+                      | _ => raise Fail("simpleregalloc.access: No debería suceder.")
+                    end
 
-				val n = length(uncolored)
-				val tempcols = ListPair.zip(uncolored, List.take(colores, n))
+            fun is_spilledTemp x = (x = spilledTemp)
+            fun do_rewrite i = List.exists is_spilledTemp (Assem.getTemps i)
 
-				fun getTempCol t =
-					let
-						fun gtc t [] = if Splayset.member(precoloredSet, t) then t 
-									   else raise Fail("Temporario no encontrado: "^t)
-					      | gtc t ((a,b)::xs) = if a=t then b else gtc t xs
-					in
-						gtc t tempcols
-					end
-
-				val (prevMovs, posMovs) =
-					let
-						fun mkgetMov t = movaTemp(getFramePos t, getTempCol t)
-						fun mksetMov t = movaMem(getTempCol t, getFramePos t)
-						fun filterPC t = not(Splayset.member(precoloredSet, t))
-					in
-						(map mkgetMov (List.filter filterPC src), 
-						 map mksetMov (List.filter filterPC dest))
-					end
-
-				val newdst = map getTempCol dest
-				val newsrc = map getTempCol src
-				val newinstr = OPER {assem=assem, dest=newdst, src=newsrc, jump=jump}
-			in
-				List.concat [prevMovs, [newinstr], posMovs]
-			end
-		  | rewriteInstr (LABEL l) = [LABEL l]
-		  | rewriteInstr (MOVE {assem, dest, src}) =
-			let
-				val precoloredSet = Splayset.addList(Splayset.empty String.compare, precolored)
-                val tdest = hd dest
-                val tsrc = hd src
-			in
-				if Splayset.member(precoloredSet, tdest) andalso Splayset.member(precoloredSet, tsrc) then [OPER {assem=assem, dest=[tdest], src=[tsrc], jump=NONE}]
-				else if Splayset.member(precoloredSet, tdest) then [movaTemp(getFramePos tsrc, tdest)]
-				else if Splayset.member(precoloredSet, tsrc) then [movaMem(tsrc, getFramePos tdest)]
-				else
-					let
-						val color = hd(asignables)
-					in
-						[movaTemp(getFramePos tsrc, color), movaMem(color, getFramePos tdest)]
-					end
-			end
-	in
-		List.concat (map rewriteInstr body)
-	end
+            (* Se le pasa la instrs a spillear *)
+            fun rewriteInstr (OPER {assem, dest, src, jump}) =
+                    let (* Asignación de colores *)
+                        val colores = Set.listItems (Set.delete (asignablesSet, spilledTemp))
+                        (* Asignar un registro como color *)
+                        (*val color = hd colores*)
+                        (* Asignar un nuevo temp como color *)
+                        val color = Temp.newtemp()
+                        val prevMov = movaTemp (framepos, color)
+                        val posMov = movaMem (color, framepos)
+                        fun replace t = if t = spilledTemp then color else t
+                        val newdest = map replace dest
+                        val newsrc = map replace src
+                        val newinstr = OPER {assem=assem, dest=newdest, src=newsrc, jump=jump}
+                    in
+                        [prevMov, newinstr, posMov]
+                    end
+              | rewriteInstr (LABEL l) = [LABEL l]
+              | rewriteInstr (MOVE {assem, dest, src}) =
+                    let val tdest = hd dest
+                        val tsrc = hd src
+                    in
+                        if tdest = spilledTemp then
+                            [movaMem (tsrc, framepos)]
+                        else if tsrc = spilledTemp then
+                            [movaTemp (framepos, tdest)]
+                        else
+                            raise Fail ("simpleregalloc.rewriteInstr: No debería suceder")
+                    end
+        in
+            (List.concat (map (fn i => if do_rewrite i then rewriteInstr i else [i]) body), frm)
+        end
 end

@@ -469,36 +469,40 @@ fun assignColors () =
                         tabRInserta_ (n, n_color, color)
                     end
         in 
-            assignColors_while ();
+            assignColors_while();
             Set.app foralln (!coalescedNodes)
         end
 
 (* RewriteProgram *)
-fun rewriteProgram bframes (instrsblocks : (Assem.instr list list)) =
-        let fun rewriteNode (n, instrsblocks') =
-                    let val pares = ListPair.zip (instrsblocks', bframes)
-                        fun isSpillInstr i =
-                                let val temps = Assem.getTemps i
-                                in
-                                    List.exists (fn x => x = gtemp() n) temps
-                                end
-                        fun rewriteInstr f i =
-                                if isSpillInstr i then
-                                    Simpleregalloc.simpleregalloc f [i]
-                                else [i]
-                        fun rewriteBlock (is, f) =
-                                List.concat (List.map (rewriteInstr f) is)
-                    in
-                        List.map rewriteBlock pares
-                    end
-            val result = Set.foldr rewriteNode instrsblocks (!spilledNodes)
-            val newTemps = Set.empty Int.compare (* simpleregalloc usa un registro en vez de temp *)
+fun rewriteProgram (blocks : (Assem.instr list * Frame.frame) list) =
+        let fun rewriteNode (n, (blocks' : (Assem.instr list * Frame.frame) list)) =
+                    List.map (Simpleregalloc.simpleregalloc (gtemp() n)) blocks
         in
-            spilledNodes := Set.empty Int.compare;
-            initial := Set.union (Set.union (!coloredNodes, !coalescedNodes), newTemps);
-            coloredNodes := Set.empty Int.compare;
-            coalescedNodes := Set.empty Int.compare;
-            result
+            Set.foldl rewriteNode blocks (!spilledNodes)
+        end
+
+(* Main *)
+fun coloring_main (blocks : (Assem.instr list * Frame.frame) list) =
+        let val instrs = (List.concat o List.map (List.rev o #1)) blocks
+            val fgraph = Flow.makeFGraph instrs
+            val _ = makeIGraph fgraph
+            val _ = makeWorkList()
+            fun repeat() =
+                    if not (Set.isEmpty (!simplifyWorkList)) then (simplify(); repeat())
+                    else if not (Set.isEmpty (!worklistMoves)) then (coalesce fgraph; repeat())
+                    else if not (Set.isEmpty (!freezeWorkList)) then (freeze fgraph; repeat())
+                    else if not (Set.isEmpty (!spillWorkList)) then (selectSpill fgraph; repeat())
+                    else ()
+            fun finish() = (
+                    assignColors();
+                    if not (Set.isEmpty (!spilledNodes)) then
+                            (coloring_main o rewriteProgram) blocks
+                    else
+                            (blocks, !color) (* That's all folks! Return final assem and colors *)
+                )
+        in
+            repeat();
+            finish()
         end
 
 end

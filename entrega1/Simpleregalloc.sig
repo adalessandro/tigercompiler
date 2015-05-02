@@ -1,4 +1,4 @@
 signature Simpleregalloc =
 sig
-	val simpleregalloc : Frame.frame -> Assem.instr list -> Assem.instr list
+	val simpleregalloc : Temp.temp -> Assem.instr list * Frame.frame -> Assem.instr list * Frame.frame
 end
