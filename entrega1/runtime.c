@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <signal.h>
-/*
+
 typedef struct {
-    long length;
-    unsigned char chars[1];
+	long length;
+	unsigned char chars[1];
 } string;
+
 const string consts[256] = {
 	{1, (char)0}, {1, (char)1}, {1, (char)2},
 	{1, (char)3}, {1, (char)4}, {1, (char)5},
@@ -95,129 +96,158 @@ const string consts[256] = {
 	{1, (char)252}, {1, (char)253}, {1, (char)254},
 	{1, (char)255}
 };
+
 string empty = {0, ""};
 
-long *_initArray(long size, long init)
+long *_allocArray(long size, long init)
 {
-    int i;
-    long *a = malloc(size * sizeof(long) + 1);
+	int i;
+	long *a = malloc(size * sizeof(long) + 1);
+
 	a[0] = size;
-    for (i = 1; i <= size; i++)
+
+	for (i = 1; i <= size; i++)
 		a[i] = init;
-    return a+1;
+
+	return a + 1;
 }
+
 void _checkIndexArray(long *a, long i)
 {
-	if(i<0 || i>a[-1]) {
+	if(i < 0 || i > a[-1]) {
 		fprintf(stderr, "indice %ld excedido!\n", i);
 		exit(-1);
 	}
 }
 long *_allocRecord(long ctos, ...)
 {
-    int i;
-    long *p, *a;
+	int i;
+	long *p, *a;
 	va_list va;
-    p = a = malloc(ctos*sizeof(long));
+
+	p = a = malloc(ctos * sizeof(long));
 	va_start(va, ctos);
-    for (i = 0; i < ctos; i ++)
+
+	for (i = 0; i < ctos; i ++)
 		*p++ = va_arg(va, long);
-    return a;
+
+	return a;
 }
+
 void _checkNil(long* r)
 {
-	if(r==0) {
+	if (r == 0) {
 		fprintf(stderr, "Nil!\n");
 		exit(-1);
 	}
 }
+
 long _stringCompare(string *s, string *t)
 {
-    int i;
-    if(s == t)
+	int i;
+
+	if(s == t)
 		return 0;
-    for(i = 0; i<s->length && i<t->length; i++)
-		if(s->chars[i]!=t->chars[i])
-		    return s->chars[i]-t->chars[i];
-	return s->length-t->length;
+
+	for(i = 0; i < s->length && i < t->length; i++)
+		if(s->chars[i] != t->chars[i])
+			return s->chars[i] - t->chars[i];
+
+	return s->length - t->length;
 }
+
 void print(string *s)
 {
-    int i;
-    unsigned char *p = s->chars;
-    for (i = 0; i < s->length; i++, p++)
+	int i;
+	unsigned char *p = s->chars;
+
+	for (i = 0; i < s->length; i++, p++)
 		putchar(*p);
 }
+
 void flush()
 {
-    fflush(stdout);
+	fflush(stdout);
 }
+
 long ord(string *s)
 {
-    if (s->length == 0)
+	if (s->length == 0)
 		return -1;
-    else
+	else
 		return s->chars[0];
 }
 string *chr(long i)
 {
-    if (i < 0 || i >= 256) {
+	if (i < 0 || i >= 256) {
 		printf("chr(%ld) out of range\n", i);
 		exit(1);
-    }
-    return (string*)(consts + i);
+	}
+	return (string*)(consts + i);
 }
+
 long size(string *s)
 {
-    return s->length;
+	return s->length;
 }
-string *substring(string *s, long first, long n)
+
+string *substring (string *s, long first, long n)
 {
-    if (first < 0 || first + n > s->length) {
-		printf("substring([%ld],%ld,%ld) out of range\n", s->length, first, n);
+	int i;
+	string *t;
+
+	if (first < 0 || first + n > s->length) {
+		printf("substring([%ld],%ld,%ld) out of range\n", s->length,
+		       first, n);
 		exit(1);
-    }
-    if (n == 1)
+	}
+	if (n == 1)
 		return (string*)(consts + s->chars[first]);
-    {
-		string *t = malloc(sizeof(long) + n);
-		int i;
+	else {
+		t = malloc(sizeof(long) + n);
 		t->length = n;
 		for (i = 0; i < n; i++)
-		    t->chars[i] = s->chars[first + i];
+			t->chars[i] = s->chars[first + i];
 		return t;
-    }
+	}
 }
-string *concat(string *a, string *b)
+
+string *concat (string *a, string *b)
 {
-    if (a->length == 0)
+	int i, n;
+	string *t;
+
+	if (a->length == 0)
 		return b;
-    else if (b->length == 0)
+	else if (b->length == 0)
 		return a;
-    else {
-		int i, n = a->length + b->length;
-		string *t = malloc(sizeof(long) + n);
+	else {
+		i = n = a->length + b->length;
+		t = malloc(sizeof(long) + n);
 		t->length = n;
 		for (i = 0; i < a->length; i++)
-		    t->chars[i] = a->chars[i];
+			t->chars[i] = a->chars[i];
 		for (i = 0; i < b->length; i++)
-		    t->chars[i + a->length] = b->chars[i];
+			t->chars[i + a->length] = b->chars[i];
 		return t;
-    }
+	}
 }
+
 long not(long i)
 {
-    return !i;
+	return !i;
 }
+
 string *getstr()
 {
-    int i = getc(stdin);
-    if (i == EOF)
+	int i = getc(stdin);
+
+	if (i == EOF)
 		return &empty;
-    else
+	else
 		return (string*)(consts + i);
 }
-*/
+
 /*
  * Copiada del gcc de arm.
  * __udivmodsi4
@@ -227,10 +257,12 @@ unsigned int udiv(unsigned int num, unsigned int den,
 		  unsigned int *rem_p)
 {
 	unsigned int quot = 0, qbit = 1;
+
 	if (den == 0)
 	{
 		raise(SIGFPE);
 	}
+
 	/*
 	 * left-justify denominator and count shift
 	 */
@@ -239,6 +271,7 @@ unsigned int udiv(unsigned int num, unsigned int den,
 		den <<= 1;
 		qbit <<= 1;
 	}
+
 	while (qbit)
 	{
 		if (den <= num)
@@ -249,8 +282,10 @@ unsigned int udiv(unsigned int num, unsigned int den,
 		den >>= 1;
 		qbit >>= 1;
 	}
+
 	if (rem_p)
 		*rem_p = num;
+
 	return quot;
 }
 
@@ -263,34 +298,28 @@ signed int idiv(signed int num, signed int den)
 {
 	signed int minus = 0;
 	signed int v;
+
 	if (num < 0)
 	{
 		num = -num;
 		minus = 1;
 	}
+
 	if (den < 0)
 	{
 		den = -den;
 		minus ^= 1;
 	}
+
 	v = udiv(num, den, 0);
+
 	if (minus)
 		v = -v;
+
 	return v;
 }
 
 int main()
 {
-    int i;
-	/*
-    for (i = 0; i < 256; i++) {
-		consts[i].length = 1;
-		consts[i].chars[0] = i;
-    }
-	*/
-    //return _tigermain(0 /* static link!? */ );
-    return idiv(2,0);
+	return _tigermain(0 /* static link!? */ );
 }
-
-
-
