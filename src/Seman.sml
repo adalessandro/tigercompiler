@@ -375,7 +375,7 @@ fun transExp(venv, tenv) =
                                           | SOME ty => ty)
                             (* enmascaramos el nombre de la función para evitar colisiones *)
                             val labelname = case name of
-                                "_Main" => name
+                                "_tigermain" => name
                               | _ => name^"."^makestring(nl)^"."^makestring(newLabel())
                             (* insertamos la función en venv *)
                             val venv' = tabRInserta(name,
@@ -449,7 +449,7 @@ fun transExp(venv, tenv) =
 fun transProg ex =
     let 
         val main =
-            LetExp({decs=[FunctionDec[({name="_Main", params=[],
+            LetExp({decs=[FunctionDec[({name="_tigermain", params=[],
                         result=SOME "int", body=ex}, 0)]],
                         (*result=NONE, body=ex}, 0)]],*)
                     body=UnitExp 0}, 0)

@@ -142,7 +142,7 @@ fun procEntryExit1 (frame, body) =
                        MOVE(TEMP lr, MEM(BINOP(PLUS, TEMP sp, CONST wSz))), (* lr = [sp+4] *)
                        MOVE(TEMP sp, BINOP(PLUS, TEMP sp, CONST (2*wSz))), (* sp += 8 *)
                        MOVE(TEMP pc, TEMP lr)]
-                       (* JUMP(TEMP lr, [])] *) (* bx lr *)
+                       (*JUMP(TEMP lr, [])]*) (* bx lr *)
                       )
     in
         seq([prologo, body, epilogo])

@@ -215,7 +215,9 @@ val format =
         | MOVE {assem, dest, src} => speak("\t" ^ assem, dest, src, nil)
     end
 
-fun printAssem i = print (format i ^ "\n")
+fun strAssem i = format i ^ "\n"
+
+fun printAssem i = (print o strAssem) i
 
 (* Reemplazar las ocurrencias del temp t por el registro r en una instrucción. *)
 fun replace (t, r) =

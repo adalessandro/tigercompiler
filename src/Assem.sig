@@ -20,6 +20,8 @@ sig
     (*val format : (temp -> string) -> instr -> string*)
     val format : instr -> string
 
+	val strAssem : instr -> string
+
 	val printAssem : instr -> unit
 
     val munchStmBlock : Tree.stm list * Frame.frame -> instr list

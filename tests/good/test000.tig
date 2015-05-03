@@ -1,5 +1,5 @@
 let
-    function do_nothing1 (a : int, b : int) : int = a + b
 in
-	do_nothing1 (93, 199)
+	print ("Hola mundo");
+	7
 end

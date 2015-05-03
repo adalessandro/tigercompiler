@@ -29,8 +29,9 @@ fun main args =
             val (flow, l6) = arg (l5, "-flow") 
             val (interf, l7) = arg (l6, "-interf") 
             val (color, l8) = arg (l7, "-color")
+            val (final, l9) = arg (l8, "-final")
             val entrada =
-                    case l8 of
+                    case l9 of
                     [n] => ((open_in n) handle _ => raise Fail (n ^ " no existe!"))
                   | [] => std_in
                   | _ => raise Fail "opción desconocida!"
@@ -75,7 +76,13 @@ fun main args =
             val final_instrs = (List.concat o List.map List.rev) final_assemblocklist
 
             (* It's the final printing! *)
-            val _ = (List.map Assem.printAssem final_instrs; ())
+            val _ = if final then (
+                        List.map Assem.printAssem final_instrs; ()
+                    ) else ()
+            val final_prog = String.concat (List.map Assem.strAssem final_instrs)
+            val fd = TextIO.openOut "output.s"
+            val _ = TextIO.output (fd, final_prog)
+            val _ = TextIO.closeOut fd
         in
             print "Ultra yes!!!\n"
         end

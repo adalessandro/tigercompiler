@@ -27,12 +27,12 @@ type access = Frame.access
 type frag = Frame.frag
 val fraglist = ref ([]: frag list)
 
-val actualLevel = ref ~1 (* _Main debe tener level = 0. *)
+val actualLevel = ref ~1 (* _tigermain debe tener level = 0. *)
 
 fun getActualLev() = !actualLevel
 
 val outermost: level = {parent=NONE,
-                        frame=newFrame{name="_Main", formals=[]},
+                        frame=newFrame{name="_tigermain", formals=[]},
                         levelint=getActualLev()}
 
 fun newLevel{parent={parent, frame, levelint}, name, formals} =
