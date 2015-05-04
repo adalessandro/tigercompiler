@@ -10,7 +10,7 @@ open Flow
 open Tigerextras
 
 (* DEBUG *)
-val enable_debug = false
+val enable_debug = true
 
 fun debug x = if enable_debug then print x else ()
 
@@ -143,6 +143,7 @@ fun printIGraph ops =
 (* LivenessAnalisys and Build *)
 fun makeIGraph (FGRAPH fgraph) =
         let
+            val _ = debug "makeIGraph()\n"
             (* Initialize the interference graph *)
             val regs_set = Set.addList (Set.empty String.compare, Frame.generalregs) 
             val temps_set = Set.union (getTempsSet (FGRAPH fgraph), regs_set)
@@ -517,6 +518,7 @@ fun rewriteProgram (blocks : (Assem.instr list * Frame.frame) list) =
 (* Main *)
 fun coloring_main opts (blocks : (Assem.instr list * Frame.frame) list) =
         let (* For debugging *)
+            val _ = debug "coloring_main()\n"
             val opt_flow = List.nth (opts, 0)
             val opt_interf = List.nth (opts, 1)
             val opt_color = List.nth (opts, 2)

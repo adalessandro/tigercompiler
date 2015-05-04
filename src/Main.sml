@@ -5,6 +5,8 @@ open Seman
 open Tigerextras
 open BasicIO Nonstdio
 
+val out_file_name = "output.s"
+
 fun lexstream (is: instream) =
         Lexing.createLexer (fn b => fn n => buff_input is b 0 n)
 
@@ -80,9 +82,15 @@ fun main args =
                         List.map Assem.printAssem final_instrs; ()
                     ) else ()
             val final_prog = String.concat (List.map Assem.strAssem final_instrs)
-            val fd = TextIO.openOut "output.s"
-            val _ = TextIO.output (fd, final_prog)
+    
+            val final_prog' = "\t.global _tigermain\n" ^ final_prog
+
+            (* Output program to file *)
+            val fd = TextIO.openOut out_file_name
+            val _ = TextIO.output (fd, final_prog')
             val _ = TextIO.closeOut fd
+            val _ = Process.system ("arm-linux-gnueabi-gcc -g runtime.o " ^ out_file_name)
+            val _ = Process.system ("scp a.out root@192.168.0.103:")
         in
             print "Ultra yes!!!\n"
         end

@@ -7,6 +7,11 @@ open Graph
 open Tab
 open Tigerextras
 
+(* DEBUG *)
+val enable_debug = true
+
+fun debug x = if enable_debug then print x else ()
+
 (*structure Graph*)
 datatype flowgraph =
         FGRAPH of { control: Graph.graph,
@@ -16,7 +21,8 @@ datatype flowgraph =
                     nodes: Assem.instr Graph.table}
 
 fun makeFGraph (instrs : Assem.instr list) =
-        let val instr_indexes = List.tabulate (List.length instrs, (fn x => x))
+        let val _ = debug "makeFGraph()\n"
+            val instr_indexes = List.tabulate (List.length instrs, (fn x => x))
             val instr_pairs = ListPair.zip (instr_indexes, instrs)
 
             fun islast pos = (List.length instrs = pos + 1)

@@ -1,0 +1,6 @@
+let
+    function do_nothing1 (a : int, b : int, c : int) : int = a + b + c
+in
+	print(chr(do_nothing1 (1, 2, 3) + 4));
+	0
+end

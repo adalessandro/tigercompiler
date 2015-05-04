@@ -121,9 +121,12 @@ fun munchStmBlock (ss, frame) =
                 end
           | munchStm (T.EXP e1) =
                 (munchExp e1; ())
-          | munchStm (T.JUMP (e1, llst)) =
+          | munchStm (T.JUMP (e1, llst)) = (
+                case llst of
+                [RET_LABEL] => emits (OPER {assem = "bx      `d0", dest = [Frame.lr], src = [], jump = NONE})
                 (*let val e1' = munchExp e1*)
-                emits (OPER {assem = "b       `j0", dest = [], src = [], jump = SOME llst})
+              | _ => emits (OPER {assem = "b       `j0", dest = [], src = [], jump = SOME llst})
+            )
           | munchStm (T.CJUMP (op1, e1, e2, l1, l2)) =
                 let val (e1', e2') = (munchExp e1, munchExp e2)
                     val cond = case op1 of
