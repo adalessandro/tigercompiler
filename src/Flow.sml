@@ -8,7 +8,7 @@ open Tab
 open Tigerextras
 
 (* DEBUG *)
-val enable_debug = true
+val enable_debug = false
 
 fun debug x = if enable_debug then print x else ()
 
@@ -124,9 +124,12 @@ fun getTempsSet (FGRAPH fgraph) =
 fun printFlow ops (FGRAPH fgraph) =
         let fun printFlow' opt =
                     case opt of
-                    "control" => Graph.printGraph (print o Int.toString) (#control fgraph)
-                  | "def" => Tab.printTab printint (Graph.printSet print) (#def fgraph)
-                  | "use" => Tab.printTab printint (Graph.printSet print) (#def fgraph)
+                    "control" => (print "Control: ";
+                                  Graph.printGraph (print o Int.toString) (#control fgraph))
+                  | "def" => (print "Def: ";
+                              Tab.printTab printint (Graph.printSet print) (#def fgraph))
+                  | "use" => (print "Use: ";
+                              Tab.printTab printint (Graph.printSet print) (#use fgraph))
                   | "ismove" => Tab.printTab printint (print o Bool.toString) (#ismove fgraph)
                   | "nodes" => Tab.printTab printint (print o Assem.format) (#nodes fgraph)
                   | _ => raise Fail "printFlow: opción desconocida"

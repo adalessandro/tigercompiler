@@ -21,7 +21,7 @@ fun list2set xs = Splayset.addList ((Splayset.empty String.compare), xs)
 
 fun listpp f xs = "[" ^ String.concat (List.map (fn x => f x ^ ", ") xs) ^ "]"
 
-fun printlist f xs = (print "["; List.map (fn x => (f x; print ", ")) xs; print "]")
+fun printlist f xs = (print "["; List.map (fn x => (f x; print ", ")) xs; print "]\n")
 
 fun list_eq ([], []) = true
   | list_eq (x::xs, y::ys) =

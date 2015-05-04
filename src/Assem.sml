@@ -123,7 +123,7 @@ fun munchStmBlock (ss, frame) =
                 (munchExp e1; ())
           | munchStm (T.JUMP (e1, llst)) = (
                 case llst of
-                [RET_LABEL] => emits (OPER {assem = "bx      `d0", dest = [Frame.lr], src = [], jump = NONE})
+                [RET_LABEL] => emits (OPER {assem = "bx      `s0", dest = [], src = [Frame.lr], jump = NONE})
                 (*let val e1' = munchExp e1*)
               | _ => emits (OPER {assem = "b       `j0", dest = [], src = [], jump = SOME llst})
             )

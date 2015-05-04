@@ -81,6 +81,7 @@ fun main args =
             val _ = if final then (
                         List.map Assem.printAssem final_instrs; ()
                     ) else ()
+
             val final_prog = String.concat (List.map Assem.strAssem final_instrs)
     
             val final_prog' = "\t.global _tigermain\n" ^ final_prog

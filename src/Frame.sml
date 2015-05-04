@@ -39,7 +39,6 @@ val r7 = "r7"
 val r8 = "r8"
 val r9 = "r9"
 val r10 = "r10"
-val r12 = "r12"
 val generalregs = [r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10]
 val genregslen = List.length generalregs
 
@@ -57,8 +56,8 @@ val calldefs = [rv]
 val specialregs = [rv, fp, sp, lr, pc]
 val argregs = [r0, r1, r2, r3]
 val argregslen = List.length argregs
-val callersaves = []
-val calleesaves = []
+val callersaves = [r0, r1, r2, r3]
+val calleesaves = [r4, r5, r6, r7, r8, r9, r10]
 
 type frame = {
     name: string,

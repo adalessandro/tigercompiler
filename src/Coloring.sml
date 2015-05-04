@@ -10,7 +10,7 @@ open Flow
 open Tigerextras
 
 (* DEBUG *)
-val enable_debug = true
+val enable_debug = false
 
 fun debug x = if enable_debug then print x else ()
 
@@ -112,7 +112,7 @@ fun isprecolored x = Set.member (!precolored, x)
 
 fun set_getone s =
         case (Set.find (fn x => true) s) of
-        NONE => raise Fail "getone_fromset ERROR: empty set"
+        NONE => raise Fail "set_getone ERROR: empty set"
       | SOME x => x
 
 fun set_forall f s = (Set.find f s = NONE)
@@ -145,7 +145,7 @@ fun makeIGraph (FGRAPH fgraph) =
         let
             val _ = debug "makeIGraph()\n"
             (* Initialize the interference graph *)
-            val regs_set = Set.addList (Set.empty String.compare, Frame.generalregs) 
+            val regs_set = Set.addList (Set.empty String.compare, precolored_temps) 
             val temps_set = Set.union (getTempsSet (FGRAPH fgraph), regs_set)
             val temps_list = Set.listItems temps_set
             val temps_indexes = List.tabulate (List.length temps_list, (fn x => x))
@@ -161,7 +161,7 @@ fun makeIGraph (FGRAPH fgraph) =
 
             (* Initialize node work-lists, sets and stacks *)
             val precolored_nodes = List.map (tnode()) precolored_temps
-            val _ = precolored := Set.addList (!precolored, precolored_nodes)
+            val _ = precolored := Set.addList (Set.empty Int.compare, precolored_nodes)
             val _ = initial := Set.difference (temp_nodes_set, !precolored)
             val _ = simplifyWorkList := Set.empty Int.compare
             val _ = freezeWorkList := Set.empty Int.compare
@@ -187,7 +187,7 @@ fun makeIGraph (FGRAPH fgraph) =
             val _ = movelist := tabInserList (tabNueva(), move_init)
             val alias_init = List.tabulate (List.length temps_list, (fn x => (x, x)))
             val _ = alias := tabInserList (tabNueva(), alias_init)
-            val color_init = List.tabulate (List.length temps_list, (fn x => (x, "")))
+            val color_init = List.tabulate (List.length temps_list, (fn x => (x, "--")))
             val _ = color := tabInserList (tabNueva(), color_init)
             val _ = List.map (fn t => tabRInserta_ (tnode() t, t, color)) precolored_temps
 
@@ -202,7 +202,8 @@ fun makeIGraph (FGRAPH fgraph) =
             fun ismove n = tabSaca(n, (#ismove fgraph))
 
             fun liveness (inTab, outTab) =
-                let fun liveness' (inTab', outTab', []) = (inTab', outTab')
+                let val _ = debug "liveness()\n"
+                    fun liveness' (inTab', outTab', []) = (inTab', outTab')
                       | liveness' (inTab', outTab', (n::ns)) =
                             let fun liveout n = tabSaca (n, outTab')
                                 fun livein n = tabSaca (n, inTab')
@@ -266,7 +267,8 @@ and addEdge(u, v) =
          ) else ()
 
 fun makeWorkList () =
-        let fun foralln n =
+        let val _ = debug "makeWorkList()\n"
+            fun foralln n =
                     if tabSaca(n, (!degree)) >= k_len then
                         spillWorkList := Set.add (!spillWorkList, n)
                     else if isMoveRelated(n) then
@@ -300,6 +302,7 @@ fun simplify () =
         let val _ = debug "simplify()\n"
             fun forone n = (
                     simplifyWorkList := set_safedelete (!simplifyWorkList, n);
+                    debug ("Al stack se vaaa: " ^ (gtemp() n) ^ "\n");
                     Pila.pushPila selectStack n;
                     Set.app decrementDegree (adjacent n)
                     )
@@ -474,6 +477,7 @@ fun assignColors_while () = (
     debug "assignColors_while()\n";
     while (not (Pila.isEmpty selectStack)) do
         let val n = Pila.popPila selectStack
+            val _ = debug ("Del stack vienee: " ^ (gtemp() n) ^ "\n")
             val okColorsList = k_colors
             val okColors = ref (Set.empty String.compare)
             val _ = okColors := Set.addList (!okColors, okColorsList)
@@ -488,9 +492,10 @@ fun assignColors_while () = (
             Set.app forallw (tabSaca (n, !adjList));
             if Set.isEmpty (!okColors) then
                 spilledNodes := Set.add (!spilledNodes, n)
-            else
+            else (
                 coloredNodes := Set.add (!coloredNodes, n);
                 tabRInserta_ (n, set_getone (!okColors), color)
+            )
         end
     )
 
@@ -510,7 +515,7 @@ fun assignColors () =
 fun rewriteProgram (blocks : (Assem.instr list * Frame.frame) list) =
         let val _ = debug "rewriteProgram()\n"
             fun rewriteNode (n, (blocks' : (Assem.instr list * Frame.frame) list)) =
-                    List.map (Simpleregalloc.simpleregalloc (gtemp() n)) blocks
+                    List.map (Simpleregalloc.simpleregalloc (gtemp() n)) blocks'
         in
             Set.foldl rewriteNode blocks (!spilledNodes)
         end
@@ -524,8 +529,9 @@ fun coloring_main opts (blocks : (Assem.instr list * Frame.frame) list) =
             val opt_color = List.nth (opts, 2)
             (* Process *)
             val instrs = (List.concat o List.map (List.rev o #1)) blocks
+            val _ = List.map Assem.printAssem instrs
             val fgraph = Flow.makeFGraph instrs
-            val _ = if opt_flow then Flow.printFlow ["control"] fgraph else ()
+            val _ = if opt_flow then Flow.printFlow ["def", "use"] fgraph else ()
             val _ = makeIGraph fgraph
             val _ = if opt_interf then printIGraph ["graph", "nodes"] else ()
             val _ = makeWorkList()

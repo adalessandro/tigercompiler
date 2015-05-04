@@ -4,6 +4,19 @@ struct
 structure Set = Splayset
 
 open Assem
+open Tigerextras
+
+(* DEBUG *)
+val enable_debug = true
+
+fun debug x = if enable_debug then print x else ()
+
+(* Auxiliary functions *)
+fun set_safedelete (s, i) = (
+        Set.delete (s, i)
+        handle NotFound => s
+  )
+
 
 (* movaTemp, de memoria a un temporario.*)
 fun movaTemp (mempos, temp) =
@@ -30,9 +43,9 @@ fun movaMem (temp, mempos) =
                         ", #" ^ Int.toString (mempos)
                     else ""
         in
-            OPER {assem = "str     `s0, [`d0" ^ offset ^ "]",
-                  src = [temp], 
-                  dest = [Frame.fp], 
+            OPER {assem = "str     `s0, [`s1" ^ offset ^ "]",
+                  src = [temp, Frame.fp], 
+                  dest = [], 
                   jump = NONE
                  }
         end
@@ -45,7 +58,8 @@ fun movaMem (temp, mempos) =
  *      Requiere spilledTemp no debe ser precoloreado. Esto es un invariante previo?
  *)
 fun simpleregalloc spilledTemp ((body : instr list), (frm : Frame.frame)) =
-        let (* Temporarios que se pueden usar (p.ej, el temporario que representa a rax. 
+        let val _ = debug ("simpleregalloc (" ^ spilledTemp  ^ ")\n")
+            (* Temporarios que se pueden usar (p.ej, el temporario que representa a rax. 
              * Diferencia con precolored: el temporario que representa a rbp no se puede usar) *)
             val asignables = Frame.generalregs
             val asignablesSet = Set.addList (Set.empty String.compare, asignables)
@@ -65,16 +79,19 @@ fun simpleregalloc spilledTemp ((body : instr list), (frm : Frame.frame)) =
             (* Se le pasa la instrs a spillear *)
             fun rewriteInstr (OPER {assem, dest, src, jump}) =
                     let (* Asignación de colores *)
-                        val colores = Set.listItems (Set.delete (asignablesSet, spilledTemp))
+                        val colores = Set.listItems (set_safedelete (asignablesSet, spilledTemp))
                         (* Asignar un registro como color *)
                         (*val color = hd colores*)
                         (* Asignar un nuevo temp como color *)
                         val color = Temp.newtemp()
+                        val _ = debug ("Se creo el nuevo temp: " ^ color ^ "\n")
+                        val _ = debug ("Se borro el viejo temp: " ^ spilledTemp ^ "\n")
                         val prevMov = movaTemp (framepos, color)
                         val posMov = movaMem (color, framepos)
                         fun replace t = if t = spilledTemp then color else t
                         val newdest = map replace dest
                         val newsrc = map replace src
+                        val _ = (print "Dest + src: "; printlist print newdest; printlist print newsrc)
                         val newinstr = OPER {assem=assem, dest=newdest, src=newsrc, jump=jump}
                     in
                         [prevMov, newinstr, posMov]
