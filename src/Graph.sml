@@ -86,24 +86,36 @@ fun printSet nodepp s = (
         print "}"
     )
 
-fun printGraph nodepp g =
+fun printGraph isdirected nodepp g =
         let val glst = Splaymap.listItems g
-            fun ppneig {suc=suc, pred=pred} = (
+            fun ppneig_dir {suc=suc, pred=pred} = (
                     print "Suc: ";
                     printSet nodepp suc;
                     print " Pred: ";
                     printSet nodepp pred
                 )
+            fun ppneig_notdir {suc=suc, ...} = (
+                    print "Adj: ";
+                    printSet nodepp suc
+                )
             fun pp (nod, neig) = (
                     print "Nodo: ";
                     nodepp nod;
-                    print "; ";
-                    ppneig neig;
+                    print "; "; (
+                    if isdirected then
+                        ppneig_dir neig
+                    else
+                        ppneig_notdir neig
+                    );
                     print "\n"
                 )
         in
             List.map pp glst;
             ()
         end
+
+val printGraphDir = printGraph true
+
+val printGraphNotDir = printGraph false
 
 end

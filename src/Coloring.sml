@@ -126,7 +126,7 @@ fun printIGraph ops =
         let fun printnodepair (a, b) = (print "("; printint a; print ", "; printint b; print ")")
             fun printIGraph' opt =            
                     case opt of
-                    "graph" => Graph.printGraph printint (graph())
+                    "graph" => Graph.printGraphNotDir (print o gtemp()) (graph())
                   | "moves" => Graph.printSet printnodepair (moves())
                   | "nodes" => Tab.printTab printint print (nodes())
                   | _ => raise Fail "printIGraph: opción desconocida"
@@ -533,7 +533,7 @@ fun coloring_main opts (blocks : (Assem.instr list * Frame.frame) list) =
             val fgraph = Flow.makeFGraph instrs
             val _ = if opt_flow then Flow.printFlow ["def", "use"] fgraph else ()
             val _ = makeIGraph fgraph
-            val _ = if opt_interf then printIGraph ["graph", "nodes"] else ()
+            val _ = if opt_interf then printIGraph ["graph"] else ()
             val _ = makeWorkList()
             fun repeat() = (
                     debug "repeat()\n";

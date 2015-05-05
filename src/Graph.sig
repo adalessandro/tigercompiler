@@ -25,7 +25,10 @@ sig
     val nodename : node -> string
     
     val printSet : ('a -> unit) -> 'a Set.set -> unit 
-    val printGraph : (node -> unit) -> graph -> unit 
+
+    val printGraph : bool -> (node -> unit) -> graph -> unit 
+    val printGraphDir : (node -> unit) -> graph -> unit 
+    val printGraphNotDir : (node -> unit) -> graph -> unit 
 
     val entry2pp : string -> unit
     val entrypp : node * string list -> unit

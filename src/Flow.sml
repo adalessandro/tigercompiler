@@ -125,7 +125,7 @@ fun printFlow ops (FGRAPH fgraph) =
         let fun printFlow' opt =
                     case opt of
                     "control" => (print "Control: ";
-                                  Graph.printGraph (print o Int.toString) (#control fgraph))
+                                  Graph.printGraphDir (print o Int.toString) (#control fgraph))
                   | "def" => (print "Def: ";
                               Tab.printTab printint (Graph.printSet print) (#def fgraph))
                   | "use" => (print "Use: ";

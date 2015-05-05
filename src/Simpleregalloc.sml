@@ -91,10 +91,10 @@ fun simpleregalloc spilledTemp ((body : instr list), (frm : Frame.frame)) =
                         fun replace t = if t = spilledTemp then color else t
                         val newdest = map replace dest
                         val newsrc = map replace src
-                        val _ = (print "Dest + src: "; printlist print newdest; printlist print newsrc)
                         val newinstr = OPER {assem=assem, dest=newdest, src=newsrc, jump=jump}
                     in
-                        [prevMov, newinstr, posMov]
+                        (* Las instrs están en orden inverso. Así qué se insertan invertidas. *)
+                        [posMov, newinstr, prevMov]
                     end
               | rewriteInstr (LABEL l) = [LABEL l]
               | rewriteInstr (MOVE {assem, dest, src}) =
