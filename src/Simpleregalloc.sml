@@ -26,12 +26,14 @@ fun movaTemp (mempos, temp) =
                     else if mempos > 0 then
                         ", #" ^ Int.toString (mempos)
                     else ""
+            val instr =
+                    OPER {assem = "ldr     `d0, [`s0" ^ offset ^ "]",
+                          src = [Frame.fp],
+                          dest = [temp],
+                          jump = NONE
+                         }
         in
-            OPER {assem = "ldr     `d0, [`s0" ^ offset ^ "]",
-                  src = [Frame.fp], 
-                  dest = [temp], 
-                  jump = NONE
-                 }
+            [instr]
         end
 
 (* movaMem crea una instrucción que mueve un temporario a memoria. *)
@@ -42,12 +44,14 @@ fun movaMem (temp, mempos) =
                     else if mempos > 0 then
                         ", #" ^ Int.toString (mempos)
                     else ""
+            val instr =
+                    OPER {assem = "str     `s0, [`s1" ^ offset ^ "]",
+                          src = [temp, Frame.fp],
+                          dest = [],
+                          jump = NONE
+                         }
         in
-            OPER {assem = "str     `s0, [`s1" ^ offset ^ "]",
-                  src = [temp, Frame.fp], 
-                  dest = [], 
-                  jump = NONE
-                 }
+            [instr]
         end
 
 (* simpleregalloc body frm spilledTemp
@@ -86,27 +90,31 @@ fun simpleregalloc spilledTemp ((body : instr list), (frm : Frame.frame)) =
                         val color = Temp.newtemp()
                         val _ = debug ("Se creo el nuevo temp: " ^ color ^ "\n")
                         val _ = debug ("Se borro el viejo temp: " ^ spilledTemp ^ "\n")
-                        val prevMov = movaTemp (framepos, color)
-                        val posMov = movaMem (color, framepos)
+                        val issrc = List.exists (fn x => x = spilledTemp) src
+                        val isdest = List.exists (fn x => x = spilledTemp) dest
                         fun replace t = if t = spilledTemp then color else t
-                        val newdest = map replace dest
-                        val newsrc = map replace src
+                        val newsrc = if issrc then map replace src else src
+                        val newdest = if isdest then map replace dest else dest
+                        val prevMovs = if issrc then movaTemp (framepos, color) else []
+                        val posMovs = if isdest then movaMem (color, framepos) else []
                         val newinstr = OPER {assem=assem, dest=newdest, src=newsrc, jump=jump}
                     in
                         (* Las instrs están en orden inverso. Así qué se insertan invertidas. *)
-                        [posMov, newinstr, prevMov]
+                        List.rev (prevMovs @ [newinstr] @ posMovs)
                     end
               | rewriteInstr (LABEL l) = [LABEL l]
               | rewriteInstr (MOVE {assem, dest, src}) =
                     let val tdest = hd dest
                         val tsrc = hd src
+                        val instrs =
+                                if tdest = spilledTemp then
+                                    movaMem (tsrc, framepos)
+                                else if tsrc = spilledTemp then
+                                    movaTemp (framepos, tdest)
+                                else
+                                    raise Fail ("simpleregalloc.rewriteInstr: No debería suceder")
                     in
-                        if tdest = spilledTemp then
-                            [movaMem (tsrc, framepos)]
-                        else if tsrc = spilledTemp then
-                            [movaTemp (framepos, tdest)]
-                        else
-                            raise Fail ("simpleregalloc.rewriteInstr: No debería suceder")
+                        List.rev instrs
                     end
         in
             (List.concat (map (fn i => if do_rewrite i then rewriteInstr i else [i]) body), frm)

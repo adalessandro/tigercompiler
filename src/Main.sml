@@ -90,6 +90,7 @@ fun main args =
             val fd = TextIO.openOut out_file_name
             val _ = TextIO.output (fd, final_prog')
             val _ = TextIO.closeOut fd
+            val _ = Process.system ("arm-linux-gnueabi-gcc -c runtime.c -o runtime.o")
             val _ = Process.system ("arm-linux-gnueabi-gcc -g runtime.o " ^ out_file_name)
             val _ = Process.system ("scp a.out root@192.168.0.103:")
         in
