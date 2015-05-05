@@ -32,11 +32,15 @@ fun main args =
             val (interf, l7) = arg (l6, "-interf") 
             val (color, l8) = arg (l7, "-color")
             val (final, l9) = arg (l8, "-final")
+            val (debug, l10) = arg (l9, "-debug")
             val entrada =
-                    case l9 of
+                    case l10 of
                     [n] => ((open_in n) handle _ => raise Fail (n ^ " no existe!"))
                   | [] => std_in
                   | _ => raise Fail "opción desconocida!"
+
+            (* General debug *)
+            val _ = Tigerextras.enable_debug := debug
 
             (* Parsing input *)
             val lexbuf = lexstream entrada

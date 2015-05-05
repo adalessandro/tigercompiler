@@ -74,6 +74,7 @@ clean:
 	$(REMOVE) *.uo
 	$(REMOVE) errlist
 	$(REMOVE) *.o
+	$(REMOVE) tiger
 
 .sig.ui:
 	$(MOSMLC) $<

@@ -10,9 +10,9 @@ open Flow
 open Tigerextras
 
 (* DEBUG *)
-val enable_debug = false
+val enable_debug = true
 
-fun debug x = if enable_debug then print x else ()
+fun debug x = if (!Tigerextras.enable_debug) andalso enable_debug then print x else ()
 
 (* Variables de IGRAPH globales y funciones para manejarlas *)
 datatype igraph = (* No se está usando *)
@@ -201,9 +201,9 @@ fun makeIGraph (FGRAPH fgraph) =
             fun succ n = Graph.succ (#control fgraph) n
             fun ismove n = tabSaca(n, (#ismove fgraph))
 
+            val _ = debug "liveness()\n"
             fun liveness (inTab, outTab) =
-                let val _ = debug "liveness()\n"
-                    fun liveness' (inTab', outTab', []) = (inTab', outTab')
+                let fun liveness' (inTab', outTab', []) = (inTab', outTab')
                       | liveness' (inTab', outTab', (n::ns)) =
                             let fun liveout n = tabSaca (n, outTab')
                                 fun livein n = tabSaca (n, inTab')
@@ -302,7 +302,6 @@ fun simplify () =
         let val _ = debug "simplify()\n"
             fun forone n = (
                     simplifyWorkList := set_safedelete (!simplifyWorkList, n);
-                    debug ("Al stack se vaaa: " ^ (gtemp() n) ^ "\n");
                     Pila.pushPila selectStack n;
                     Set.app decrementDegree (adjacent n)
                     )
@@ -477,7 +476,6 @@ fun assignColors_while () = (
     debug "assignColors_while()\n";
     while (not (Pila.isEmpty selectStack)) do
         let val n = Pila.popPila selectStack
-            val _ = debug ("Del stack vienee: " ^ (gtemp() n) ^ "\n")
             val okColorsList = k_colors
             val okColors = ref (Set.empty String.compare)
             val _ = okColors := Set.addList (!okColors, okColorsList)
@@ -529,7 +527,7 @@ fun coloring_main opts (blocks : (Assem.instr list * Frame.frame) list) =
             val opt_color = List.nth (opts, 2)
             (* Process *)
             val instrs = (List.concat o List.map (List.rev o #1)) blocks
-            val _ = List.map Assem.printAssem instrs
+            val _ = if (!Tigerextras.enable_debug) andalso enable_debug then List.map Assem.printAssem instrs else []
             val fgraph = Flow.makeFGraph instrs
             val _ = if opt_flow then Flow.printFlow ["def", "use"] fgraph else ()
             val _ = makeIGraph fgraph

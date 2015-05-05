@@ -9,7 +9,7 @@ open Tigerextras
 (* DEBUG *)
 val enable_debug = true
 
-fun debug x = if enable_debug then print x else ()
+fun debug x = if (!Tigerextras.enable_debug) andalso enable_debug then print x else ()
 
 (* Auxiliary functions *)
 fun set_safedelete (s, i) = (
@@ -88,8 +88,8 @@ fun simpleregalloc spilledTemp ((body : instr list), (frm : Frame.frame)) =
                         (*val color = hd colores*)
                         (* Asignar un nuevo temp como color *)
                         val color = Temp.newtemp()
-                        val _ = debug ("Se creo el nuevo temp: " ^ color ^ "\n")
-                        val _ = debug ("Se borro el viejo temp: " ^ spilledTemp ^ "\n")
+                        val _ = debug ("Creado temp: " ^ color ^
+                                    ". Borrado temp: " ^ spilledTemp ^ "\n")
                         val issrc = List.exists (fn x => x = spilledTemp) src
                         val isdest = List.exists (fn x => x = spilledTemp) dest
                         fun replace t = if t = spilledTemp then color else t

@@ -1,6 +1,8 @@
 structure Tigerextras =
 struct
 
+val enable_debug = ref false
+
 fun quitarreps [] = []
   | quitarreps (x::xs) = if List.exists (fn y => x = y) xs then quitarreps xs else x::(quitarreps xs)
 

@@ -8,9 +8,9 @@ open Tab
 open Tigerextras
 
 (* DEBUG *)
-val enable_debug = false
+val enable_debug = true
 
-fun debug x = if enable_debug then print x else ()
+fun debug x = if (!Tigerextras.enable_debug) andalso enable_debug then print x else ()
 
 (*structure Graph*)
 datatype flowgraph =
