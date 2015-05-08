@@ -4,6 +4,7 @@ open Frame
 open Tree
 open Temp
 open Abs
+open Tigerextras
 
 exception breakexc
 exception divCero

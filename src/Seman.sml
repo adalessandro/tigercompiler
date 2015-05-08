@@ -371,13 +371,22 @@ fun transExp(venv, tenv) =
                             val labelname = case name of
                                 "_tigermain" => name
                               | _ => name^"."^makestring(nl)^"."^makestring(newLabel())
+
+                            (* lista con los escapes de los parametros *)
+                            val funext = (labelname = "_tigermain")
+                            val escapparams = List.map (! o (#escape)) params
+                            val escapparams' = if funext then escapparams else true::escapparams
+
+                            (* generar nuevo level *)
+                            val newlev = preFunctionDec(topLevel(), labelname, escapparams')
+
                             (* insertamos la función en venv *)
                             val venv' = tabRInserta(name,
-                                Func {level = topLevel(), (*newLev,*)
+                                Func {level = newlev,
                                       label = labelname,
                                       formals = typarams,
                                       result = tyres,
-                                      extern = (labelname = "_tigermain")}, venv)
+                                      extern = funext}, venv)
                         in
                             (* controlamos que no se repiten parametros en la función *)
                             case repite (#name) params of
@@ -391,13 +400,9 @@ fun transExp(venv, tenv) =
                                     SOME (Func {level, label, formals, result, extern}) =>
                                             (level, label, formals, result, extern)
                                   | _ => error ("Internal error FuncionDec aux1", nl)
-                            (* lista con los escapes de los parametros *)
-                            val escapparams = List.map (! o (#escape)) params
-                            val escapparams' = if funext then escapparams else true::escapparams
 
-                            (* tipamos el body de la función *)
-                            val lev = preFunctionDec(topLevel(), funlab, escapparams')
-                            val _ = pushLevel lev
+                            (* pushlevel *)
+                            val _ = pushLevel funlev
 
                             (* generamos e insertamos las variables de los args en venv *)
                             fun transParam x =
@@ -413,7 +418,7 @@ fun transExp(venv, tenv) =
                             (* recorremos el body *)
                             val {exp=expbody, ty=tybody} = (transExp(venv', tenv) body)
                             (* funres = TUnit implica que es un procedimiento *)
-                            val expfunc = functionDec(expbody, lev, (tiposIguales funres TUnit))
+                            val expfunc = functionDec(expbody, funlev, (tiposIguales funres TUnit))
                             val _ = postFunctionDec()
                             val _ = popLevel()
                         in

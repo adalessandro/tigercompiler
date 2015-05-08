@@ -321,6 +321,6 @@ signed int idiv(signed int num, signed int den)
 
 int main()
 {
-	_tigermain( 0 /* static link!? */ );
-	return 0;
+	printf("Resultado %d\n", _tigermain(0)); /* FAKE static link! */
+	return 7;
 }

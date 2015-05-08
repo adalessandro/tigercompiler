@@ -153,7 +153,7 @@ fun procEntryExit1 (frame : frame, body : Tree.stm) =
             fun filterInReg (InReg t, ls) = t :: ls
               | filterInReg (_, ls) = ls
             val argtemps = List.foldr filterInReg [] (formals frame)
-            val pairs = ListPair.zip (argtemps, argregs)
+            val pairs = ListPair.zip (argtemps, List.tl argregs)
             fun argmove (t, r) = MOVE (TEMP t, TEMP r)
             val argmoves = List.map argmove pairs
         in
@@ -176,12 +176,12 @@ fun procEntryExit2 (frame : frame, instrs : Assem.instr list) =
  *)
 fun procEntryExit3 (instrs : Assem.instr list, frame : frame) =
         let val prolog = [
-                    Assem.OPER {assem = "stmfd   sp!, {fp, lr}", dest = [], src = [], jump = NONE},
-                    Assem.OPER {assem = "add     fp, sp, #4", dest = [], src = [], jump = NONE}
+                    Assem.OPER {assem = "stmfd   sp!, {r0}", dest = [], src = [], jump = NONE},
+                    Assem.OPER {assem = "stmfd   sp!, {fp, lr}", dest = [], src = [], jump = NONE}
                 ]
             val epilog = [
-                    Assem.OPER {assem = "sub     sp, fp, #4", dest = [], src = [], jump = NONE},
                     Assem.OPER {assem = "ldmfd   sp!, {fp, lr}", dest = [], src = [], jump = NONE},
+                    Assem.OPER {assem = "add     sp, sp, #4", dest = [], src = [], jump = NONE},
                     Assem.OPER {assem = "bx      lr", dest = [], src = [], jump = NONE}
                 ]
             val offset = (!(#actualLocal frame)) * wSz

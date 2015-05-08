@@ -6,5 +6,5 @@ let
         a + b + 1
     end
 in
-	do_nothing1 (93) + 1
+	print (chr (do_nothing1 (93) + 1)); 0
 end
