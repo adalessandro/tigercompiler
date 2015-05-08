@@ -28,6 +28,7 @@ GRALOBJS= \
 	Abs.uo \
 	Assem.uo \
 	Canon.uo \
+	Codegen.uo \
 	Coloring.uo \
 	Escap.uo \
 	Flow.uo \
@@ -86,6 +87,7 @@ depend: \
 	Abs.sml \
 	Assem.sml \
 	Canon.sml \
+	Codegen.sml \
 	Coloring.sml \
 	Escap.sml \
 	Flow.sml \
@@ -116,10 +118,12 @@ depend: \
 	$(MOSMLTOOLS)/mosmldep >> Makefile
 
 ### DO NOT DELETE THIS LINE
-Frame.uo: Frame.ui Temp.ui Tigerit.uo Tree.uo Tigerextras.uo 
-Seman.uo: Seman.ui Trans.ui Tab.ui Topsort.ui Abs.uo Sres.uo Pila.ui 
+Frame.uo: Frame.ui Temp.ui Tigerit.uo Tree.uo Assem.ui Tigerextras.uo 
+Seman.uo: Seman.ui Trans.ui Tab.ui Topsort.ui Abs.uo Sres.uo Pila.ui \
+    Tigerextras.uo 
 Main.uo: Tigerpp.ui Trans.ui Interp.ui Seman.ui Grm.ui Temp.ui Escap.ui \
-    Frame.ui Canon.ui Lex.uo Tree.uo Assem.ui Coloring.uo Tigerextras.uo 
+    Frame.ui Canon.ui Lex.uo Tree.uo Assem.ui Coloring.uo Tigerextras.uo \
+    Codegen.ui 
 Seman.ui: Abs.uo 
 Canon.uo: Canon.ui Tab.ui Temp.ui Frame.ui Tree.uo 
 Trans.ui: Temp.ui Frame.ui Abs.uo Tree.uo 
@@ -139,17 +143,19 @@ Simpleregalloc.uo: Simpleregalloc.ui Temp.ui Frame.ui Assem.ui \
     Tigerextras.uo 
 Tigerpp.ui: Abs.uo 
 Escap.ui: Abs.uo 
+Codegen.uo: Codegen.ui Temp.ui Frame.ui Assem.ui Tigerextras.uo 
 Sres.uo: Tab.ui Trans.ui Temp.ui Abs.uo Tips.uo 
-Assem.ui: Temp.ui Frame.ui Tree.uo 
+Assem.ui: Temp.ui 
 Escap.uo: Escap.ui Tab.ui Abs.uo 
 Flow.uo: Tab.ui Temp.ui Graph.ui Assem.ui Tigerextras.uo 
 Grm.ui: Abs.uo 
 Topsort.ui: Tab.ui Abs.uo Tips.uo 
-Frame.ui: Temp.ui Tree.uo 
-Assem.uo: Assem.ui Temp.ui Frame.ui Tigerextras.uo 
+Frame.ui: Temp.ui Tree.uo Assem.ui 
+Codegen.ui: Frame.ui Tree.uo Assem.ui 
+Assem.uo: Assem.ui Temp.ui Tigerextras.uo 
 Interp.uo: Interp.ui Tab.ui Temp.ui Frame.ui Tigerit.uo Tree.uo 
 Coloring.uo: Tab.ui Simpleregalloc.ui Temp.ui Graph.ui Flow.uo Frame.ui \
-    Assem.ui Pila.ui Tigerextras.uo 
+    Assem.ui Pila.ui Tigerextras.uo Codegen.ui 
 Tigerit.uo: Tab.ui Tree.uo 
 Graph.ui: Tab.ui 
 Tab.uo: Tab.ui 

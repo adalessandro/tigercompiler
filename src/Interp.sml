@@ -17,18 +17,7 @@ struct
 
     fun inter showdebug (funfracs: (stm list*Frame.frame) list) (stringfracs: (Temp.label*string) list) =
     let
-        (*fun printStmList x =
-            let val _ = print "\nINICIO PRINT StmList\n"
-                val _ = List.map print (List.map It.tree x)
-                val _ = print "\nFIN PRINT StmList\n"
-            in () end
-        val _ = print "\nINICIO PRINT funfracs\n"
-        val _ = (List.map (printStmList o #1) funfracs)
-        val _ = print "\nFIN PRINT funfracs\n"
-        val _ = List.map (Frame.printFrame o #2) funfracs*)
         (* Memoria y registros *)
-        val _ = print("stringfracs")
-  val _ = List.map (fn (x,y) => print("Guardamos str: "^y^" en el lab:"^x^"\n")) stringfracs
         local
             val tabTemps: (Temp.temp, int ref) Tabla ref = ref (tabNueva())
             val tabMem: (int, int ref) Tabla ref = ref (tabNueva())

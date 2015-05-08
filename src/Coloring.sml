@@ -562,7 +562,7 @@ fun replaceTemps (blocks : (Assem.instr list * Frame.frame) list) =
                     let val _ = debug "replace()\n"
                         val color_lst = List.map (fn (a, b) => (gtemp() a, b)) (tabAList (!color))
                         (* Lista de funciones. Cada una reemplaza un temp. *)
-                        val fn_lst = List.map Assem.replace color_lst
+                        val fn_lst = List.map Codegen.replace color_lst
                         (* Aplicar todos los reemplazos a una instr. *)
                         fun rep_instr i = List.foldl (fn (f, i') => f i') i fn_lst
                     in

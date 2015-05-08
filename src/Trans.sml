@@ -10,45 +10,38 @@ exception divCero
     
 type level = {parent:frame option , frame: frame, levelint: int}
 
-fun printLevel (level:level) =
-    let val _ = print "\n"
-        val _ = case (#parent level) of
-                     SOME f => (print "parentFrame = " ; printFrame f)
-                   | NONE => print "parent = NONE"
-        val _ = print "\n"
-        val _ = (print "frame = " ; Frame.printFrame (#frame level))
-        val _ = print "\n"
-        val _ = (print "levelint = " ; print (Int.toString (#levelint level)))
-        val _ = print "\n"
-    in () end
-
 type access = Frame.access
 
 type frag = Frame.frag
+
+val datosGlobs = ref ([]: frag list)
+
 val fraglist = ref ([]: frag list)
 
 val actualLevel = ref ~1 (* _tigermain debe tener level = 0. *)
 
 fun getActualLev() = !actualLevel
 
-val outermost: level = {parent=NONE,
-                        frame=newFrame{name="_tigermain", formals=[]},
-                        levelint=getActualLev()}
+val outermost : level = {   parent = NONE,
+                            frame = newFrame {name="_tigermain", escapes=[]},
+                            levelint = getActualLev()
+                        }
 
-fun newLevel{parent={parent, frame, levelint}, name, formals} =
-    {parent=SOME frame,
-     frame=newFrame{name=name, formals=formals},
-     levelint=levelint+1}
+fun newLevel {parent = {parent, frame, levelint}, name, formals} =
+        {   parent = SOME frame,
+            frame = newFrame {name=name, escapes=formals},
+            levelint = levelint+1}
 
-fun allocArg{parent, frame, levelint} b = Frame.allocArg frame b
-fun allocLocal{parent, frame, levelint} b = Frame.allocLocal frame b
+fun allocArg {parent, frame, levelint} b = Frame.allocArg frame b
 
-fun formals{parent, frame, levelint} = Frame.formals frame
+fun allocLocal {parent, frame, levelint} b = Frame.allocLocal frame b
+
+fun formals {parent, frame, levelint} = Frame.formals frame
 
 datatype exp =
-    Ex of Tree.exp
-  | Nx of Tree.stm
-  | Cx of label * label -> Tree.stm
+        Ex of Tree.exp
+      | Nx of Tree.stm
+      | Cx of label * label -> Tree.stm
 
 fun unEx (Ex e) = e
   | unEx (Nx s) = ESEQ(s, CONST 0)
@@ -113,13 +106,13 @@ in
           | NONE => raise Fail "break incorrecto!"            
 end
 
-val datosGlobs = ref ([]: frag list)
-
-fun procEntryExit{level: level, body} =
-    let val label = STRING(name(#frame level), "")
-        val body' = PROC{frame= #frame level, body=unNx body}
-        val final = STRING(";;-------", "")
-    in  datosGlobs:=(!datosGlobs@[label, body', final]) end
+fun procEntryExit {level: level, body} =
+        let val label = STRING (name(#frame level), "")
+            val body' = PROC {frame = #frame level, body = unNx body}
+            val final = STRING (";;-------", "")
+        in
+            datosGlobs := (!datosGlobs @ [label, body', final])
+        end
 
 fun getResult() = !datosGlobs
 
@@ -136,20 +129,28 @@ fun stringExp(s: string) =
         val _ = datosGlobs:=(!datosGlobs @ [STRING(l, len), STRING("", str)])
     in  Ex(NAME l) end
 
-fun preFunctionDec(l, n, f) =
-    (pushSalida(NONE);
-     actualLevel := !actualLevel+1;
-     newLevel{formals=f,name=n,parent=l})
+fun preFunctionDec(l, n, f) = (
+        pushSalida(NONE);
+        actualLevel := (!actualLevel) + 1;
+        newLevel {formals=f, name=n, parent=l}
+    )
 
 fun functionDec(e, l, proc) =
-    let val body = if proc then unNx e
-                   else MOVE(TEMP rv, unEx e)
-        val body' = procEntryExit1(#frame l, body)
-        val () = procEntryExit{body=Nx body', level=l}
-    in  Ex(CONST 0) end
+        let val body =
+                    if proc then
+                        unNx e
+                    else
+                        MOVE (TEMP rv, unEx e)
+            val body' = procEntryExit1 (#frame l, body)
+            val _ = procEntryExit {body = Nx body', level = l}
+        in
+            Ex(CONST 0)
+        end
 
-fun postFunctionDec() =
-    (popSalida(); actualLevel := !actualLevel-1)
+fun postFunctionDec() = (
+        popSalida();
+        actualLevel := !actualLevel-1
+    )
 
 fun unitExp() = Ex (CONST 0)
 
@@ -214,40 +215,38 @@ fun arrayExp{size, init} =
     end
 
 fun callExp (name, external, isproc, lev:level, la) = 
-    let val nivel = #levelint lev
-        fun aux 0 = TEMP fp
-          | aux n = MEM(BINOP(PLUS,
-                    CONST fpPrevLev, aux(n-1)))
-        val fpLev =
-            if nivel = getActualLev() 
-            then MEM (BINOP (PLUS, CONST fpPrevLev, TEMP fp))
+        let (* Get the SL to be passed as an argument *)
+            val callerlev = getActualLev()
+            val calleelev = #levelint lev
+            fun get_sl n = (* n is the number of levels to go up *)
+                    if n < 0 then
+                        TEMP fp
+                    else
+                        MEM (BINOP (PLUS, CONST fpPrevLev, get_sl(n-1)))
+            val t1 = newtemp()
+            val sl = ESEQ (seq [MOVE (TEMP t1, get_sl (callerlev - calleelev))], TEMP t1)
+
+            fun preparaArgs (h, (rt, re)) =
+                    case h of
+                    Ex(CONST n) => ((CONST n) :: rt, re)
+                  | Ex(NAME n) => ((NAME n) :: rt, re)
+                  | Ex(TEMP n) => ((TEMP n) :: rt, re)
+                  | _ => let val temp = newtemp()
+                         in
+                            ((TEMP temp) :: rt, MOVE (TEMP temp, unEx h) :: re)
+                         end
+            val (ta, la') = List.foldr preparaArgs ([], []) la
+            val ta' = if external then ta else sl :: ta
+            val argsAndCall = la' @ [EXP(CALL(NAME name, ta'))]
+        in
+            if isproc then
+                Nx (seq argsAndCall)
             else
-                if (nivel < getActualLev())
-                then aux(getActualLev() - nivel)
-                else aux 0
-        
-        fun preparaArgs [] (rt, re) = (rt, re)
-          | preparaArgs (h :: t) (rt, re) =
-                case h of
-                     Ex(CONST n) => preparaArgs t ((CONST n) :: rt, re)
-                   | Ex(NAME n) => preparaArgs t ((NAME n) :: rt, re)
-                   | Ex(TEMP n) => preparaArgs t ((TEMP n) :: rt, re)
-                   | _ => let val temp = newtemp()
-                          in  preparaArgs t ((TEMP temp) :: rt,
-                                             MOVE( TEMP temp, unEx h) :: re)
-                          end
-        val (ta, la') = preparaArgs (rev la) ([], [])
-        val ta' = if external then ta else fpLev :: ta
-    in
-        if isproc then
-            Nx( seq( la' @ [EXP( CALL( NAME name, ta') ) ] ) )
-        else
-            let val temp = newtemp()
-            in Ex( ESEQ( seq( la' @ [EXP( CALL( NAME name, ta') ), 
-                                        MOVE( TEMP temp, TEMP rv)]),
-                   TEMP temp))
-            end
-    end
+                let val t2 = newtemp()
+                in
+                    Ex (ESEQ (seq (argsAndCall @ [MOVE(TEMP t2, TEMP rv)]), TEMP t2))
+                end
+        end
 
 fun letExp ([], body) = Ex (unEx body)
  |  letExp (inits, body) = Ex (ESEQ(seq inits,unEx body))
@@ -402,5 +401,18 @@ fun binOpStrExp {left,oper,right} =
                              MOVE( TEMP temp, TEMP rv),
                              (CJUMP( oper', TEMP temp, CONST 0, t, f))])
     end
+
+fun printLevel (level:level) =
+    let val _ = print "\n"
+        val _ = case (#parent level) of
+                     SOME f => (print "parentFrame = " ; printFrame f)
+                   | NONE => print "parent = NONE"
+        val _ = print "\n"
+        val _ = (print "frame = " ; Frame.printFrame (#frame level))
+        val _ = print "\n"
+        val _ = (print "levelint = " ; print (Int.toString (#levelint level)))
+        val _ = print "\n"
+    in () end
+
 
 end

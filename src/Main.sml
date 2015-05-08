@@ -69,7 +69,7 @@ fun main args =
             val _ = if interp then Interp.inter true blocks strs else ()
         
             (* Instruction selection *)
-            val assemblocklist : Assem.instr list list = List.map Assem.munchStmBlock blocks 
+            val assemblocklist : Assem.instr list list = List.map Codegen.munchStmBlock blocks 
             val instrs = (List.concat o List.map List.rev) assemblocklist
             val _ = if code then (
                         List.map Assem.printAssem instrs; ()

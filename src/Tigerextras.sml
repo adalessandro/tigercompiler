@@ -15,6 +15,24 @@ fun unionsinrep' [] ys = ys
 
 fun unionsinrep xs ys = unionsinrep' (quitarreps xs) (quitarreps ys)
 
+(*  repite key lst
+ *      Retorna (SOME x) donde x es un elemento de lst tal que key(x) se repite en lst.
+ *      Si no existe tal elemento retorna NONE.
+ *)
+fun repite key lst =
+        let fun compare x =
+                    if List.exists (fn y => key x = key y) lst then
+                        SOME x
+                    else
+                        NONE
+            fun iterate (x, resp) =
+                    case resp of
+                    NONE => compare x
+                  | a => a
+        in
+            List.foldl iterate NONE lst
+        end
+
 (* restadelist a b = a - b en conjuntos *)
 fun restadelist xs ys = 
     List.foldr (fn (y, xs') => List.filter (fn x => x <> y) xs') xs ys
@@ -40,5 +58,7 @@ fun printbool true = print "T"
   | printbool false = print "F"
 
 fun printint x = (print o Int.toString) x
+
+fun println x = print (x ^ "\n")
 
 end

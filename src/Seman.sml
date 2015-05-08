@@ -5,6 +5,7 @@ open Abs
 open Sres
 open Topsort
 open Trans
+open Tigerextras
 
 (* Pilas para el manejo de levels de anidamiento de funciones *)
 val levelPila: Trans.level Pila.Pila = Pila.nuevaPila1(Trans.outermost) 
@@ -358,11 +359,6 @@ fun transExp(venv, tenv) =
                             NONE => error(s^" no está declarado", nl)
                           | SOME ty => ty)
                       | _ => error("Internal error (4)", nl)
-                    (* repite key ls: devuelve SOME x si existen 2 elementos en ls que tienen el mismo key() *)
-                    fun repite key = #1 o foldr (fn (x, (b, xs)) => case b of
-                            SOME _ => (b, [])
-                          | NONE => if (List.all (fn y => (key x) <> (key y)) xs)
-                                    then (NONE, (x::xs)) else (SOME x, [])) (NONE, [])
                     fun aux0 (({name, params, result, body}, nl), (venv, tenv)) =
                         let
                             (* tipamos todos los argumentos *)
@@ -392,36 +388,42 @@ fun transExp(venv, tenv) =
                         end 
                     fun aux1 ( ({name, params, result, body}, nl) , (venv, tenv)) =
                         let 
-                            val (funlev, funlab, funform, funres, funext) = case tabBusca(name, venv) of
-                                SOME (Func {level, label, formals, result, extern}) => (level, label, formals, result, extern)
-                              | _ => error("Internal error FuncionDec aux1", nl)
+                            val (funlev, funlab, funform, funres, funext) =
+                                    case tabBusca(name, venv) of
+                                    SOME (Func {level, label, formals, result, extern}) =>
+                                            (level, label, formals, result, extern)
+                                  | _ => error ("Internal error FuncionDec aux1", nl)
                             (* lista con los escapes de los parametros *)
                             val escapparams = List.map (! o (#escape)) params
                             val escapparams' = if funext then escapparams else true::escapparams
 
                             (* tipamos el body de la función *)
                             val lev = preFunctionDec(topLevel(), funlab, escapparams')
-                            (* val _ = Trans.printLevel lev *)
                             val _ = pushLevel lev
 
                             (* generamos e insertamos las variables de los args en venv *)
-                            fun transParam x = let val accParam = allocArg (topLevel()) (!(#escape x)) 
-                                                   val tyParam = transNameTy (#typ x) tenv nl
-                                               in  (#name x, Var{ty=tyParam, access=accParam, level=getActualLev()})
-                                               end
+                            fun transParam x =
+                                    let val accParam = allocArg (topLevel()) (!(#escape x)) 
+                                        val tyParam = transNameTy (#typ x) tenv nl
+                                    in
+                                        (#name x, 
+                                         Var{ty=tyParam, access=accParam, level=getActualLev()})
+                                    end
                             val varEntries = List.map transParam params
                             val venv' = tabInserList (venv, varEntries)
 
                             (* recorremos el body *)
                             val {exp=expbody, ty=tybody} = (transExp(venv', tenv) body)
-                            val expfunc = functionDec(expbody, lev, (tiposIguales funres TUnit)) (* si funres = TUnit implica que es un procedimiento *)
+                            (* funres = TUnit implica que es un procedimiento *)
+                            val expfunc = functionDec(expbody, lev, (tiposIguales funres TUnit))
                             val _ = postFunctionDec()
                             val _ = popLevel()
                         in
                             (* controlamos que el body tiene el tipo declarado del resultado *)
-                            if tiposIguales tybody funres 
-                            then (venv, tenv)
-                            else error("Tipo del body no coincide con el tipo del resultado.", nl) 
+                            if tiposIguales tybody funres then
+                                (venv, tenv)
+                            else
+                                error ("Tipo del body no coincide con el tipo del resultado.", nl) 
                         end
                     val (venv', _) = List.foldl aux0 (venv, tenv) fs
                     val (venv'', _) = List.foldl aux1 (venv', tenv) fs
