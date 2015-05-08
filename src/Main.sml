@@ -88,7 +88,7 @@ fun main args =
 
             val final_prog = String.concat (List.map Assem.strAssem final_instrs)
     
-            val final_prog' = "\t.global _tigermain\n" ^ final_prog
+            val final_prog' = Frame.setDirectives final_prog strs
 
             (* Output program to file *)
             val fd = TextIO.openOut out_file_name

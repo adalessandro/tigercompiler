@@ -38,6 +38,7 @@ val callersaves : Temp.temp list
 val newFrame : {name: Temp.label, escapes: bool list} -> frame
 val name : frame -> Temp.label
 val makeString : Temp.label * string -> string
+val setDirectives : string -> (Temp.label * string) list -> string
 val formals : frame -> access list
 val allocArg : frame -> bool -> access
 val allocLocal : frame -> bool -> access

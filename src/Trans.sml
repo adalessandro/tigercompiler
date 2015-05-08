@@ -81,20 +81,6 @@ fun unCx (Nx s) = raise Fail ("Error (UnCx(Nx..))")
   | unCx (Ex e) =
         (fn (t,f) => CJUMP(NE, e, CONST 0, t, f))
 
-fun Ir(e) =
-    let fun aux(Ex e) = Tigerit.tree(EXP e)
-          | aux(Nx s) = Tigerit.tree(s)
-          | aux _ = raise Fail "bueno, a completar!"
-        fun aux2(PROC{body, frame}) = aux(Nx body)
-          | aux2(STRING(l, "")) = l^":\n"
-          | aux2(STRING("", s)) = "\t"^s^"\n"
-          | aux2(STRING(l, s)) = l^":\t"^s^"\n"
-        fun aux3 [] = ""
-          | aux3(h::t) = (aux2 h)^(aux3 t)
-    in  aux3 e end
-
-fun nombreFrame frame = print(".globl " ^ Frame.name frame ^ "\n")
-
 (* While y for necesitan la ultima etiqueta para un break *)
 local
     val salidas: label option Pila.Pila = Pila.nuevaPila1 NONE
@@ -108,11 +94,10 @@ in
 end
 
 fun procEntryExit {level: level, body} =
-        let val label = STRING (name (#frame level), "")
+        let (*val label = STRING (name (#frame level), "")*) (* omitimos agregar el fun label *)
             val body' = PROC {frame = #frame level, body = unNx body}
-            val final = STRING (";;-------", "")
         in
-            datosGlobs := (!datosGlobs @ [label, body', final])
+            datosGlobs := (!datosGlobs @ [body'])
         end
 
 fun getResult() = !datosGlobs
@@ -126,7 +111,7 @@ fun stringLen s =
 fun stringExp(s: string) =
             let val l = newlabel()
                 val len = ".long " ^ makestring(stringLen s)
-                val str = ".string \"" ^ s ^ "\""
+                val str = ".ascii \"" ^ s ^ "\""
                 val _ = datosGlobs:=(!datosGlobs @ [STRING(l, len), STRING("", str)])
             in
                 Ex (NAME l)
@@ -164,8 +149,8 @@ fun intExp i = Ex (CONST i)
 fun simpleVar(InFrame i, nivel) =
         let fun aux 0 = TEMP fp
               | aux n = MEM(BINOP(PLUS,
-                        CONST fpPrevLev, aux(n-1))) (* ver si es fpPrevLev *)
-        in  Ex (MEM(BINOP(PLUS, aux(!actualLevel - nivel), CONST i))) end
+                        CONST fpPrevLev, aux(n-1)))
+        in  Ex (MEM(BINOP(MINUS, aux(!actualLevel - nivel), CONST i))) end
   | simpleVar(InReg l, _) =
         Ex (TEMP l) 
 
@@ -188,12 +173,17 @@ fun subscriptVar(arr, ind) =
         val i = unEx ind
         val ra = newtemp()
         val ri = newtemp()
+        val ret = newtemp()
     in
         Ex( ESEQ(seq[MOVE(TEMP ra, a),
                      MOVE(TEMP ri, i),
-                     EXP(externalCall("_checkindex", [TEMP ra, TEMP ri]))],
-                MEM(BINOP(PLUS, TEMP ra,
-                    BINOP(MUL, TEMP ri, CONST Frame.wSz)))))
+                     EXP(externalCall("_checkIndexArray", [TEMP ra, TEMP ri])),
+                     MOVE(TEMP ret, MEM( BINOP(PLUS, TEMP ra,
+                                               BINOP(MUL, TEMP ri, CONST Frame.wSz)
+                                              )))
+                    ],
+                TEMP ret)
+            )
     end
 
 fun recordExp l =
@@ -214,7 +204,7 @@ fun arrayExp{size, init} =
         val s = unEx size
         val i = unEx init
     in
-        Ex (externalCall("allocArray", [s, i]))
+        Ex (externalCall("_allocArray", [s, i]))
     end
 
 fun callExp (name, external, isproc, lev:level, la) = 

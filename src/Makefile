@@ -118,44 +118,45 @@ depend: \
 	$(MOSMLTOOLS)/mosmldep >> Makefile
 
 ### DO NOT DELETE THIS LINE
-Escap.ui: Abs.uo 
-Canon.uo: Canon.ui Tab.ui Temp.ui Frame.ui Tree.uo 
-Topsort.uo: Topsort.ui Tab.ui Abs.uo Sres.uo Tips.uo 
-Trans.uo: Trans.ui Temp.ui Frame.ui Tigerit.uo Abs.uo Tree.uo Pila.ui 
-Lex.uo: Nlin.uo Grm.ui 
+Frame.uo: Frame.ui Temp.ui Tigerit.uo Tree.uo Assem.ui Tigerextras.uo 
 Seman.uo: Seman.ui Trans.ui Tab.ui Topsort.ui Abs.uo Sres.uo Pila.ui \
     Tigerextras.uo 
-Graph.uo: Graph.ui Tab.ui Tigerextras.uo 
-Codegen.ui: Frame.ui Tree.uo Assem.ui 
-Codegen.uo: Codegen.ui Temp.ui Frame.ui Assem.ui Tigerextras.uo 
-Grm.ui: Abs.uo 
-Sres.uo: Tab.ui Trans.ui Temp.ui Abs.uo Tips.uo 
-Assem.ui: Temp.ui 
-Topsort.ui: Tab.ui Abs.uo Tips.uo 
-Grm.uo: Grm.ui Nlin.uo Abs.uo 
-Trans.ui: Temp.ui Frame.ui Abs.uo Tree.uo 
 Main.uo: Tigerpp.ui Trans.ui Interp.ui Seman.ui Grm.ui Temp.ui Escap.ui \
     Frame.ui Canon.ui Lex.uo Tree.uo Assem.ui Coloring.uo Tigerextras.uo \
     Codegen.ui 
-Interp.ui: Temp.ui Frame.ui Tree.uo 
-Flow.uo: Tab.ui Temp.ui Graph.ui Assem.ui Tigerextras.uo 
-Graph.ui: Tab.ui 
-Simpleregalloc.ui: Temp.ui Frame.ui Assem.ui 
-Pila.uo: Pila.ui 
-Coloring.uo: Tab.ui Simpleregalloc.ui Temp.ui Graph.ui Flow.uo Frame.ui \
-    Assem.ui Pila.ui Tigerextras.uo Codegen.ui 
-Tigerit.uo: Tab.ui Tree.uo 
-Canon.ui: Temp.ui Frame.ui Tree.uo 
 Seman.ui: Abs.uo 
+Canon.uo: Canon.ui Tab.ui Temp.ui Frame.ui Tree.uo 
+Trans.ui: Temp.ui Frame.ui Abs.uo Tree.uo 
+Tree.uo: Temp.ui 
+Lex.uo: Nlin.uo Grm.ui 
+Pila.uo: Pila.ui 
+Simpleregalloc.ui: Temp.ui Frame.ui Assem.ui 
+Trans.uo: Trans.ui Temp.ui Frame.ui Tigerit.uo Abs.uo Tree.uo Pila.ui \
+    Tigerextras.uo 
 Temp.uo: Temp.ui 
-Frame.ui: Temp.ui Tree.uo Assem.ui 
-Interp.uo: Interp.ui Tab.ui Temp.ui Frame.ui Tigerit.uo Tree.uo 
-Escap.uo: Escap.ui Tab.ui Abs.uo 
-Frame.uo: Frame.ui Temp.ui Tigerit.uo Tree.uo Assem.ui Tigerextras.uo 
-Tab.uo: Tab.ui 
-Assem.uo: Assem.ui Temp.ui Tigerextras.uo 
+Interp.ui: Temp.ui Frame.ui Tree.uo 
+Grm.uo: Grm.ui Nlin.uo Abs.uo 
+Graph.uo: Graph.ui Tab.ui Tigerextras.uo 
+Topsort.uo: Topsort.ui Tab.ui Abs.uo Sres.uo Tips.uo 
+Tigerpp.uo: Tigerpp.ui Abs.uo 
+Canon.ui: Temp.ui Frame.ui Tree.uo 
 Simpleregalloc.uo: Simpleregalloc.ui Temp.ui Frame.ui Assem.ui \
     Tigerextras.uo 
 Tigerpp.ui: Abs.uo 
-Tree.uo: Temp.ui 
-Tigerpp.uo: Tigerpp.ui Abs.uo 
+Escap.ui: Abs.uo 
+Codegen.uo: Codegen.ui Temp.ui Frame.ui Assem.ui Tigerextras.uo 
+Sres.uo: Tab.ui Trans.ui Temp.ui Abs.uo Tips.uo 
+Assem.ui: Temp.ui 
+Escap.uo: Escap.ui Tab.ui Abs.uo 
+Flow.uo: Tab.ui Temp.ui Graph.ui Assem.ui Tigerextras.uo 
+Grm.ui: Abs.uo 
+Topsort.ui: Tab.ui Abs.uo Tips.uo 
+Frame.ui: Temp.ui Tree.uo Assem.ui 
+Codegen.ui: Frame.ui Tree.uo Assem.ui 
+Assem.uo: Assem.ui Temp.ui Tigerextras.uo 
+Interp.uo: Interp.ui Tab.ui Temp.ui Frame.ui Tigerit.uo Tree.uo 
+Coloring.uo: Tab.ui Simpleregalloc.ui Temp.ui Graph.ui Flow.uo Frame.ui \
+    Assem.ui Pila.ui Tigerextras.uo Codegen.ui 
+Tigerit.uo: Tab.ui Tree.uo 
+Graph.ui: Tab.ui 
+Tab.uo: Tab.ui 

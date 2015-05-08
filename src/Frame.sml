@@ -132,7 +132,19 @@ fun exp(InFrame k) = MEM(BINOP(PLUS, TEMP(fp), CONST k))
 
 fun externalCall(s, l) = CALL (NAME s, l)
 
-fun makeString(l, s) = l ^ ":\n" ^ "\t.ascii\t\"" ^ Temp.makeString(s) ^ "\"\n"
+fun makeString(l, s) =
+        let val lab = if (l = "") then "" else l ^ ":\n"
+            val str = if (s = "") then "" else "\t" ^ s ^ "\n"
+        in
+            lab ^ str
+        end
+
+fun setDirectives prog strs =
+        let val strs' = (String.concat o List.map makeString) strs
+            val headers = "\t.global _tigermain\n"
+        in
+            headers ^ strs' ^ prog
+        end
 
 (*  ProcEntryExit1 - (p. 261)
  *  For each incoming register parameter, move it to the place from which it is seen from within
@@ -177,9 +189,11 @@ fun procEntryExit2 (frame : frame, instrs : Assem.instr list) =
 fun procEntryExit3 (instrs : Assem.instr list, frame : frame) =
         let val prolog = [
                     Assem.OPER {assem = "stmfd   sp!, {r0}", dest = [], src = [], jump = NONE},
-                    Assem.OPER {assem = "stmfd   sp!, {fp, lr}", dest = [], src = [], jump = NONE}
+                    Assem.OPER {assem = "stmfd   sp!, {fp, lr}", dest = [], src = [], jump = NONE},
+                    Assem.OPER {assem = "mov     fp, sp", dest = [], src = [], jump = NONE}
                 ]
             val epilog = [
+                    Assem.OPER {assem = "mov     sp, fp", dest = [], src = [], jump = NONE},
                     Assem.OPER {assem = "ldmfd   sp!, {fp, lr}", dest = [], src = [], jump = NONE},
                     Assem.OPER {assem = "add     sp, sp, #4", dest = [], src = [], jump = NONE},
                     Assem.OPER {assem = "bx      lr", dest = [], src = [], jump = NONE}

@@ -6,5 +6,6 @@ let
         a + b + 1
     end
 in
-	print (chr (do_nothing1 (93) + 1)); 0
+	print ("Buen día mundo\n");
+	do_nothing1 (93) + 1
 end

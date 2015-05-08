@@ -1,8 +1,10 @@
 /* valid for and let */
 
 let
-	var a := 0
+  	type  arrtype = array of int
+  	var arr1 : arrtype := arrtype [10] of 97
+	var i : int := 1
 in 
-	for i :=0 to 100 do (a :=a+2);
-    a
+	print(chr(arr1[0] + i));
+    1
 end

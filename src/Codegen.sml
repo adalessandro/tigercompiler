@@ -189,7 +189,7 @@ fun munchStmBlock (ss, frame) =
                                     else ()
                             val eargs'' = List.map aux eargs'
                         in
-                            emits (OPER {assem = "bl      `j0", dest = [], src = [],
+                            emits (OPER {assem = "bl      `j0", dest = Frame.callersaves, src = [],
                                          jump = SOME [ename', CALL_LABEL]});
                             Frame.rv
                         end
@@ -209,10 +209,30 @@ fun munchStmBlock (ss, frame) =
         end
 
 (* Reemplazar las ocurrencias del temp t por el registro r en una instrucción. *)
+fun safeSubstring (s, i, n) =
+        String.substring (s, i, n)
+        handle Subscript => ""
+        
+val checkSpecialCases =
+        let
+        in
+            fn OPER {assem=a, dest=d, src=s, jump=j} => (
+                        case (safeSubstring (a, 0, 4)) of
+                        "mul " => (* El mundo explotará si el dest y los dos src son el mismo *)
+                                if List.hd d = List.hd s then
+                                    OPER {assem=a, dest=d, src=List.rev s, jump=j}
+                                else
+                                    OPER {assem=a, dest=d, src=s, jump=j}
+                      | _ => OPER {assem=a, dest=d, src=s, jump=j}
+                    )
+             | x => x
+        end
+
 fun replace (t, r) =
         let fun rep ls = List.map (fn x => if x = t then r else x) ls
         in
-            fn OPER {assem=a, dest=d, src=s, jump=j} => OPER {assem=a, dest=rep d, src=rep s, jump=j}
+            fn OPER {assem=a, dest=d, src=s, jump=j} =>
+                        checkSpecialCases (OPER {assem=a, dest=rep d, src=rep s, jump=j})
              | LABEL {assem=a, lab=l} => LABEL {assem=a, lab=l}
              | MOVE {assem=a, dest=d, src=s} => MOVE {assem=a, dest=rep d, src=rep s}
         end

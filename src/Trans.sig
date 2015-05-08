@@ -47,6 +47,4 @@ val binOpIntRelExp: {left:exp, oper:Abs.oper, right:exp} -> exp
 val binOpStrExp : {left:exp, oper:Abs.oper, right:exp} -> exp
 val arrayExp : {size: exp, init: exp} -> exp
 
-val Ir : frag list -> string
-
 end
