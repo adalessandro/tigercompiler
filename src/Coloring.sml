@@ -273,10 +273,8 @@ fun makeWorkList () =
                         spillWorkList := Set.add (!spillWorkList, n)
                     else if isMoveRelated(n) then
                         freezeWorkList := Set.add (!freezeWorkList, n)
-                    else (
-                        println ("simplifyWorkList " ^ (gtemp() n));
+                    else
                         simplifyWorkList := Set.add (!simplifyWorkList, n)
-                    )
         in
             Set.app foralln (!initial)
         end
@@ -304,7 +302,6 @@ fun simplify () =
         let val _ = debug "simplify()\n"
             fun forone n = (
                     simplifyWorkList := set_safedelete (!simplifyWorkList, n);
-                    println ("pushSelectStack n: " ^ (gtemp() n));
                     Pila.pushPila selectStack n;
                     Set.app decrementDegree (adjacent n)
                     )
@@ -321,10 +318,8 @@ and decrementDegree m =
                 spillWorkList := set_safedelete (!spillWorkList, m);
                 if (isMoveRelated m) then
                     freezeWorkList := Set.add (!freezeWorkList, m)
-                else (
-                    println ("decrementdegree simplifyWorkList " ^ (gtemp() m));
+                else
                     simplifyWorkList := Set.add (!simplifyWorkList, m)
-                )
             ) else ()
         end
 
@@ -386,7 +381,6 @@ and addWorkList u =
             tabSaca(u, (!degree)) < k_len
         ) then (
             freezeWorkList := set_safedelete (!freezeWorkList, u);
-            println ("addWroklist simplifyworklist " ^ (gtemp() u));
             simplifyWorkList := Set.add (!simplifyWorkList, u)
         ) else ()
 
@@ -436,7 +430,6 @@ fun freeze (FGRAPH fgraph) =
         let val _ = debug "freeze()\n"
             fun forone u = (
                         freezeWorkList := Set.delete (!freezeWorkList, u);
-                        println ("simplifyworklist " ^ (gtemp() u));
                         simplifyWorkList := Set.add (!simplifyWorkList, u);
                         freezeMoves (FGRAPH fgraph) u
                     )
@@ -459,7 +452,6 @@ and freezeMoves (FGRAPH fgraph) u =
                         if Set.isEmpty (nodeMoves v) andalso tabSaca(v, !degree) < k_len andalso
                             not (isprecolored v) then (
                             freezeWorkList := set_safedelete (!freezeWorkList, v);
-                            println ("freezemoves " ^ (gtemp() u) ^ " simplifyworklist " ^ (gtemp() v));
                             simplifyWorkList := Set.add (!simplifyWorkList, v)
                         ) else ()
                     end
@@ -473,7 +465,6 @@ fun selectSpill (FGRAPH fgraph) =
             val heuristic = set_getone
             fun forone m = (
                         spillWorkList := Set.delete (!spillWorkList, m);
-                        println ("simplifyworklist " ^ (gtemp() m));
                         simplifyWorkList := Set.add (!simplifyWorkList, m);
                         freezeMoves (FGRAPH fgraph) m
                     )
@@ -504,7 +495,6 @@ fun assignColors_while () = (
                 coloredNodes := Set.add (!coloredNodes, n);
                 (let val coco = set_getone (!okColors)
                 in
-                    println ("coco= " ^ coco ^ " || n= " ^ (gtemp() n));
                     tabRInserta_ (n, coco, color)
                 end)
             )
