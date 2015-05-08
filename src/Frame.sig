@@ -51,7 +51,7 @@ val procEntryExit1:
 val procEntryExit2:
 		frame * Assem.instr list -> Assem.instr list
 val procEntryExit3 :
-		frame * Assem.instr list -> {prolog: string, body: Assem.instr list, epilog: string}
+		Assem.instr list * frame -> {prolog: string, body: Assem.instr list, epilog: string}
 
 (* Extras *)
 val frag2str : frag -> string

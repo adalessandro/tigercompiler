@@ -174,7 +174,7 @@ fun procEntryExit2 (frame : frame, instrs : Assem.instr list) =
  *  Creates the procedure prologue and epilogue assembly language.
  *  Adds stack pointer adjustment.
  *)
-fun procEntryExit3 (frame : frame, instrs : Assem.instr list) =
+fun procEntryExit3 (instrs : Assem.instr list, frame : frame) =
         let val prolog = [
                     Assem.OPER {assem = "stmfd   sp!, {fp, lr}", dest = [], src = [], jump = NONE},
                     Assem.OPER {assem = "add     fp, sp, #4", dest = [], src = [], jump = NONE}
@@ -189,10 +189,15 @@ fun procEntryExit3 (frame : frame, instrs : Assem.instr list) =
                     Assem.OPER {assem = "sub     sp, sp, " ^ Assem.const(offset),
                                 dest = [], src = [], jump = NONE}
                 ]
+            val (funlab, rest, lastjump) = (
+                    [List.hd instrs],
+                    List.tl (List.take (instrs, List.length instrs - 3)),
+                    List.drop (instrs, List.length instrs - 3)
+                )
         in
             {   prolog = "@ prologo\n",
-                body = prolog @ locals_gap @ instrs @ epilog,
-                epilog = "@epilogo\n"
+                body = funlab @ prolog @ locals_gap @ rest @ epilog @ lastjump,
+                epilog = "@ epilogo\n"
             }
         end
 

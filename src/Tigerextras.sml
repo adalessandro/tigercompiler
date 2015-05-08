@@ -20,17 +20,17 @@ fun unionsinrep xs ys = unionsinrep' (quitarreps xs) (quitarreps ys)
  *      Si no existe tal elemento retorna NONE.
  *)
 fun repite key lst =
-        let fun compare x =
-                    if List.exists (fn y => key x = key y) lst then
+        let fun compare (x, xs) =
+                    if List.exists (fn y => key x = key y) xs then
                         SOME x
                     else
                         NONE
-            fun iterate (x, resp) =
+            fun iterate (x, (resp, rest)) =
                     case resp of
-                    NONE => compare x
-                  | a => a
+                    SOME e => (SOME e, [])
+                  | NONE => (compare(x, List.tl rest), List.tl rest)
         in
-            List.foldl iterate NONE lst
+            #1 (List.foldl iterate (NONE, lst) lst)
         end
 
 (* restadelist a b = a - b en conjuntos *)

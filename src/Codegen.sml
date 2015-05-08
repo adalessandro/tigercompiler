@@ -153,12 +153,6 @@ fun munchStmBlock (ss, frame) =
               | munchStm (T.SEQ (s1, s2)) = (munchStm s1; munchStm s2)
               | munchStm (T.LABEL l) = emits (LABEL {assem = l ^ ":", lab = l})
             
-            and munchBlockLabel x =
-                    case x of
-                    T.LABEL l => emits (LABEL {assem = (Frame.name frame) ^ ":",
-                                               lab = (Frame.name frame)})
-                  | _ => raise Fail "Assem: Bloque básico no empieza con un LABEL"
-
             and munchExp (T.CONST i) = result (fn x => munchStm (T.MOVE (T.TEMP x, T.CONST i)))
               | munchExp (T.NAME l) = l
               | munchExp (T.TEMP t) = t
@@ -201,11 +195,17 @@ fun munchStmBlock (ss, frame) =
                         end
               | munchExp _ = raise Fail "munchExp undefined"
 
+            and getBlockLabel x =
+                    case x of
+                    T.LABEL l => (LABEL {assem = (Frame.name frame) ^ ":",
+                                         lab = (Frame.name frame)})
+                  | _ => raise Fail "Assem: Bloque básico no empieza con un LABEL"
+
         in
-            ilist := [];
-            munchBlockLabel (hd ss);
-            List.map munchStm (tl ss);
-            !ilist
+            ilist := []; (* reset global list *)
+            List.map munchStm (tl ss); (* generate body *)
+            getBlockLabel (hd ss) :: (* generate function label *)
+                Frame.procEntryExit2 (frame, List.rev(!ilist)) (* generate sink instr *)
         end
 
 (* Reemplazar las ocurrencias del temp t por el registro r en una instrucción. *)

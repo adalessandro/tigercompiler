@@ -70,7 +70,7 @@ fun main args =
         
             (* Instruction selection *)
             val assemblocklist : Assem.instr list list = List.map Codegen.munchStmBlock blocks 
-            val instrs = (List.concat o List.map List.rev) assemblocklist
+            val instrs = List.concat assemblocklist
             val _ = if code then (
                         List.map Assem.printAssem instrs; ()
                     ) else ()
@@ -79,7 +79,7 @@ fun main args =
             val bframes = List.map (#2) blocks
             val opts = [flow, interf, color]
             val final_assemblocklist = Coloring.coloring opts (ListPair.zip (assemblocklist, bframes))
-            val final_instrs = (List.concat o List.map List.rev) final_assemblocklist
+            val final_instrs = List.concat final_assemblocklist
 
             (* It's the final printing! *)
             val _ = if final then (
@@ -94,9 +94,12 @@ fun main args =
             val fd = TextIO.openOut out_file_name
             val _ = TextIO.output (fd, final_prog')
             val _ = TextIO.closeOut fd
+
+            (* Build runtime, link and scp *)
             val _ = Process.system ("arm-linux-gnueabi-gcc -c runtime.c -o runtime.o")
             val _ = Process.system ("arm-linux-gnueabi-gcc -g runtime.o " ^ out_file_name)
-            val _ = Process.system ("scp a.out root@192.168.0.103:")
+            (*val _ = Process.system ("scp a.out root@192.168.0.103:")*)
+
         in
             print "Ultra yes!!!\n"
         end

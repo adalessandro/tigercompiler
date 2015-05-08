@@ -26,8 +26,6 @@ type venv = (string, EnvEntry) Tab.Tabla
 (* Tipo tabla espacio de nombres de tipos *)
 type tenv = (string, Tipo) Tab.Tabla
 
-val debug = (fn x => print ("\n\n\nDEBUGSEMAN: " ^ x ^ "\n\n\n"))
-
 fun printtenv tenv = map (fn x => print (("("^(#1 x)^", "^printTipo(#2 x)^")")^"\n")) (tabAList tenv)
 
 fun printvenv venv = map (fn x => print (("("^(#1 x)^", "^envEntry2String(#2 x)^")")^"\n")) (tabAList venv)

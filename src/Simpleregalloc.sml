@@ -99,8 +99,7 @@ fun simpleregalloc spilledTemp ((body : instr list), (frm : Frame.frame)) =
                         val posMovs = if isdest then movaMem (color, framepos) else []
                         val newinstr = OPER {assem=assem, dest=newdest, src=newsrc, jump=jump}
                     in
-                        (* Las instrs están en orden inverso. Así qué se insertan invertidas. *)
-                        List.rev (prevMovs @ [newinstr] @ posMovs)
+                        prevMovs @ [newinstr] @ posMovs
                     end
               | rewriteInstr (LABEL l) = [LABEL l]
               | rewriteInstr (MOVE {assem, dest, src}) =
@@ -114,7 +113,7 @@ fun simpleregalloc spilledTemp ((body : instr list), (frm : Frame.frame)) =
                                 else
                                     raise Fail ("simpleregalloc.rewriteInstr: No debería suceder")
                     in
-                        List.rev instrs
+                        instrs
                     end
         in
             (List.concat (map (fn i => if do_rewrite i then rewriteInstr i else [i]) body), frm)

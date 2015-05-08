@@ -107,7 +107,7 @@ in
 end
 
 fun procEntryExit {level: level, body} =
-        let val label = STRING (name(#frame level), "")
+        let val label = STRING (name (#frame level), "")
             val body' = PROC {frame = #frame level, body = unNx body}
             val final = STRING (";;-------", "")
         in
@@ -123,11 +123,13 @@ fun stringLen s =
     in  aux(explode s) end
 
 fun stringExp(s: string) =
-    let val l = newlabel()
-        val len = ".long "^makestring(stringLen s)
-        val str = ".string \""^s^"\""
-        val _ = datosGlobs:=(!datosGlobs @ [STRING(l, len), STRING("", str)])
-    in  Ex(NAME l) end
+            let val l = newlabel()
+                val len = ".long " ^ makestring(stringLen s)
+                val str = ".string \"" ^ s ^ "\""
+                val _ = datosGlobs:=(!datosGlobs @ [STRING(l, len), STRING("", str)])
+            in
+                Ex (NAME l)
+            end
 
 fun preFunctionDec(l, n, f) = (
         pushSalida(NONE);
@@ -376,43 +378,48 @@ fun binOpIntExp {left, oper, right} =
     end
 
 fun binOpIntRelExp {left,oper,right} =
-    let val oper' = case oper of
-                         LtOp => LT
-                       | LeOp => LE
-                       | GtOp => GT
-                       | GeOp => GE
-                       | EqOp => EQ
-                       | NeqOp => NE
-                       | _ => raise Fail ("Error interno en binOpIntRelExp")
-        val eleft = unEx left
-        val eright = unEx right
-    in  Cx (fn (t, f) => (CJUMP( oper', eleft, eright, t, f)))
-    end
+        let val oper' = case oper of
+                        LtOp => LT
+                      | LeOp => LE
+                      | GtOp => GT
+                      | GeOp => GE
+                      | EqOp => EQ
+                      | NeqOp => NE
+                      | _ => raise Fail ("Error interno en binOpIntRelExp")
+            val eleft = unEx left
+            val eright = unEx right
+        in
+            Cx (fn (t, f) => (CJUMP( oper', eleft, eright, t, f)))
+        end
 
 fun binOpStrExp {left,oper,right} =
-     let val oper' = case oper of
-                         EqOp => EQ
-                       | NeqOp => NE
-                       | _ => raise Fail ("Error interno en binOpStrExp")
-        val eleft = unEx left
-        val eright = unEx right
-        val temp = newtemp()
-    in  Cx (fn (t, f) => seq[EXP(externalCall("_stringCompare", [eleft, eright])), (* 0 si son iguales *)
-                             MOVE( TEMP temp, TEMP rv),
-                             (CJUMP( oper', TEMP temp, CONST 0, t, f))])
-    end
+        let val oper' =
+                    case oper of
+                    EqOp => EQ
+                  | NeqOp => NE
+                  | _ => raise Fail ("Error interno en binOpStrExp")
+            val eleft = unEx left
+            val eright = unEx right
+            val temp = newtemp()
+        in  Cx (fn (t, f) => seq[EXP(externalCall("_stringCompare", [eleft, eright])), 
+                             MOVE(TEMP temp, TEMP rv),
+                             (CJUMP(oper', TEMP temp, CONST 0, t, f))])
+        end
 
-fun printLevel (level:level) =
-    let val _ = print "\n"
-        val _ = case (#parent level) of
-                     SOME f => (print "parentFrame = " ; printFrame f)
-                   | NONE => print "parent = NONE"
-        val _ = print "\n"
-        val _ = (print "frame = " ; Frame.printFrame (#frame level))
-        val _ = print "\n"
-        val _ = (print "levelint = " ; print (Int.toString (#levelint level)))
-        val _ = print "\n"
-    in () end
-
+(* Extras *)
+fun printLevel (level:level) = (
+        print "\n"; (
+            case (#parent level) of
+            SOME f => (print "parentFrame = " ; printFrame f)
+          | NONE => print "parent = NONE"
+        );
+        print "\n";
+        print "frame = ";
+        Frame.printFrame (#frame level);
+        print "\n";
+        print "levelint = ";
+        print (Int.toString (#levelint level));
+        print "\n"
+    )
 
 end

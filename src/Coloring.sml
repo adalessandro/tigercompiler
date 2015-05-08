@@ -526,10 +526,10 @@ fun coloring_main opts (blocks : (Assem.instr list * Frame.frame) list) =
             val opt_interf = List.nth (opts, 1)
             val opt_color = List.nth (opts, 2)
             (* Process *)
-            val instrs = (List.concat o List.map (List.rev o #1)) blocks
+            val instrs = (List.concat o List.map #1) blocks
             val _ = if (!Tigerextras.enable_debug) andalso enable_debug then List.map Assem.printAssem instrs else []
             val fgraph = Flow.makeFGraph instrs
-            val _ = if opt_flow then Flow.printFlow ["def", "use"] fgraph else ()
+            val _ = if opt_flow then Flow.printFlow ["ismove"] fgraph else ()
             val _ = makeIGraph fgraph
             val _ = if opt_interf then printIGraph ["graph"] else ()
             val _ = makeWorkList()
@@ -572,7 +572,23 @@ fun replaceTemps (blocks : (Assem.instr list * Frame.frame) list) =
             List.map rep_block blocks
         end
 
+fun removeMoves (instrs : Assem.instr list list) =
+        let fun isredundant (Assem.MOVE {dest=dest, src=src, ...}) = (dest = src)
+              | isredundant _ = false
+        in
+            List.map (List.filter (not o isredundant)) instrs
+        end
+
 fun coloring opts (blocks : (Assem.instr list * Frame.frame) list) =
-        (replaceTemps o coloring_main opts) blocks
+        let val colored = coloring_main opts blocks
+            fun appProcEntry (is, frm) =
+                    let val {prolog, body, epilog} = Frame.procEntryExit3 (is, frm)
+                    in
+                        (body, frm)
+                    end
+            val colored' = List.map appProcEntry colored
+        in
+            (removeMoves o replaceTemps) colored' 
+        end
 
 end
