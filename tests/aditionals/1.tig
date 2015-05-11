@@ -1,0 +1,5 @@
+let
+in
+	print("hola\n\t\013que\014\^Ztal") ;
+	0
+end

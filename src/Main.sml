@@ -78,7 +78,11 @@ fun main args =
             (* Flow, Liveness analisys and Coloring *)
             val bframes = List.map (#2) blocks
             val opts = [flow, interf, color]
+
             val final_assemblocklist = Coloring.coloring opts (ListPair.zip (assemblocklist, bframes))
+
+            val _ = List.map Frame.printFrame bframes
+
             val final_instrs = List.concat final_assemblocklist
 
             (* It's the final printing! *)

@@ -423,7 +423,9 @@ fun transExp(venv, tenv) =
                             val _ = popLevel()
                         in
                             (* controlamos que el body tiene el tipo declarado del resultado *)
-                            if tiposIguales tybody funres then
+                            if name = "_tigermain" then (* BORRAR !!! *)
+                                (venv, tenv)
+                            else if tiposIguales tybody funres then
                                 (venv, tenv)
                             else
                                 error ("Tipo del body no coincide con el tipo del resultado.", nl) 
@@ -434,7 +436,8 @@ fun transExp(venv, tenv) =
                     (* controlamos que no se repite declaración de la misma función en el batch *)
                     case repite (#name o #1) fs of
                         NONE => (venv'', tenv, [])
-                      | SOME x => error("El batch de declaraciones repite la función "^((#name o #1) x), (#2 x))
+                      | SOME x => error("El batch de declaraciones repite la función " ^
+                                        ((#name o #1) x), (#2 x))
                 end
             (* trdec: ts es del tipo ({name: symbol, ty: ty} * pos) list *)
           | trdec (venv, tenv) (TypeDec ts) =

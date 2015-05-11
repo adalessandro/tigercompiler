@@ -9,10 +9,7 @@ open Tab
 open Flow
 open Tigerextras
 
-(* DEBUG *)
-val enable_debug = true
-
-fun debug x = if (!Tigerextras.enable_debug) andalso enable_debug then print x else ()
+fun debug x = if (!Tigerextras.enable_debug) andalso Tigerextras.coloring_debug then print x else ()
 
 (* Variables de IGRAPH globales y funciones para manejarlas *)
 datatype igraph = (* No se está usando *)
@@ -531,7 +528,9 @@ fun coloring_main opts (blocks : (Assem.instr list * Frame.frame) list) =
             val opt_color = List.nth (opts, 2)
             (* Process *)
             val instrs = (List.concat o List.map #1) blocks
-            val _ = if (!Tigerextras.enable_debug) andalso enable_debug then List.map Assem.printAssem instrs else []
+            val _ = if (!Tigerextras.enable_debug) andalso Tigerextras.coloring_debug then
+                        List.map Assem.printAssem instrs
+                    else []
             val fgraph = Flow.makeFGraph instrs
             val _ = if opt_flow then Flow.printFlow ["ismove"] fgraph else ()
             val _ = makeIGraph fgraph

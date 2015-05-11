@@ -115,7 +115,7 @@ long *_allocArray(long size, long init)
 void _checkIndexArray(long *a, long i)
 {
 	if(i < 0 || i > a[-1]) {
-		fprintf(stderr, "indice %ld excedido!\n", i);
+		fprintf(stderr, "Runtime error: array index %ld out of bounds!\n", i);
 		exit(-1);
 	}
 }
@@ -137,7 +137,7 @@ long *_allocRecord(long ctos, ...)
 void _checkNil(long* r)
 {
 	if (r == 0) {
-		fprintf(stderr, "Nil!\n");
+		fprintf(stderr, "Runtime error: Nil!\n");
 		exit(-1);
 	}
 }
@@ -180,7 +180,7 @@ long ord(string *s)
 string *chr(long i)
 {
 	if (i < 0 || i >= 256) {
-		printf("chr(%ld) out of range\n", i);
+		printf("Runtime error: chr(%ld) out of range\n", i);
 		exit(1);
 	}
 	return (string*)(consts + i);
@@ -197,8 +197,8 @@ string *substring (string *s, long first, long n)
 	string *t;
 
 	if (first < 0 || first + n > s->length) {
-		printf("substring([%ld],%ld,%ld) out of range\n", s->length,
-		       first, n);
+		printf("Runtime error: substring([%ld],%ld,%ld) out of range\n",
+		       s->length, first, n);
 		exit(1);
 	}
 	if (n == 1)
@@ -321,6 +321,6 @@ signed int idiv(signed int num, signed int den)
 
 int main()
 {
-	_tigermain(0); /* FAKE static link! */
-	return 7;
+	printf ("\nResult = %d\n", _tigermain(0)); /* FAKE static link! */
+	return 0;
 }

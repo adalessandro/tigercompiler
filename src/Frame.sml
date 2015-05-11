@@ -76,11 +76,11 @@ val wSz = 4                 (* word size in bytes *)
 val fpPrev = 0              (* offset (bytes) - FP from caller *)
 val fpPrevLev = 2*wSz       (* offset (bytes) - FP from upper level *)
 
-val argsInicial = 1         (* int - SL is always the first argument *)
+val argsInicial = 0         (* int - SL is always the first argument *)
 val localsInicial = 0       (* int *)
 val regInicial = 1          (* int *)
 
-val argsOffInicial = 2*wSz  (* bytes - after the args we pushed {lr, fp} *)
+val argsOffInicial = 3*wSz  (* bytes - after the args we pushed {lr, fp, r0} *)
 val argsGap = wSz           (* bytes *)
 val localsGap = ~wSz        (* bytes - it's a FULL descending stack *)
 
@@ -199,10 +199,11 @@ fun procEntryExit3 (instrs : Assem.instr list, frame : frame) =
                     Assem.OPER {assem = "bx      lr", dest = [], src = [], jump = NONE}
                 ]
             val offset = (!(#actualLocal frame)) * wSz
-            val locals_gap = [
-                    Assem.OPER {assem = "sub     sp, sp, " ^ Assem.const(offset),
-                                dest = [], src = [], jump = NONE}
-                ]
+            val locals_gap =
+                    if offset <> 0 then
+                        [Assem.OPER {assem = "sub     sp, sp, " ^ Assem.const(offset),
+                                     dest = [], src = [], jump = NONE}]
+                    else []
             val (funlab, rest, lastjump) = (
                     [List.hd instrs],
                     List.tl (List.take (instrs, List.length instrs - 3)),
@@ -225,8 +226,8 @@ fun printAccess (acc : access) =
 fun printFrame (frame : frame) = (
         print "FRAME:\n";
         print "name: "; print (#name frame); print "\n";
-        print "formals: " ; printlist printAccess (!(#formals frame)); print "\n";
-        print "locals: "; printlist printbool (#locals frame); print "\n";
+        print "formals: " ; printlist printAccess (!(#formals frame));
+        print "locals: "; printlist printbool (#locals frame);
         print "actualArg: "; (printint o ! o #actualArg) frame; print "\n";
         print "actualLocal: "; (printint o ! o #actualLocal) frame; print "\n";
         print "actualReg: "; (printint o ! o #actualReg) frame; print "\n"

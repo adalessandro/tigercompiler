@@ -1,0 +1,10 @@
+let
+	var i:=33
+	var a:=10
+	function f():int = 10
+	function g(a:int):int = f() + a + i
+in
+	i:=g(64);
+	print(chr(i));
+	0
+end

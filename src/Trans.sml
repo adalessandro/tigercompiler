@@ -150,7 +150,7 @@ fun simpleVar(InFrame i, nivel) =
         let fun aux 0 = TEMP fp
               | aux n = MEM(BINOP(PLUS,
                         CONST fpPrevLev, aux(n-1)))
-        in  Ex (MEM(BINOP(MINUS, aux(!actualLevel - nivel), CONST i))) end
+        in  Ex (MEM(BINOP(PLUS, aux(!actualLevel - nivel), CONST i))) end
   | simpleVar(InReg l, _) =
         Ex (TEMP l) 
 
@@ -228,7 +228,7 @@ fun callExp (name, external, isproc, lev:level, la) =
                          in
                             ((TEMP temp) :: rt, MOVE (TEMP temp, unEx h) :: re)
                          end
-            val (ta, la') = List.foldr preparaArgs ([], []) la
+            val (ta, la') = List.foldl preparaArgs ([], []) la
             val ta' = if external then ta else sl :: ta
             val argsAndCall = la' @ [EXP(CALL(NAME name, ta'))]
         in

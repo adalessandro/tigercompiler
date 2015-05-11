@@ -22,7 +22,12 @@ val FALSE_LABEL = "__FALSE_LABEL__"
 val RET_LABEL = "__RET_LABEL__"
 val CALL_LABEL = "__CALL_LABEL__" 
 
-fun const i = "#" ^ Int.toString(i)
+fun const i =
+        if i < 0 then
+            "#-" ^ Int.toString (~i) 
+        else
+            "#" ^ Int.toString (i)
+
 fun flabel l = "=" ^ l
 
 (* ----- Extras ----- *)

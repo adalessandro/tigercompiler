@@ -158,7 +158,8 @@ fun munchStmBlock (ss, frame) =
               | munchExp (T.TEMP t) = t
               | munchExp (T.BINOP (op1, e1, e2)) =
                         result (fn x => munchStm (T.MOVE (T.TEMP x, T.BINOP (op1, e1, e2))))
-              | munchExp (T.MEM e1) = munchExp e1
+              | munchExp (T.MEM e1) =
+                        result (fn x => munchStm (T.MOVE (T.TEMP x, T.MEM e1)))
               | munchExp (T.CALL (ename, eargs)) =
                         let fun str y =
                                     T.BINOP (T.PLUS,
@@ -173,8 +174,9 @@ fun munchStmBlock (ss, frame) =
                                         munchStm (T.MOVE (T.TEMP (List.nth (Frame.argregs, y)), x))
                                     else
                                         munchStm (T.MOVE (T.MEM (str y), x))
+                            (* Hacer espacio para meter args en stack *)
                             val argstoframe = (len - Frame.argregslen)
-                            val _ = if len >= Frame.argregslen then
+                            val _ = if len > Frame.argregslen then
                                         munchStm (
                                             T.MOVE (
                                                 T.TEMP Frame.sp, (

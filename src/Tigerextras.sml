@@ -1,8 +1,14 @@
 structure Tigerextras =
 struct
 
+(* Debug flags *)
 val enable_debug = ref false
+val simpleregalloc_debug = true
+val flow_debug = false
+val coloring_debug = false
 
+
+(* Extras *)
 fun quitarreps [] = []
   | quitarreps (x::xs) = if List.exists (fn y => x = y) xs then quitarreps xs else x::(quitarreps xs)
 

@@ -6,10 +6,7 @@ structure Set = Splayset
 open Assem
 open Tigerextras
 
-(* DEBUG *)
-val enable_debug = true
-
-fun debug x = if (!Tigerextras.enable_debug) andalso enable_debug then print x else ()
+fun debug x = if (!Tigerextras.enable_debug) andalso Tigerextras.simpleregalloc_debug then print x else ()
 
 (* Auxiliary functions *)
 fun set_safedelete (s, i) = (
@@ -20,12 +17,7 @@ fun set_safedelete (s, i) = (
 
 (* movaTemp, de memoria a un temporario.*)
 fun movaTemp (mempos, temp) =
-        let val offset =
-                    if mempos < 0 then
-                        ", #-" ^ Int.toString (~mempos) 
-                    else if mempos > 0 then
-                        ", #" ^ Int.toString (mempos)
-                    else ""
+        let val offset = ", " ^ Assem.const mempos
             val instr =
                     OPER {assem = "ldr     `d0, [`s0" ^ offset ^ "]",
                           src = [Frame.fp],
@@ -38,12 +30,7 @@ fun movaTemp (mempos, temp) =
 
 (* movaMem crea una instrucción que mueve un temporario a memoria. *)
 fun movaMem (temp, mempos) =
-        let val offset =
-                    if mempos < 0 then
-                        ", #-" ^ Int.toString (~mempos) 
-                    else if mempos > 0 then
-                        ", #" ^ Int.toString (mempos)
-                    else ""
+        let val offset = ", " ^ Assem.const mempos
             val instr =
                     OPER {assem = "str     `s0, [`s1" ^ offset ^ "]",
                           src = [temp, Frame.fp],
@@ -68,21 +55,25 @@ fun simpleregalloc spilledTemp ((body : instr list), (frm : Frame.frame)) =
             val asignables = Frame.generalregs
             val asignablesSet = Set.addList (Set.empty String.compare, asignables)
 
-            (* Lista de offsets en el frame de los temporarios *)
-            val framepos =
-                    let val access = Frame.allocLocal frm true
-                    in
-                        case access of
-                        Frame.InFrame n => n
-                      | _ => raise Fail("simpleregalloc.access: No debería suceder.")
-                    end
-
             fun is_spilledTemp x = (x = spilledTemp)
             fun do_rewrite i = List.exists is_spilledTemp (Assem.getTemps i)
 
+            (* Offset en el frame para alojar el spilledTemp *)
+            val opt_acc =
+                    if List.exists do_rewrite body then
+                        let val access = Frame.allocLocal frm true
+                        in
+                            case access of
+                            Frame.InFrame n => SOME n
+                          | _ => raise Fail("simpleregalloc.access: No debería suceder.")
+                        end
+                    else
+                        NONE
+
             (* Se le pasa la instrs a spillear *)
             fun rewriteInstr (OPER {assem, dest, src, jump}) =
-                    let (* Asignación de colores *)
+                    let val framepos = Option.valOf opt_acc
+                        (* Asignación de colores *)
                         val colores = Set.listItems (set_safedelete (asignablesSet, spilledTemp))
                         (* Asignar un registro como color *)
                         (*val color = hd colores*)
@@ -103,7 +94,8 @@ fun simpleregalloc spilledTemp ((body : instr list), (frm : Frame.frame)) =
                     end
               | rewriteInstr (LABEL l) = [LABEL l]
               | rewriteInstr (MOVE {assem, dest, src}) =
-                    let val tdest = hd dest
+                    let val framepos = Option.valOf opt_acc
+                        val tdest = hd dest
                         val tsrc = hd src
                         val instrs =
                                 if tdest = spilledTemp then
@@ -118,4 +110,5 @@ fun simpleregalloc spilledTemp ((body : instr list), (frm : Frame.frame)) =
         in
             (List.concat (map (fn i => if do_rewrite i then rewriteInstr i else [i]) body), frm)
         end
+
 end
