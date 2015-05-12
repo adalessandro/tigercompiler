@@ -131,8 +131,7 @@ Tree.uo: Temp.ui
 Lex.uo: Nlin.uo Grm.ui 
 Pila.uo: Pila.ui 
 Simpleregalloc.ui: Temp.ui Frame.ui Assem.ui 
-Trans.uo: Trans.ui Temp.ui Frame.ui Tigerit.uo Abs.uo Tree.uo Pila.ui \
-    Tigerextras.uo 
+Trans.uo: Trans.ui Temp.ui Frame.ui Abs.uo Tree.uo Pila.ui Tigerextras.uo 
 Temp.uo: Temp.ui 
 Interp.ui: Temp.ui Frame.ui Tree.uo 
 Grm.uo: Grm.ui Nlin.uo Abs.uo 
@@ -144,7 +143,7 @@ Simpleregalloc.uo: Simpleregalloc.ui Temp.ui Frame.ui Assem.ui \
     Tigerextras.uo 
 Tigerpp.ui: Abs.uo 
 Escap.ui: Abs.uo 
-Codegen.uo: Codegen.ui Temp.ui Frame.ui Assem.ui Tigerextras.uo 
+Codegen.uo: Codegen.ui Temp.ui Frame.ui Assem.ui Tree.uo Tigerextras.uo 
 Sres.uo: Tab.ui Trans.ui Temp.ui Abs.uo Tips.uo 
 Assem.ui: Temp.ui 
 Escap.uo: Escap.ui Tab.ui Abs.uo 
@@ -152,7 +151,7 @@ Flow.uo: Tab.ui Temp.ui Graph.ui Assem.ui Tigerextras.uo
 Grm.ui: Abs.uo 
 Topsort.ui: Tab.ui Abs.uo Tips.uo 
 Frame.ui: Temp.ui Tree.uo Assem.ui 
-Codegen.ui: Frame.ui Tree.uo Assem.ui 
+Codegen.ui: Frame.ui Assem.ui Tree.uo 
 Assem.uo: Assem.ui Temp.ui Tigerextras.uo 
 Interp.uo: Interp.ui Tab.ui Temp.ui Frame.ui Tigerit.uo Tree.uo 
 Coloring.uo: Tab.ui Simpleregalloc.ui Temp.ui Graph.ui Flow.uo Frame.ui \

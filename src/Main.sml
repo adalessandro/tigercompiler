@@ -69,7 +69,8 @@ fun main args =
             val _ = if interp then Interp.inter true blocks strs else ()
         
             (* Instruction selection *)
-            val assemblocklist : Assem.instr list list = List.map Codegen.munchStmBlock blocks 
+            (*val assemblocklist : Assem.instr list list = List.map Codegen.munchStmBlock blocks *)
+            val assemblocklist : Assem.instr list list = Codegen.codegen blocks 
             val instrs = List.concat assemblocklist
             val _ = if code then (
                         List.map Assem.printAssem instrs; ()
@@ -80,8 +81,6 @@ fun main args =
             val opts = [flow, interf, color]
 
             val final_assemblocklist = Coloring.coloring opts (ListPair.zip (assemblocklist, bframes))
-
-            val _ = List.map Frame.printFrame bframes
 
             val final_instrs = List.concat final_assemblocklist
 

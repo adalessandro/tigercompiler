@@ -3,9 +3,9 @@ struct
 
 (* Debug flags *)
 val enable_debug = ref false
-val simpleregalloc_debug = true
+val simpleregalloc_debug = false
 val flow_debug = false
-val coloring_debug = false
+val coloring_debug = true
 
 
 (* Extras *)

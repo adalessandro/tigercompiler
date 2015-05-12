@@ -84,6 +84,13 @@ val argsOffInicial = 3*wSz  (* bytes - after the args we pushed {lr, fp, r0} *)
 val argsGap = wSz           (* bytes *)
 val localsGap = ~wSz        (* bytes - it's a FULL descending stack *)
 
+(* Auxiliary functions *)
+fun isInReg (InReg _) = true
+  | isInReg _ = false
+
+fun isInFrame (InFrame _) = true
+  | isInFrame _ = false
+
 (* Frame definition *)
 fun newFrame {name, escapes} =
         {   name = name,
@@ -162,11 +169,9 @@ fun procEntryExit1 (frame : frame, body : Tree.stm) =
             val calleemoves = List.map calleemove calleesaves
             val calleestores = List.map #1 calleemoves
             val calleefetchs = List.map #2 calleemoves
-            fun filterInReg (InReg t, ls) = t :: ls
-              | filterInReg (_, ls) = ls
-            val argtemps = List.foldr filterInReg [] (formals frame)
+            val argtemps = List.map exp (List.filter isInReg (formals frame))
             val pairs = ListPair.zip (argtemps, List.tl argregs)
-            fun argmove (t, r) = MOVE (TEMP t, TEMP r)
+            fun argmove (t, r) = MOVE (t, TEMP r)
             val argmoves = List.map argmove pairs
         in
             seq (calleestores @ argmoves @ [body] @ calleefetchs)

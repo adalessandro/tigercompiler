@@ -23,9 +23,18 @@ val sp : Temp.temp
 val pc : Temp.temp
 val lr : Temp.temp
 
+val wSz : int
 val fpPrev : int
 val fpPrevLev : int
-val wSz : int
+
+val argsInicial : int
+val localsInicial : int
+val regInicial : int
+
+val argsOffInicial : int
+val argsGap : int
+val localsGap : int
+
 val specialregs : Temp.temp list
 val argregs : Temp.temp list
 val argregslen : int
@@ -33,6 +42,10 @@ val generalregs : Temp.temp list
 val genregslen : int
 val calleesaves : Temp.temp list
 val callersaves : Temp.temp list
+
+(* Auxiliary Functions*)
+val isInReg : access -> bool
+val isInFrame : access -> bool
 
 (* Frame Functions *)
 val newFrame : {name: Temp.label, escapes: bool list} -> frame

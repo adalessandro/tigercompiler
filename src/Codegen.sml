@@ -24,7 +24,12 @@ fun result gen =
             gen t; t
         end
 
+(* global stuff *)
+val gblframes : Frame.frame list ref = ref []
 
+fun getframe name : Frame.frame option = List.find (fn f => Frame.name f = name) (!gblframes)
+
+(* Codegen functions *)
 fun munchStmBlock (ss, frame) = 
         let fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
               | munchStm (T.MOVE ((T.NAME _), _)) = raise Fail "MOVE dest = NAME"
@@ -57,7 +62,7 @@ fun munchStmBlock (ss, frame) =
                         end
               | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.DIV, e1, e2)))) = (
                         munchStm (T.EXP (T.CALL (T.NAME "idiv", [e1, e2])));
-                        emits (MOVE {assem = "movs    `d0, `s0", dest = [d], src = [Frame.rv]})
+                        emits (MOVE {assem = "mov     `d0, `s0", dest = [d], src = [Frame.rv]})
                     )
               | munchStm (T.MOVE ((T.TEMP d), (T.BINOP (T.AND, e1, e2)))) =
                         let val (e1', e2') = (munchExp e1, munchExp e2)
@@ -116,7 +121,7 @@ fun munchStmBlock (ss, frame) =
                         let val (e1', e2') = (munchExp e1, munchExp e2)
                         in
                             emits (OPER {assem = "str     `d0, " ^ (memStr e1 e1'),
-                                         dest = [e2'], src = [e1'], jump = NONE})
+                                         dest = [], src = [e1', e2'], jump = NONE})
                         end
               | munchStm (T.MOVE ((T.CALL _), _)) = raise Fail "MOVE dest = CALL"
               | munchStm (T.MOVE ((T.ESEQ (s1, e1), e2))) = (
@@ -153,6 +158,26 @@ fun munchStmBlock (ss, frame) =
               | munchStm (T.SEQ (s1, s2)) = (munchStm s1; munchStm s2)
               | munchStm (T.LABEL l) = emits (LABEL {assem = l ^ ":", lab = l})
             
+            and munchArgStack (arg, pos) =
+                    let val memdir = pos * Frame.wSz
+                        val e = munchExp arg
+                    in
+                            emits (OPER {assem = "str     `s0, [sp, " ^ Assem.const(memdir) ^ "]",
+                                         src = [e], dest = [], jump = NONE});
+                            pos + 1
+                    end
+
+            and munchArgReg (T.TEMP t, reg) = (
+                        munchStm (T.MOVE (T.TEMP reg, T.TEMP t));
+                        [t, reg]
+                    )
+              | munchArgReg (e, reg) =
+                    let val e' = munchExp e
+                    in
+                        munchStm (T.MOVE (T.TEMP reg, T.TEMP e'));
+                        [e', reg]
+                    end
+
             and munchExp (T.CONST i) = result (fn x => munchStm (T.MOVE (T.TEMP x, T.CONST i)))
               | munchExp (T.NAME l) = l
               | munchExp (T.TEMP t) = t
@@ -161,39 +186,48 @@ fun munchStmBlock (ss, frame) =
               | munchExp (T.MEM e1) =
                         result (fn x => munchStm (T.MOVE (T.TEMP x, T.MEM e1)))
               | munchExp (T.CALL (ename, eargs)) =
-                        let fun str y =
-                                    T.BINOP (T.PLUS,
-                                             T.TEMP Frame.sp,
-                                             T.CONST ((y - Frame.argregslen) * Frame.wSz))
-                            val len = List.length eargs
-                            val ename' = munchExp ename
-                            val indexes = List.tabulate (len, (fn x => x))
-                            val eargs' = ListPair.zip(eargs, indexes)
-                            fun aux (x,y) =
-                                    if y < Frame.argregslen then
-                                        munchStm (T.MOVE (T.TEMP (List.nth (Frame.argregs, y)), x))
-                                    else
-                                        munchStm (T.MOVE (T.MEM (str y), x))
-                            (* Hacer espacio para meter args en stack *)
-                            val argstoframe = (len - Frame.argregslen)
-                            val _ = if len > Frame.argregslen then
-                                        munchStm (
-                                            T.MOVE (
-                                                T.TEMP Frame.sp, (
-                                                    T.BINOP (
-                                                        T.MINUS,
-                                                        T.TEMP Frame.sp,
-                                                        T.CONST(argstoframe * Frame.wSz)
-                                                    )
-                                                )
-                                            )
-                                        )
+                        let val ename' = munchExp ename
+                            val frm = getframe ename'
+                            val (toreg, toframe) = (
+                                    case frm of
+                                    NONE => (* external call *)
+                                            if List.length eargs <= Frame.argregslen then
+                                                (eargs, [])
+                                            else
+                                                (List.take (eargs, Frame.argregslen),
+                                                 List.drop (eargs, Frame.argregslen))
+                                  | SOME frm' => (* internal call *)
+                                            let val formals =
+                                                        Frame.InReg "SL" :: (Frame.formals frm')
+                                                val zip = ListPair.zip (eargs, formals)
+                                                val (argsreg, argsframe) =
+                                                        List.partition (Frame.isInReg o #2) zip
+                                            in
+                                                (List.map #1 argsreg, List.map #1 argsframe)
+                                            end
+                                )
+                            val sp_offset = (List.length toframe) * Frame.wSz
+                            val toreg_zip = ListPair.zip (toreg, Frame.argregs)
+                            val result_t = Temp.newtemp()
+                            val _ = if sp_offset <> 0 then
+                                        emits (OPER {assem = "sub     sp, sp, " ^
+                                                              Assem.const(sp_offset),
+                                                     src = [], dest = [], jump = NONE})
                                     else ()
-                            val eargs'' = List.map aux eargs'
+                            val _ = List.foldl munchArgStack 0 toframe
+                            val srcs = List.concat (List.map munchArgReg toreg_zip)
+                            val _ = emits (OPER {assem = "bl      `j0",
+                                                 dest = (*result_t :: *)Frame.callersaves,
+                                                 src = [] (*srcs*),
+                                                 jump = SOME [ename', CALL_LABEL]})
+                            val _ = if sp_offset <> 0 then
+                                        emits (OPER {assem = "add     sp, sp, " ^
+                                                              Assem.const(sp_offset),
+                                                     src = [], dest = [], jump = NONE})
+                                    else ()
+                            val _ = munchStm (T.MOVE (T.TEMP result_t, T.TEMP Frame.rv))
                         in
-                            emits (OPER {assem = "bl      `j0", dest = Frame.callersaves, src = [],
-                                         jump = SOME [ename', CALL_LABEL]});
-                            Frame.rv
+                            result_t
                         end
               | munchExp _ = raise Fail "munchExp undefined"
 
@@ -208,6 +242,13 @@ fun munchStmBlock (ss, frame) =
             List.map munchStm (tl ss); (* generate body *)
             getBlockLabel (hd ss) :: (* generate function label *)
                 Frame.procEntryExit2 (frame, List.rev(!ilist)) (* generate sink instr *)
+        end
+
+(* Main function *)
+fun codegen (blocks : (Tree.stm list * Frame.frame) list) =
+        let val _ = gblframes := (List.map #2 blocks)
+        in
+            List.map munchStmBlock blocks
         end
 
 (* Reemplazar las ocurrencias del temp t por el registro r en una instrucción. *)
