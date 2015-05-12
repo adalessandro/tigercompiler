@@ -34,7 +34,7 @@ fun munchStmBlock (ss, frame) =
         let fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
               | munchStm (T.MOVE ((T.NAME _), _)) = raise Fail "MOVE dest = NAME"
               | munchStm (T.MOVE ((T.TEMP d), (T.CONST i))) = 
-                        emits (OPER {assem = "mov    `d0, " ^ Assem.const(i),
+                        emits (OPER {assem = "mov     `d0, " ^ Assem.const(i),
                                      dest = [d], src = [], jump = NONE})
               | munchStm (T.MOVE ((T.TEMP d), (T.NAME l))) =
                         emits (OPER {assem = "ldr     `d0, " ^ Assem.flabel(l),
@@ -120,7 +120,7 @@ fun munchStmBlock (ss, frame) =
               | munchStm (T.MOVE ((T.MEM e1), e2)) =
                         let val (e1', e2') = (munchExp e1, munchExp e2)
                         in
-                            emits (OPER {assem = "str     `d0, " ^ (memStr e1 e1'),
+                            emits (OPER {assem = "str     `s1, " ^ (memStr e1 e1'),
                                          dest = [], src = [e1', e2'], jump = NONE})
                         end
               | munchStm (T.MOVE ((T.CALL _), _)) = raise Fail "MOVE dest = CALL"

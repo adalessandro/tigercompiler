@@ -117,10 +117,13 @@ fun stringExp(s: string) =
                 Ex (NAME l)
             end
 
-fun preFunctionDec(l, n, f) = (
-        pushSalida(NONE);
-        actualLevel := (!actualLevel) + 1;
+(* Se crea el level y se inserta en venv antes de recorrer el cuerpo de la función *)
+fun initLevelFunctionDec(l, n, f) =
         newLevel {formals=f, name=n, parent=l}
+
+fun preFunctionDec() = (
+        pushSalida(NONE);
+        actualLevel := (!actualLevel) + 1
     )
 
 fun functionDec(e, l, proc) =
@@ -137,7 +140,7 @@ fun functionDec(e, l, proc) =
 
 fun postFunctionDec() = (
         popSalida();
-        actualLevel := !actualLevel-1
+        actualLevel := (!actualLevel)-1
     )
 
 fun unitExp() = Ex (CONST 0)
@@ -146,13 +149,19 @@ fun nilExp() = Ex (CONST 0)
 
 fun intExp i = Ex (CONST i)
 
-fun simpleVar(InFrame i, nivel) =
+fun simpleVar (InFrame i, nivel) =
         let fun aux 0 = TEMP fp
               | aux n = MEM(BINOP(PLUS,
-                        CONST fpPrevLev, aux(n-1)))
-        in  Ex (MEM(BINOP(PLUS, aux(!actualLevel - nivel), CONST i))) end
-  | simpleVar(InReg l, _) =
-        Ex (TEMP l) 
+                            CONST fpPrevLev, aux(n-1)))
+        in
+            if i = 0 then
+                Ex (MEM (aux (!actualLevel - nivel)))
+            else if i > 0 then
+                Ex (MEM (BINOP (PLUS, aux(!actualLevel-nivel), CONST i)))
+            else
+                Ex (MEM (BINOP (MINUS, aux(!actualLevel-nivel), CONST (~i))))
+        end
+  | simpleVar(InReg l, _) = Ex (TEMP l) 
 
 (*fun varDec(acc) = simpleVar(acc, getActualLev())*)
 fun varDec(acc, e) = let val sv = unEx (simpleVar(acc, getActualLev()))
@@ -222,7 +231,6 @@ fun callExp (name, external, isproc, lev:level, la) =
             fun preparaArgs (h, (rt, re)) =
                     case h of
                     Ex(CONST n) => ((CONST n) :: rt, re)
-                  | Ex(NAME n) => ((NAME n) :: rt, re)
                   | Ex(TEMP n) => ((TEMP n) :: rt, re)
                   | _ => let val temp = newtemp()
                          in

@@ -39,7 +39,8 @@ val ifThenExp : {test: exp, then': exp} -> exp
 val ifThenElseExp : {test: exp, then': exp, else': exp} -> exp
 val ifThenElseExpUnit : {test: exp, then': exp, else': exp} -> exp
 val assignExp : {var: exp, exp:exp}-> exp
-val preFunctionDec : level * Temp.label * bool list -> level
+val initLevelFunctionDec : level * Temp.label * bool list -> level
+val preFunctionDec : unit -> unit
 val functionDec : exp * level * bool -> exp
 val postFunctionDec : unit -> unit
 val binOpIntExp : {left:exp, oper:Abs.oper, right:exp} -> exp

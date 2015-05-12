@@ -139,8 +139,11 @@ fun exp(InFrame k) = MEM(BINOP(PLUS, TEMP(fp), CONST k))
 
 fun externalCall(s, l) = CALL (NAME s, l)
 
+val labelsuffix = "."
+
 fun makeString(l, s) =
-        let val lab = if (l = "") then "" else l ^ ":\n"
+        let val dir = l ^ ":\n\t.word " ^ l ^ labelsuffix ^ "\n"
+            val lab = if (l = "") then "" else dir ^ l ^ labelsuffix ^ ":\n"
             val str = if (s = "") then "" else "\t" ^ s ^ "\n"
         in
             lab ^ str
@@ -148,9 +151,10 @@ fun makeString(l, s) =
 
 fun setDirectives prog strs =
         let val strs' = (String.concat o List.map makeString) strs
-            val headers = "\t.global _tigermain\n"
+            val headers_1 = "\t.global _tigermain\n"
+            val headers_2 = "\t.align 2\n"
         in
-            headers ^ strs' ^ prog
+            headers_1 ^ strs' ^ headers_2 ^ prog
         end
 
 (*  ProcEntryExit1 - (p. 261)

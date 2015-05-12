@@ -378,7 +378,7 @@ fun transExp(venv, tenv) =
                             val escapparams' = if funext then escapparams else true::escapparams
 
                             (* generar nuevo level *)
-                            val newlev = preFunctionDec(topLevel(), labelname, escapparams')
+                            val newlev = initLevelFunctionDec(topLevel(), labelname, escapparams')
 
                             (* insertamos la función en venv *)
                             val venv' = tabRInserta(name,
@@ -401,7 +401,8 @@ fun transExp(venv, tenv) =
                                             (level, label, formals, result, extern)
                                   | _ => error ("Internal error FuncionDec aux1", nl)
 
-                            (* pushlevel *)
+                            (* preFunctionDec y pushlevel *)
+                            val _ = preFunctionDec()
                             val _ = pushLevel funlev
 
                             (* generamos e insertamos las variables de los args en venv *)

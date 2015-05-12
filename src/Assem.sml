@@ -28,7 +28,7 @@ fun const i =
         else
             "#" ^ Int.toString (i)
 
-fun flabel l = "=" ^ l
+fun flabel l = l
 
 (* ----- Extras ----- *)
 fun getTemps instr =
