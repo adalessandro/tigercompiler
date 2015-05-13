@@ -208,7 +208,6 @@ fun munchStmBlock (ss, frame) =
                                 )
                             val sp_offset = (List.length toframe) * Frame.wSz
                             val toreg_zip = ListPair.zip (toreg, Frame.argregs)
-                            val result_t = Temp.newtemp()
                             val _ = if sp_offset <> 0 then
                                         emits (OPER {assem = "sub     sp, sp, " ^
                                                               Assem.const(sp_offset),
@@ -217,17 +216,16 @@ fun munchStmBlock (ss, frame) =
                             val _ = List.foldl munchArgStack 0 toframe
                             val srcs = List.concat (List.map munchArgReg toreg_zip)
                             val _ = emits (OPER {assem = "bl      `j0",
-                                                 dest = (*result_t :: *)Frame.callersaves,
-                                                 src = [] (*srcs*),
+                                                 dest = Frame.callersaves,
+                                                 src = srcs,
                                                  jump = SOME [ename', CALL_LABEL]})
                             val _ = if sp_offset <> 0 then
                                         emits (OPER {assem = "add     sp, sp, " ^
                                                               Assem.const(sp_offset),
                                                      src = [], dest = [], jump = NONE})
                                     else ()
-                            val _ = munchStm (T.MOVE (T.TEMP result_t, T.TEMP Frame.rv))
                         in
-                            result_t
+                            Frame.rv
                         end
               | munchExp _ = raise Fail "munchExp undefined"
 

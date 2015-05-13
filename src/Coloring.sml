@@ -138,7 +138,7 @@ fun printIGraph ops =
  *)
 
 (* LivenessAnalisys and Build *)
-fun makeIGraph (FGRAPH fgraph) =
+fun makeIGraph opt_interf (FGRAPH fgraph) =
         let
             val _ = debug "makeIGraph()"
             (* Initialize the interference graph *)
@@ -221,6 +221,9 @@ fun makeIGraph (FGRAPH fgraph) =
                 end
             
             val (inTab, outTab) = liveness (init_inout_tab, init_inout_tab)
+            val _ = if opt_interf then
+                        printTab printint (printSet print) outTab
+                    else ()
 
             (* Build P.245 *)
             fun build i =
@@ -292,12 +295,12 @@ and nodeMoves n =
             Set.intersection (a, (Set.union (b, c)))
         end
 
-and isMoveRelated n = Set.isEmpty (nodeMoves n)
+and isMoveRelated n = (not o Set.isEmpty) (nodeMoves n)
 
 (* Simplify *)
 fun simplify () =
-        let val _ = debug "simplify()"
-            fun forone n = (
+        let fun forone n = (
+                    debug ("simplify(" ^ (gtemp() n) ^ ")");
                     simplifyWorkList := set_safedelete (!simplifyWorkList, n);
                     Pila.pushPila selectStack n;
                     Set.app decrementDegree (adjacent n)
@@ -532,7 +535,7 @@ fun coloring_main opts (blocks : (Assem.instr list * Frame.frame) list) =
             val instrs = (List.concat o List.map #1) blocks
             val fgraph = Flow.makeFGraph instrs
             val _ = if opt_flow then Flow.printFlow ["control", "ismove"] fgraph else ()
-            val _ = makeIGraph fgraph
+            val _ = makeIGraph opt_interf fgraph
             val _ = if opt_interf then printIGraph ["graph"] else ()
             val _ = makeWorkList()
             fun repeat() = (
