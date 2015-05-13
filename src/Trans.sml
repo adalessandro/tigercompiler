@@ -169,14 +169,15 @@ fun varDec(acc, e) = let val sv = unEx (simpleVar(acc, getActualLev()))
                      in  Nx (MOVE (sv, ex))
                      end
 
-fun fieldVar(var, pos) = 
-    let val t = newtemp()
-    in  Ex( ESEQ( seq[MOVE( TEMP t, unEx var),
-                      EXP( externalCall("_checkNil", [TEMP t])) ],
-                  MEM (BINOP( PLUS, CONST(wSz * pos), TEMP t))))
-    end
+fun fieldVar (var, pos) =
+        let val t = newtemp()
+        in
+            Ex (ESEQ (seq [MOVE (TEMP t, unEx var),
+                           EXP (externalCall ("_checkNil", [TEMP t]))],
+                      MEM (BINOP (PLUS, CONST (wSz * pos), TEMP t))))
+        end
 
-fun subscriptVar(arr, ind) =
+fun subscriptVar (arr, ind) =
     let
         val a = unEx arr
         val i = unEx ind
@@ -196,17 +197,18 @@ fun subscriptVar(arr, ind) =
     end
 
 fun recordExp l =
-    let val ret = newtemp()
-        fun gentemps 0 = []
-          | gentemps n = newtemp() :: gentemps(n-1)
-        val regs = gentemps (length l)
-        fun aux ((e, s), t) = (MOVE (TEMP t, unEx e), s, TEMP t)
-        val lexps = map aux (ListPair.zip (l, regs))
-        val l' = Listsort.sort (fn((_, m, _), (_, n, _)) => Int.compare(m, n)) lexps
-        val lexps' = map #1 lexps
-    in
-        Ex( ESEQ( seq( lexps' @ [EXP (externalCall("_allocRecord", CONST (length l) :: (List.map #3 l'))), MOVE ( TEMP ret, TEMP rv) ] ), TEMP ret))
-    end
+        let val ret = newtemp()
+            val pairs = List.map (fn x => (x, newtemp())) l
+            fun genmove ((e, s), t) = (MOVE (TEMP t, unEx e), s, TEMP t)
+            val lexps = map genmove pairs
+            val l' = Listsort.sort (fn((_, m, _), (_, n, _)) => Int.compare(m, n)) lexps
+            val lexps' = map #1 lexps
+        in
+            Ex (ESEQ (seq (lexps' @ [EXP (externalCall ("_allocRecord", CONST (length l) ::
+                                                        (List.map #3 l'))),
+                                          MOVE (TEMP ret, TEMP rv)]),
+                      TEMP ret))
+        end
         
 fun arrayExp{size, init} =
     let
@@ -356,13 +358,12 @@ fun ifThenElseExpUnit {test, then', else'} =
                 LABEL l3])
     end
 
-fun assignExp{var, exp} =
-let
-    val v = unEx var
-    val vl = unEx exp
-in
-    Nx (MOVE(v,vl))
-end
+fun assignExp {var, exp} =
+        let val v = unEx var
+            val vl = unEx exp
+        in
+            Nx (MOVE (v,vl))
+        end
 
 fun binOpIntExp {left, oper, right} = 
     let val oper' = case oper of

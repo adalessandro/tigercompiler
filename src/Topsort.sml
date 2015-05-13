@@ -19,39 +19,50 @@ fun lp --- e = List.filter ((op <> rs e) o fst) lp
 
 exception Ciclo
 
-fun printtenv tenv = map (fn x => print (("("^(#1 x)^", "^printTipo(#2 x)^")")^"\n")) (tabAList tenv)
+fun printtenv tenv =
+        map (fn x => print (("(" ^ (#1 x) ^ ", " ^ printTipo(#2 x) ^ ")") ^ "\n"))
+            (tabAList tenv)
 
-fun printvenv venv = map (fn x => print (("("^(#1 x)^", "^envEntry2String(#2 x)^")")^"\n")) (tabAList venv)
+fun printvenv venv =
+        map (fn x => print (("(" ^ (#1 x) ^ ", " ^ envEntry2String(#2 x) ^ ")") ^ "\n"))
+            (tabAList venv)
 
-(* topsort genera una (symbol list) donde cada elemento depende solo de los anteriores.
-        p es del tipo (symbol, symbol) list
+(*  topsort genera una (symbol list) donde cada elemento depende solo de los anteriores.
+ *  p es del tipo (symbol, symbol) list
  *)
 fun topsort p =
-            (* candidatos filtra los elementos de st dejando solo aquellos que 
-                    no son segunda componente (el tipo dependiente) de ningún par en p *)
-    let fun candidatos p st = List.filter (fn e => List.all((op<> rs e) o snd) p) st
-        fun tsort p [] res = rev res
-          | tsort [] st res = rev (st@res)
-          | tsort p (st as (h::t)) res =
-                let val x = (hd (candidatos p st)) handle Empty => raise Ciclo (* quedan elementos y no hay candidato, implica Ciclo *)
-                in tsort (p---x) (st--x) (x::res) end
-        fun elementos lt = (* dada una lista de pares, genera una lista con sus elementos sin repetir *)
-            List.foldr ( fn((x,y), l) =>
-                let val l1 = case List.find (op= rs x) l of
-                                  NONE => x::l
-                                | _ => l
-                    val l2 = case List.find (op= rs y) l1 of
-                                  NONE => y::l1
-                                | _ => l1
-                in l2 end) [] lt
-    in tsort p (elementos p) [] end
+            (*  candidatos filtra los elementos de st dejando solo aquellos que 
+             *  no son segunda componente (el tipo dependiente) de ningún par en p *)
+        let fun candidatos p st = List.filter (fn e => List.all((op<> rs e) o snd) p) st
+            fun tsort p [] res = rev res
+              | tsort [] st res = rev (st@res)
+              | tsort p (st as (h::t)) res =
+                        let val x = (hd (candidatos p st))
+                                    handle Empty => raise Ciclo (* quedan elem. y no candidato *)
+                        in
+                            tsort (p---x) (st--x) (x::res)
+                        end
+            (* dada una lista de pares, genera una lista con sus elementos sin repetir *)
+            fun elementos lt =
+                    List.foldr
+                        (fn ((x, y), l) =>
+                                let val l1 = case List.find (op= rs x) l of
+                                             NONE => x::l
+                                           | _ => l
+                                    val l2 = case List.find (op= rs y) l1 of
+                                             NONE => y::l1
+                                           | _ => l1
+                                in l2 end) [] lt
+        in tsort p (elementos p) [] end
 
-(* buscaRecords filtra un batch dejando solo las declaraciones de Records y Arrays *)
+(* buscaRecords filtra un batch dejando solo las declaraciones de Records *)
 fun buscaRecords lt =
-    let fun buscaRecs [] recs = recs
-          | buscaRecs ((r as {name,ty=RecordTy _})::t) recs = buscaRecs t (r::recs)
-          | buscaRecs (_::t) recs = buscaRecs t recs
-    in buscaRecs lt [] end
+        let fun buscaRecs [] recs = recs
+              | buscaRecs ((r as {name,ty=RecordTy _})::t) recs = buscaRecs t (r::recs)
+              | buscaRecs (_::t) recs = buscaRecs t recs
+        in
+            buscaRecs lt []
+        end
 
 (* genPares toma un batch y genera los pares (p, s) que indica que el tipo s depende de p. 
         lt: es un batch de declaraciones de tipo ({name: symbol, ty: ty} list)
@@ -99,28 +110,36 @@ fun procesa [] batch recs env = env
                          | _ => raise Fail ("error interno: procesa")
        in procesa t ps' recs env' end
 
-(* procRecord inserta los records en tenv
-        los fields del record que tienen el tipo de un record del batch se insertan con una cabecera temporal
+(*  procRecord inserta los records en tenv
+ *  Los fields del record que tienen el tipo de un record del batch se insertan con una
+ *  cabecera temporal.
  *)
-fun procRecords recs env =
-    let fun buscaEnv env' t = (* buscaEnv trae el tipo de t, que debería estar en tenv salvo que sea un record *)
-            case tabBusca (t,env) of
-                 SOME (x as (TRecord _)) => TTipo (t, ref (SOME x))
-               | SOME (x as (TArray _)) => TTipo (t, ref (SOME x))
-               | SOME t' => t'
-               | NONE => case List.find (fn {name, ...} => name = t) recs of
-                              SOME {name, ...} => TTipo(name, ref NONE)
-                            | _ => raise Fail (t^" *** no existe!! error interno")
-        fun precs [] env' = env'
-          | precs ({name, ty=RecordTy lf}::t) env' =
-                let val lf' = List.foldl (fn ({name, typ=NameTy t, ...}, l) => (name, buscaEnv env' t) :: l
-                                           | (_, l) => raise Fail ("Error interno miembro mal definido. procRecords.")
-                                         ) [] lf
-                    val (_, lf'') = List.foldl (fn ((x,y), (n,l)) => (n+1, (x,y,n)::l)) (0,[]) lf' (* enumeramos los fields *)
-                    val env'' = tabRInserta (name, TRecord (lf'', ref()), env')
-                in precs t env'' end
-          | precs _ _ = raise Fail "Error interno 666"
-    in precs recs env end
+fun procRecords recs env0 =
+        (* buscaEnv trae el tipo de t, que debería estar en tenv salvo que sea un record *)
+        let fun buscaEnv env1 t =
+                    case tabBusca (t, env1) of
+                    SOME (x as (TRecord _)) => TTipo (t, ref (SOME x))
+                  | SOME (x as (TArray _)) => TTipo (t, ref (SOME x))
+                  | SOME t' => t'
+                  | NONE => case List.find (fn {name, ...} => name = t) recs of
+                            SOME {name, ...} => TTipo (name, ref NONE)
+                          | _ => raise Fail (t ^ " *** no existe!! error interno")
+            fun precs ({name, ty=RecordTy lf}, env2) =
+                    let fun aux {name, typ=NameTy t, ...} = (name, buscaEnv env2 t)
+                          | aux _ = raise Fail ("Error procRecords: miembro mal definido.")
+                        val lf' = List.map aux lf
+                        (* enumeramos los fields *)
+                        val indexes = List.tabulate (List.length lf', (fn x => x))
+                        val pairs = ListPair.zip (indexes, lf')
+                        val lf'' = List.map (fn (i, (x, y)) => (x, y, i)) pairs
+                        val env2' = tabRInserta (name, TRecord(lf'', ref()), env2)
+                    in
+                        env2'
+                    end
+            | precs _ = raise Fail "Error interno 666"
+        in
+            List.foldl precs env0 recs
+        end
 
 fun fijaNone [] env = env
   | fijaNone ((name, TArray (TTipo (s, ref NONE), u))::t) env =
