@@ -183,17 +183,12 @@ fun subscriptVar (arr, ind) =
         val i = unEx ind
         val ra = newtemp()
         val ri = newtemp()
-        val ret = newtemp()
     in
         Ex( ESEQ(seq[MOVE(TEMP ra, a),
                      MOVE(TEMP ri, i),
-                     EXP(externalCall("_checkIndexArray", [TEMP ra, TEMP ri])),
-                     MOVE(TEMP ret, MEM( BINOP(PLUS, TEMP ra,
-                                               BINOP(MUL, TEMP ri, CONST Frame.wSz)
-                                              )))
-                    ],
-                TEMP ret)
-            )
+                     EXP(externalCall("_checkIndexArray", [TEMP ra, TEMP ri]))],
+                 MEM( BINOP(PLUS, TEMP ra, BINOP(MUL, TEMP ri, CONST Frame.wSz))))
+          )
     end
 
 fun recordExp l =
