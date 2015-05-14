@@ -212,7 +212,7 @@ fun makeIGraph opt_interf (FGRAPH fgraph) =
                             in
                                 liveness' (inTab'', outTab'', ns)
                             end
-                    val (inTab', outTab') = liveness' (inTab, outTab, instr_nodes_list)
+                    val (inTab', outTab') = liveness' (inTab, outTab, List.rev instr_nodes_list)
                 in
                     if tabEq Set.equal (inTab, inTab') andalso tabEq Set.equal (outTab, outTab') then
                         (inTab, outTab)
