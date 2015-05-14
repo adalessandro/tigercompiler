@@ -304,11 +304,12 @@ fun transExp(venv, tenv) =
                 in  {exp=simpleVar(tacc, tlev), ty=tipoReal(tvar)}
                 end
           | trvar(FieldVar(v, s), nl) =
-                let val (expv, fs) =
-                        case trvar(v, nl) of
-                            {exp, ty=TRecord(fs, u)} => (exp, fs)
-                          | _ => error("No es un record", nl)
-                    val (t', i') = 
+                let val {exp=expv, ty=vty} = trvar(v, nl)
+                    val fs =
+                            case (tipoReal vty) of
+                            TRecord (fs, _) => fs
+                          | _ => error(("No es un record, es un " ^ printTipo vty), nl)
+                    val (t', i') =
                         case List.find (fn x => #1(x) = s) fs of
                             SOME (_, t', i') => (t', i')
                           | _ => error(s^" no es miembro del record", nl)
@@ -450,7 +451,9 @@ fun transExp(venv, tenv) =
                     val batch = List.map #1 ts
                     val tenv' = fijaTipos batch tenv
                                     handle Topsort.Ciclo => raise Fail("existe un ciclo en el batch")
-                in  (venv, tenv', []) end
+                in
+                    (venv, tenv', [])
+                end
     in 
         trexp 
     end

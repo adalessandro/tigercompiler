@@ -179,15 +179,16 @@ fun munchStmBlock (ss, frame) =
                     end
 
             and munchExp (T.CONST i) = result (fn x => emits (genConst(i, x)))
-              | munchExp (T.NAME l) = l
+              | munchExp (T.NAME l) =
+                        result (fn x => emits (OPER {assem = "ldr     `d0, " ^ Assem.flabel(l),
+                                                     dest = [x], src = [], jump = NONE}))
               | munchExp (T.TEMP t) = t
               | munchExp (T.BINOP (op1, e1, e2)) =
                         result (fn x => munchStm (T.MOVE (T.TEMP x, T.BINOP (op1, e1, e2))))
               | munchExp (T.MEM e1) =
                         result (fn x => munchStm (T.MOVE (T.TEMP x, T.MEM e1)))
-              | munchExp (T.CALL (ename, eargs)) =
-                        let val ename' = munchExp ename
-                            val frm = getframe ename'
+              | munchExp (T.CALL (T.NAME ename, eargs)) =
+                        let val frm = getframe ename
                             val (toreg, toframe) = (
                                     case frm of
                                     NONE => (* external call *)
@@ -221,7 +222,7 @@ fun munchStmBlock (ss, frame) =
                             val _ = emits (OPER {assem = "bl      `j0",
                                                  dest = Frame.callersaves,
                                                  src = srcs,
-                                                 jump = SOME [ename', CALL_LABEL]})
+                                                 jump = SOME [ename, CALL_LABEL]})
                             val _ = if sp_offset <> 0 then
                                         let val t = Temp.newtemp()
                                         in (

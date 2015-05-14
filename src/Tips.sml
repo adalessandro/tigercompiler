@@ -12,7 +12,8 @@ datatype Tipo = TUnit
     | TArray of Tipo * unique
     | TRecord of (string * Tipo * int) list * unique (* nombre, tipo, posición *)
     | TFunc of Tipo list * Tipo (* tipo argumentos, tipo retorno *)
-    | TTipo of string * Tipo option ref (* por qué option? *)
+    | TTipo of string * Tipo option ref (* option para rellenar luego las referencias a tipos
+                                         * del mismo batch aún no insertados *)
 
 fun printTipo TUnit = "TUnit"
   | printTipo TNil = "TNil"
@@ -23,7 +24,7 @@ fun printTipo TUnit = "TUnit"
   | printTipo (TRecord (l,_)) = "TRec("^printFields l^")"
   | printTipo (TFunc _) = "TFunc(...)"
   | printTipo (TTipo(s,ref NONE)) = "TTipo("^s^",NONE!!!!)"
-  | printTipo (TTipo(s,ref (SOME x))) = "TTipo("^s^","^"SOME"^")"
+  | printTipo (TTipo(s,ref (SOME x))) = "TTipo("^s^","^(printTipo x)^")"
 
 and printFields l = List.foldl (fn(x,y) => x ^ ", " ^ y) "" (map (fn(a,b,i) => a ^ ":" ^ printTipo b ^ " (" ^ makestring(i) ^ ")") l)
 

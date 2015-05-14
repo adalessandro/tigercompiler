@@ -5,6 +5,7 @@ open Tips
 open Tab
 open Abs
 open Sres
+open Tigerextras
 
 infix -- ---
 infix rs ls
@@ -141,26 +142,45 @@ fun procRecords recs env0 =
             List.foldl precs env0 recs
         end
 
-fun fijaNone [] env = env
-  | fijaNone ((name, TArray (TTipo (s, ref NONE), u))::t) env =
-                     (case tabBusca (s,env) of
-                           SOME (r as (TRecord _)) => fijaNone t (tabRInserta (name, TArray (r,u), env))
-                         | _ => raise Fail "Error interno 666+1")
- | fijaNone ((name,TRecord (lf,u))::t) env =
-       let fun busNone (s,TTipo (t, r as (ref NONE)), n) = r := (SOME (tabSaca (t,env)))
-             | busNone d = ()
-           val _ = List.app busNone lf
-       in fijaNone t env end
- | fijaNone (_::t) env = fijaNone t env
+fun fijaNone ((name, tipo), env) =
+        case tipo of
+        TArray (TTipo (s, ref NONE), u) => (
+                case tabBusca (s, env) of
+                SOME (r as (TRecord _)) => (
+                    let val env' = fijaNone ((s, r), env)
+                    in
+                        tabRInserta (name, TArray (r, u), env')
+                    end
+                )
+              | _ => raise Fail "Error interno 666+1"
+            )
+      | TRecord (lf, u) =>
+                let fun trField ((s, t, n), env2) = fijaNone ((s, t), env2)
+                in
+                    List.foldl trField env lf
+                end
+      | TTipo (t, r as (ref NONE)) => (r := (SOME (tabSaca (t, env))); env)
+      | TTipo (t, r as (ref (SOME x))) => (r := (SOME (tabSaca (t, env))); env)
+      | _ => env
 
 fun fijaTipos batch env =
-    let val pares = genPares batch (*genera los pares de dependencias de tipo*)
-        val recs = buscaRecords batch (*deja solo los records*)
-        val ordered = topsort pares (*topsort: arma una secuencia de tipos donde el i-esimo puede depender solo de los anteriores*)
-        val env' = procesa ordered batch recs env (*mete en el tenv los tipos, salvo los records*)
-        val env'' = procRecords recs env' (*mete en el tenv los records; los miembros que tienen tipo record referencian a NONE*)
-        (* llegado hasta acá tenemos todos los tipos insertados, donde las referencias a records del batch son TTipo(name_record, ref NONE) *)
-        val env''' = fijaNone (tabAList env'') env'' (*cambia las referencias a NONE por las referencias al tipo*)
-    in env''' end
+    let (* Genera los pares de dependencias de tipo *)
+        val pares = genPares batch
+        (* Deja solo los records *)
+        val recs = buscaRecords batch
+        (* Topsort: arma una secuencia de tipos donde el i-esimo puede depender solo de
+         * los anteriores *)
+        val ordered = topsort pares
+        (* Mete en el tenv los tipos, salvo los records *)
+        val env' = procesa ordered batch recs env
+        (* Mete en el tenv los records; los miembros que tienen tipo record referencian a NONE *)
+        val env'' = procRecords recs env'
+        (* Llegado hasta acá tenemos todos los tipos insertados,
+         * donde las referencias a records del batch son TTipo(name_record, ref NONE)
+         * Cambiamos las referencias a NONE, por las referencias al tipo *)
+        val env''' = List.foldl fijaNone env'' (tabAList env'')
+    in
+        env'''
+    end
 
 end

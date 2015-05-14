@@ -136,7 +136,7 @@ Temp.uo: Temp.ui
 Interp.ui: Temp.ui Frame.ui Tree.uo 
 Grm.uo: Grm.ui Nlin.uo Abs.uo 
 Graph.uo: Graph.ui Tab.ui Tigerextras.uo 
-Topsort.uo: Topsort.ui Tab.ui Abs.uo Sres.uo Tips.uo 
+Topsort.uo: Topsort.ui Tab.ui Abs.uo Sres.uo Tigerextras.uo Tips.uo 
 Tigerpp.uo: Tigerpp.ui Abs.uo 
 Canon.ui: Temp.ui Frame.ui Tree.uo 
 Simpleregalloc.uo: Simpleregalloc.ui Temp.ui Frame.ui Assem.ui \
