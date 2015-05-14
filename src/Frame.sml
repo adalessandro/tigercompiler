@@ -221,14 +221,14 @@ fun procEntryExit3 (instrs : Assem.instr list, frame : frame) =
                         [Assem.OPER {assem = "sub     sp, sp, #"^ Assem.const(offset),
                                      dest = [], src = [], jump = NONE}]
                     else []
-            val (funlab, rest, lastjump) = (
+            val (funlab, rest, lastline) = (
                     [List.hd instrs],
-                    List.tl (List.take (instrs, List.length instrs - 3)),
-                    List.drop (instrs, List.length instrs - 3)
+                    List.tl (List.take (instrs, List.length instrs - 1)),
+                    List.drop (instrs, List.length instrs - 1)
                 )
         in
             {   prolog = "@ prologo\n",
-                body = funlab @ prolog @ locals_gap @ rest @ epilog @ lastjump,
+                body = funlab @ prolog @ locals_gap @ rest @ epilog @ lastline,
                 epilog = "@ epilogo\n"
             }
         end
