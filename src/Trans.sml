@@ -324,17 +324,17 @@ fun ifThenElseExp {test, then', else'} =
         val cTest = unCx test
         val eThen = unEx then'
         val eElse = unEx else'
-        val r1 = newtemp()
+        val t1 = newtemp()
         val (l1, l2, l3) = (newlabel(), newlabel(), newlabel())
     in
         Ex (ESEQ((seq[cTest(l1, l2),
                     LABEL l1,
-                    MOVE(TEMP r1, eThen),
+                    MOVE(TEMP t1, eThen),
                     JUMP(NAME l3, [l3]),
                     LABEL l2,
-                    MOVE(TEMP r1, eElse),
+                    MOVE(TEMP t1, eElse),
                     LABEL l3]),
-                TEMP r1))
+                TEMP t1))
     end
 
 fun ifThenElseExpUnit {test, then', else'} =
@@ -346,8 +346,8 @@ fun ifThenElseExpUnit {test, then', else'} =
     in
         Nx (seq[cTest(l1, l2),
                 LABEL l1,
-                JUMP(NAME l3, [l3]),
                 nThen,
+                JUMP(NAME l3, [l3]),
                 LABEL l2,
                 nElse,
                 LABEL l3])
