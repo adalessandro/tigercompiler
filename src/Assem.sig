@@ -30,7 +30,11 @@ sig
     val RET_LABEL : label
     val CALL_LABEL : label
 
+	val constlist : (string * int) list ref
+	val emitConst : int -> label
+
 	val const : int -> string
 	val flabel : string -> string
+	val genConst : int * temp -> instr
 
 end

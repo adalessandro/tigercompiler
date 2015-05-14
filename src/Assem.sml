@@ -22,13 +22,37 @@ val FALSE_LABEL = "__FALSE_LABEL__"
 val RET_LABEL = "__RET_LABEL__"
 val CALL_LABEL = "__CALL_LABEL__" 
 
+(* allocation of big consts *)
+val constlist = ref []
+
+fun emitConst n =
+        let val l = Temp.newlabel()
+        in
+            constlist := (l, n) :: (!constlist);
+            l
+        end
+
 fun const i =
         if i < 0 then
-            "#-" ^ Int.toString (~i) 
+            "-" ^ Int.toString (~i)
         else
-            "#" ^ Int.toString (i)
+            Int.toString (i)
 
 fun flabel l = l
+
+fun genConst (n, t) =
+        if (0 <= n andalso n <= 255) then
+            OPER {assem = "mov     `d0, #" ^ Int.toString(n),
+                  dest = [t], src = [], jump = NONE}
+        else if (~256 <= n andalso n <= ~1) then
+            OPER {assem = "mov     `d0, #-" ^ Int.toString(~n),
+                  dest = [t], src = [], jump = NONE}
+        else
+            let val l = emitConst n
+            in
+                OPER {assem = "ldr     `d0, " ^ flabel(l),
+                      dest = [t], src = [], jump = NONE}
+            end
 
 (* ----- Extras ----- *)
 fun getTemps instr =
@@ -58,6 +82,7 @@ val format =
                   | f nil = "" 
             in (f o explode) assem
             end 
+        handle Subscript => raise Fail (assem)
     in fn OPER {assem, dest, src, jump=NONE} => speak("\t" ^ assem, dest, src, nil)
         | OPER {assem, dest, src, jump=SOME j} => speak("\t" ^ assem, dest, src, j)
         | LABEL {assem, ...} => assem

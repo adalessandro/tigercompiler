@@ -149,12 +149,20 @@ fun makeString(l, s) =
             lab ^ str
         end
 
+fun makeConst(l, n) =
+        let val lab = l ^ ":\n"
+            val num = "\t.word " ^ Assem.const(n) ^ "\n"
+        in
+            lab ^ num
+        end
+
 fun setDirectives prog strs =
         let val strs' = (String.concat o List.map makeString) strs
             val headers_1 = "\t.global _tigermain\n"
             val headers_2 = "\t.align 2\n"
+            val consts = (String.concat o List.map makeConst) (!Assem.constlist)
         in
-            headers_1 ^ strs' ^ headers_2 ^ prog
+            headers_1 ^ strs' ^ consts ^ headers_2 ^ prog
         end
 
 (*  ProcEntryExit1 - (p. 261)
@@ -209,8 +217,8 @@ fun procEntryExit3 (instrs : Assem.instr list, frame : frame) =
                 ]
             val offset = (!(#actualLocal frame)) * wSz
             val locals_gap =
-                    if offset <> 0 then
-                        [Assem.OPER {assem = "sub     sp, sp, " ^ Assem.const(offset),
+                    if offset <> 0 then (* PROBLEM: what if it's > 255? *)
+                        [Assem.OPER {assem = "sub     sp, sp, #"^ Assem.const(offset),
                                      dest = [], src = [], jump = NONE}]
                     else []
             val (funlab, rest, lastjump) = (

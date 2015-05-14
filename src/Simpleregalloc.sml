@@ -6,7 +6,8 @@ structure Set = Splayset
 open Assem
 open Tigerextras
 
-fun debug x = if (!Tigerextras.enable_debug) andalso Tigerextras.simpleregalloc_debug then print x else ()
+fun debug x = 
+    if (!Tigerextras.enable_debug) andalso Tigerextras.simpleregalloc_debug then print x else ()
 
 (* Auxiliary functions *)
 fun set_safedelete (s, i) = (
@@ -17,28 +18,30 @@ fun set_safedelete (s, i) = (
 
 (* movaTemp, de memoria a un temporario.*)
 fun movaTemp (mempos, temp) =
-        let val offset = ", " ^ Assem.const mempos
+        let val t = Temp.newtemp()
+            val const = genConst (mempos, t)
             val instr =
-                    OPER {assem = "ldr     `d0, [`s0" ^ offset ^ "]",
-                          src = [Frame.fp],
+                    OPER {assem = "ldr     `d0, [`s0, `s1]",
+                          src = [Frame.fp, t],
                           dest = [temp],
                           jump = NONE
                          }
         in
-            [instr]
+            [const, instr]
         end
 
 (* movaMem crea una instrucción que mueve un temporario a memoria. *)
 fun movaMem (temp, mempos) =
-        let val offset = ", " ^ Assem.const mempos
+        let val t = Temp.newtemp()
+            val const = genConst (mempos, t)
             val instr =
-                    OPER {assem = "str     `s0, [`s1" ^ offset ^ "]",
-                          src = [temp, Frame.fp],
+                    OPER {assem = "str     `s0, [`s1, `s2]",
+                          src = [temp, Frame.fp, t],
                           dest = [],
                           jump = NONE
                          }
         in
-            [instr]
+            [const, instr]
         end
 
 (* simpleregalloc body frm spilledTemp

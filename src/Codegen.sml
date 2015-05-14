@@ -33,9 +33,7 @@ fun getframe name : Frame.frame option = List.find (fn f => Frame.name f = name)
 fun munchStmBlock (ss, frame) = 
         let fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
               | munchStm (T.MOVE ((T.NAME _), _)) = raise Fail "MOVE dest = NAME"
-              | munchStm (T.MOVE ((T.TEMP d), (T.CONST i))) = 
-                        emits (OPER {assem = "mov     `d0, " ^ Assem.const(i),
-                                     dest = [d], src = [], jump = NONE})
+              | munchStm (T.MOVE ((T.TEMP d), (T.CONST i))) = emits (genConst (i, d))
               | munchStm (T.MOVE ((T.TEMP d), (T.NAME l))) =
                         emits (OPER {assem = "ldr     `d0, " ^ Assem.flabel(l),
                                      dest = [d], src = [], jump = NONE})
@@ -159,12 +157,14 @@ fun munchStmBlock (ss, frame) =
               | munchStm (T.LABEL l) = emits (LABEL {assem = l ^ ":", lab = l})
             
             and munchArgStack (arg, pos) =
-                    let val memdir = pos * Frame.wSz
+                    let val offset = pos * Frame.wSz
                         val e = munchExp arg
+                        val t = Temp.newtemp()
                     in
-                            emits (OPER {assem = "str     `s0, [sp, " ^ Assem.const(memdir) ^ "]",
-                                         src = [e], dest = [], jump = NONE});
-                            pos + 1
+                        emits (genConst (offset, t));
+                        emits (OPER {assem = "str     `s0, [sp, `s1]",
+                                     dest = [], src = [e, t], jump = NONE});
+                        pos + 1
                     end
 
             and munchArgReg (T.TEMP t, reg) = (
@@ -178,7 +178,7 @@ fun munchStmBlock (ss, frame) =
                         [e', reg]
                     end
 
-            and munchExp (T.CONST i) = result (fn x => munchStm (T.MOVE (T.TEMP x, T.CONST i)))
+            and munchExp (T.CONST i) = result (fn x => emits (genConst(i, x)))
               | munchExp (T.NAME l) = l
               | munchExp (T.TEMP t) = t
               | munchExp (T.BINOP (op1, e1, e2)) =
@@ -209,9 +209,12 @@ fun munchStmBlock (ss, frame) =
                             val sp_offset = (List.length toframe) * Frame.wSz
                             val toreg_zip = ListPair.zip (toreg, Frame.argregs)
                             val _ = if sp_offset <> 0 then
-                                        emits (OPER {assem = "sub     sp, sp, " ^
-                                                              Assem.const(sp_offset),
-                                                     src = [], dest = [], jump = NONE})
+                                        let val t = Temp.newtemp()
+                                        in (
+                                            emits (genConst (sp_offset, t));
+                                            emits (OPER {assem = "sub     sp, sp, `s0",
+                                                         dest = [], src = [t], jump = NONE})
+                                        ) end
                                     else ()
                             val _ = List.foldl munchArgStack 0 toframe
                             val srcs = List.concat (List.map munchArgReg toreg_zip)
@@ -220,9 +223,12 @@ fun munchStmBlock (ss, frame) =
                                                  src = srcs,
                                                  jump = SOME [ename', CALL_LABEL]})
                             val _ = if sp_offset <> 0 then
-                                        emits (OPER {assem = "add     sp, sp, " ^
-                                                              Assem.const(sp_offset),
-                                                     src = [], dest = [], jump = NONE})
+                                        let val t = Temp.newtemp()
+                                        in (
+                                            emits (genConst (sp_offset, t));
+                                            emits (OPER {assem = "add     sp, sp, `s0",
+                                                         dest = [], src = [t], jump = NONE})
+                                        ) end
                                     else ()
                         in
                             Frame.rv
