@@ -20,28 +20,28 @@ fun set_safedelete (s, i) = (
 fun movaTemp (mempos, temp) =
         let val t = Temp.newtemp()
             val const = Codegen.genConst (mempos, t)
-            val instr =
-                    OPER {assem = "ldr     `d0, [`s0, `s1]",
-                          src = [Frame.fp, t],
-                          dest = [temp],
-                          jump = NONE
-                         }
+            val instr = (case const of
+			     NONE => [ OPER {assem = "ldr     `d0, [`s0, `s1]",
+                                             src = [Frame.fp, t], dest = [temp], jump = NONE} ]
+			   | SOME str => [ OPER {assem = "ldr     `d0, [`s0, " ^ str ^ "]",
+                                                 src = [Frame.fp], dest = [temp], jump = NONE} ] 
+                        )
         in
-            [const, instr]
+            instr
         end
 
 (* movaMem crea una instrucción que mueve un temporario a memoria. *)
 fun movaMem (temp, mempos) =
         let val t = Temp.newtemp()
             val const = Codegen.genConst (mempos, t)
-            val instr =
-                    OPER {assem = "str     `s0, [`s1, `s2]",
-                          src = [temp, Frame.fp, t],
-                          dest = [],
-                          jump = NONE
-                         }
+            val instr = (case const of
+			     NONE => [ OPER {assem = "str     `s0, [`s1, `s2]",
+                                             src = [temp, Frame.fp, t], dest = [], jump = NONE} ]
+			   | SOME str => [ OPER {assem = "str     `s0, [`s1, " ^ str ^ "]",
+                                                 src = [temp, Frame.fp], dest = [], jump = NONE} ] 
+			)                        
         in
-            [const, instr]
+            instr
         end
 
 (* simpleregalloc body frm spilledTemp
