@@ -19,7 +19,7 @@ fun set_safedelete (s, i) = (
 (* movaTemp, de memoria a un temporario.*)
 fun movaTemp (mempos, temp) =
         let val t = Temp.newtemp()
-            val const = genConst (mempos, t)
+            val const = Codegen.genConst (mempos, t)
             val instr =
                     OPER {assem = "ldr     `d0, [`s0, `s1]",
                           src = [Frame.fp, t],
@@ -33,7 +33,7 @@ fun movaTemp (mempos, temp) =
 (* movaMem crea una instrucción que mueve un temporario a memoria. *)
 fun movaMem (temp, mempos) =
         let val t = Temp.newtemp()
-            val const = genConst (mempos, t)
+            val const = Codegen.genConst (mempos, t)
             val instr =
                     OPER {assem = "str     `s0, [`s1, `s2]",
                           src = [temp, Frame.fp, t],

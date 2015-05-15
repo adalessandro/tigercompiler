@@ -140,7 +140,7 @@ Topsort.uo: Topsort.ui Tab.ui Abs.uo Sres.uo Tigerextras.uo Tips.uo
 Tigerpp.uo: Tigerpp.ui Abs.uo 
 Canon.ui: Temp.ui Frame.ui Tree.uo 
 Simpleregalloc.uo: Simpleregalloc.ui Temp.ui Frame.ui Assem.ui \
-    Tigerextras.uo 
+    Tigerextras.uo Codegen.ui 
 Tigerpp.ui: Abs.uo 
 Escap.ui: Abs.uo 
 Codegen.uo: Codegen.ui Temp.ui Frame.ui Assem.ui Tree.uo Tigerextras.uo 

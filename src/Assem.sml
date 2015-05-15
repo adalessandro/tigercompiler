@@ -40,20 +40,6 @@ fun const i =
 
 fun flabel l = l
 
-fun genConst (n, t) =
-        if (0 <= n andalso n <= 255) then
-            OPER {assem = "mov     `d0, #" ^ Int.toString(n),
-                  dest = [t], src = [], jump = NONE}
-        else if (~256 <= n andalso n <= ~1) then
-            OPER {assem = "mov     `d0, #-" ^ Int.toString(~n),
-                  dest = [t], src = [], jump = NONE}
-        else
-            let val l = emitConst n
-            in
-                OPER {assem = "ldr     `d0, " ^ flabel(l),
-                      dest = [t], src = [], jump = NONE}
-            end
-
 (* ----- Extras ----- *)
 fun getTemps instr =
         case instr of

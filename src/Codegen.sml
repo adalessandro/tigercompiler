@@ -24,6 +24,17 @@ fun result gen =
             gen t; t
         end
 
+fun genConst (n, t) : string option =
+        if (~256 <= n andalso n <= 255) then
+            SOME ("#" ^ Assem.const n)
+        else
+            let val l = emitConst n
+            in
+                emits (OPER {assem = "ldr     `d0, " ^ flabel(l),
+                            dest = [t], src = [], jump = NONE});
+                NONE
+            end
+
 (* global stuff *)
 val gblframes : Frame.frame list ref = ref []
 
@@ -33,7 +44,12 @@ fun getframe name : Frame.frame option = List.find (fn f => Frame.name f = name)
 fun munchStmBlock (ss, frame) = 
         let fun munchStm (T.MOVE ((T.CONST _), _)) = raise Fail "MOVE dest = CONST"
               | munchStm (T.MOVE ((T.NAME _), _)) = raise Fail "MOVE dest = NAME"
-              | munchStm (T.MOVE ((T.TEMP d), (T.CONST i))) = emits (genConst (i, d))
+              | munchStm (T.MOVE ((T.TEMP d), (T.CONST i))) = (
+                        case (genConst (i, d)) of
+                        NONE => ()
+                      | SOME str => emits (OPER {assem = "mov     `d0, " ^ str,
+                                                 dest = [d], src = [], jump = NONE})
+                        )
               | munchStm (T.MOVE ((T.TEMP d), (T.NAME l))) =
                         emits (OPER {assem = "ldr     `d0, " ^ Assem.flabel(l),
                                      dest = [d], src = [], jump = NONE})
@@ -160,10 +176,15 @@ fun munchStmBlock (ss, frame) =
                     let val offset = pos * Frame.wSz
                         val e = munchExp arg
                         val t = Temp.newtemp()
+                        val c = genConst (offset, t)
                     in
-                        emits (genConst (offset, t));
-                        emits (OPER {assem = "str     `s0, [sp, `s1]",
-                                     dest = [], src = [e, t], jump = NONE});
+                        (
+                        case c of
+                        NONE => emits (OPER {assem = "str     `s0, [sp, `s1]",
+                                             dest = [], src = [e, t], jump = NONE})
+                      | SOME str => emits (OPER {assem = "str     `s0, [sp, " ^ str ^ "]",
+                                             dest = [], src = [e], jump = NONE})
+                        );
                         pos + 1
                     end
 
@@ -178,7 +199,15 @@ fun munchStmBlock (ss, frame) =
                         [e', reg]
                     end
 
-            and munchExp (T.CONST i) = result (fn x => emits (genConst(i, x)))
+            and munchExp (T.CONST i) =
+                    result (fn x =>
+                            let val c = genConst(i, x)
+                            in
+                                case c of
+                                NONE => ()
+                              | SOME str => emits (OPER {assem = "mov     `d0, " ^ str,
+                                                         dest = [x], src = [], jump = NONE})
+                            end)
               | munchExp (T.NAME l) =
                         result (fn x => emits (OPER {assem = "ldr     `d0, " ^ Assem.flabel(l),
                                                      dest = [x], src = [], jump = NONE}))
@@ -211,10 +240,16 @@ fun munchStmBlock (ss, frame) =
                             val toreg_zip = ListPair.zip (toreg, Frame.argregs)
                             val _ = if sp_offset <> 0 then
                                         let val t = Temp.newtemp()
+                                            val c = genConst (sp_offset, t)
                                         in (
-                                            emits (genConst (sp_offset, t));
-                                            emits (OPER {assem = "sub     sp, sp, `s0",
-                                                         dest = [], src = [t], jump = NONE})
+                                            case c of
+                                            NONE => emits (OPER {assem = "sub     sp, sp, `s0",
+                                                                 dest = [], src = [t],
+                                                                 jump = NONE})
+                                          | SOME str =>
+                                                    emits (OPER {assem = "sub     sp, sp, " ^ str,
+                                                                 dest = [], src = [],
+                                                                 jump = NONE})
                                         ) end
                                     else ()
                             val _ = List.foldl munchArgStack 0 toframe
@@ -225,10 +260,16 @@ fun munchStmBlock (ss, frame) =
                                                  jump = SOME [ename, CALL_LABEL]})
                             val _ = if sp_offset <> 0 then
                                         let val t = Temp.newtemp()
+                                            val c = genConst (sp_offset, t)
                                         in (
-                                            emits (genConst (sp_offset, t));
-                                            emits (OPER {assem = "add     sp, sp, `s0",
-                                                         dest = [], src = [t], jump = NONE})
+                                            case c of
+                                            NONE => emits (OPER {assem = "add     sp, sp, `s0",
+                                                                 dest = [], src = [t],
+                                                                 jump = NONE})
+                                          | SOME str =>
+                                                    emits (OPER {assem = "add     sp, sp, " ^ str,
+                                                                 dest = [], src = [],
+                                                                 jump = NONE})
                                         ) end
                                     else ()
                         in

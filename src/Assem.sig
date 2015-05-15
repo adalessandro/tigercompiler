@@ -35,6 +35,5 @@ sig
 
 	val const : int -> string
 	val flabel : string -> string
-	val genConst : int * temp -> instr
 
 end
