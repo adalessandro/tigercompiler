@@ -30,6 +30,7 @@ sig
     val RET_LABEL : label
     val CALL_LABEL : label
 
+	val isImmConst : int -> bool
 	val constlist : (string * int) list ref
 	val emitConst : int -> label
 

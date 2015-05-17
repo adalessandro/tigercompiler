@@ -101,6 +101,7 @@ fun main args =
             (* Build runtime, link and scp *)
             val _ = Process.system ("arm-linux-gnueabi-gcc -c runtime.c -o runtime.o")
             val _ = Process.system ("arm-linux-gnueabi-gcc -g runtime.o " ^ out_file_name)
+            val _ = println "starting scp"
             val _ = Process.system ("scp a.out root@192.168.0.103:")
 
         in

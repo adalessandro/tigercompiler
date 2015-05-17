@@ -18,31 +18,41 @@ fun set_safedelete (s, i) = (
 
 (* movaTemp, de memoria a un temporario.*)
 fun movaTemp (mempos, temp) =
-        let val t = Temp.newtemp()
-            val const = Codegen.genConst (mempos, t)
-            val instr = (case const of
-			     NONE => [ OPER {assem = "ldr     `d0, [`s0, `s1]",
-                                             src = [Frame.fp, t], dest = [temp], jump = NONE} ]
-			   | SOME str => [ OPER {assem = "ldr     `d0, [`s0, " ^ str ^ "]",
-                                                 src = [Frame.fp], dest = [temp], jump = NONE} ] 
-                        )
-        in
-            instr
-        end
+        if isImmConst mempos then
+            let val instr =
+                        OPER {assem = "ldr     `d0, [`s0, #" ^ const mempos ^ "]",
+                              src = [Frame.fp], dest = [temp], jump = NONE}
+            in
+                [instr]
+            end
+        else
+            let val t = Temp.newtemp()
+                val const = Codegen.genConst (mempos, t)
+                val instr =
+                        OPER {assem = "ldr     `d0, [`s0, `s1]",
+                              src = [Frame.fp, t], dest = [temp], jump = NONE}
+            in
+                [const, instr]
+            end
 
 (* movaMem crea una instrucción que mueve un temporario a memoria. *)
 fun movaMem (temp, mempos) =
-        let val t = Temp.newtemp()
-            val const = Codegen.genConst (mempos, t)
-            val instr = (case const of
-			     NONE => [ OPER {assem = "str     `s0, [`s1, `s2]",
-                                             src = [temp, Frame.fp, t], dest = [], jump = NONE} ]
-			   | SOME str => [ OPER {assem = "str     `s0, [`s1, " ^ str ^ "]",
-                                                 src = [temp, Frame.fp], dest = [], jump = NONE} ] 
-			)                        
-        in
-            instr
-        end
+        if isImmConst mempos then
+            let val instr =
+                        OPER {assem = "str     `s0, [`s1, #" ^ const mempos ^ "]",
+                              src = [temp, Frame.fp], dest = [], jump = NONE}
+            in
+                [instr]
+            end
+        else
+            let val t = Temp.newtemp()
+                val const = Codegen.genConst (mempos, t)
+                val instr =
+                        OPER {assem = "str     `s0, [`s1, `s2]",
+                              src = [temp, Frame.fp, t], dest = [], jump = NONE}
+            in
+                [const, instr]
+            end
 
 (* simpleregalloc body frm spilledTemp
  *      Reemplaza todas las ocurrencias de spilledTemp por un nuevo temporario (o registro)

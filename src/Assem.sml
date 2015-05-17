@@ -25,6 +25,8 @@ val CALL_LABEL = "__CALL_LABEL__"
 (* allocation of big consts *)
 val constlist = ref []
 
+fun isImmConst n = (~256 <= n andalso n <= 255)
+
 fun emitConst n =
         let val l = Temp.newlabel()
         in
