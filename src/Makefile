@@ -76,6 +76,7 @@ clean:
 	$(REMOVE) errlist
 	$(REMOVE) *.o
 	$(REMOVE) tiger
+	$(REMOVE) a.out output.s
 
 .sig.ui:
 	$(MOSMLC) $<
