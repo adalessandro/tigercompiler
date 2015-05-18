@@ -292,14 +292,13 @@ fun forExp {lo, hi, var, body} =
         val sup = unEx hi
         val expBody = unNx body
         val (l1, l2, l3) = (newlabel(), topSalida(), newlabel())
-        val (r1, r2) = (newtemp(), newtemp())
+        val t1 = newtemp()
         val expVar = unEx var
     in
         Nx (seq[MOVE(expVar, inf),
-                MOVE(TEMP r1, inf),
-                MOVE(TEMP r2, sup),
+                MOVE(TEMP t1, sup),
                 LABEL l1,
-                CJUMP(GT, expVar, TEMP r2, l2, l3),
+                CJUMP(GT, expVar, TEMP t1, l2, l3),
                 LABEL l3,
                 expBody,
                 MOVE(expVar, BINOP(PLUS, (CONST 1), expVar)),

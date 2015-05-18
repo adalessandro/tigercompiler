@@ -13,30 +13,17 @@ open Tigerextras
 fun debug x = if (!Tigerextras.enable_debug) andalso Tigerextras.coloring_debug then println x else ()
 
 (* Variables de IGRAPH globales y funciones para manejarlas *)
-datatype igraph = (* No se está usando *)
-        IGRAPH of { graph: Graph.graph,
-                    tnode: Temp.temp -> Graph.node,
-                    gtemp: Graph.node -> Temp.temp,
-                    moves: (Graph.node * Graph.node) Set.set,
-                    nodes: Temp.temp Graph.table}
-
 val gbl_graph = ref (NONE : Graph.graph option)
 val gbl_tnode = ref (NONE : (Temp.temp -> Graph.node) option)
 val gbl_gtemp = ref (NONE : (Graph.node -> Temp.temp) option)
-val gbl_moves = ref (NONE : (Graph.node * Graph.node) Set.set option) (* No se está usando *)
-val gbl_nodes = ref (NONE : Temp.temp Graph.table option) (* No se está usando *)
 
 fun graph() = valOf (!gbl_graph)
 fun tnode() = valOf (!gbl_tnode)
 fun gtemp() = valOf (!gbl_gtemp)
-fun moves() = valOf (!gbl_moves) (* No se está usando *)
-fun nodes() = valOf (!gbl_nodes) (* No se está usando *)
 
 fun setgraph x = gbl_graph := (SOME x)
 fun settnode x = gbl_tnode := (SOME x)
 fun setgtemp x = gbl_gtemp := (SOME x)
-fun setmoves x = gbl_moves := (SOME x) (* No se está usando *)
-fun setnodes x = gbl_nodes := (SOME x) (* No se está usando *)
 
 (* Constantes globales *)
 val precolored_temps = Frame.generalregs @ Frame.specialregs
@@ -93,16 +80,16 @@ val activeMoves = ref (Set.empty Int.compare)
 
 (* Adjacency list representation of the graph; for each non-precolored temporary u,
  * adjList[u] is the set of nodes that interfere with u. *)
-val adjList = ref (tabNueva())
+val adjList = ref (Map.mkDict Int.compare)
 (* An array containing the current degree of each node. *)
-val degree = ref (tabNueva())
+val degree = ref (Map.mkDict Int.compare)
 (* A mapping from a node to the list of moves it is associated with. *)
-val movelist = ref (tabNueva())
+val movelist = ref (Map.mkDict Int.compare)
 (* When a move (u, v) has been coalesced, and v put in coalescedNodes, then alias(v) = u. *)
-val alias = ref (tabNueva())
+val alias = ref (Map.mkDict Int.compare)
 (* The color chosen by the algorithm for a node; for precolored nodes this is initialized
  * to the given color *)
-val color = ref (tabNueva())
+val color = ref (Map.mkDict Int.compare)
 
 
 (* Auxiliary functions *)
@@ -125,13 +112,13 @@ fun printIGraph ops =
             fun printIGraph' opt =            
                     case opt of
                     "graph" => Graph.printGraphNotDir (print o gtemp()) (graph())
-                  | "moves" => Graph.printSet printnodepair (moves())
-                  | "nodes" => Tab.printTab printint print (nodes())
                   | _ => raise Fail "printIGraph: opción desconocida"
         in
             List.map printIGraph' ops; ()
         end
 
+fun updateDict (d, k, v) =
+            Map.insert (d, k, v)
 
 (* PROGRAM CODE P.244-250 -------------------------------------------------------------------------
  * The algorithm is invoked using the procedure Main, which loops (via tail recursion)
@@ -152,10 +139,12 @@ fun makeIGraph opt_interf (FGRAPH fgraph) =
             val temp_nodes_set = Set.addList (Set.empty Int.compare, temps_indexes)
 
             val _ = setgraph (newNodes (newGraph()) temps_indexes)
-            val _ = settnode (fn t => #1 (tabPrimer ((fn y => t = y), temp_nodes_tab)))
-            val _ = setgtemp (fn n => tabSaca(n, temp_nodes_tab))
-            val _ = setmoves (Set.empty (pair_compare Int.compare Int.compare)) (* No se está usando *)
-            val _ = setnodes temp_nodes_tab (* No se está usando *)
+            val tnodemap = List.foldl (fn ((a, b), m) => Map.insert (m, b, a))
+                                      (Map.mkDict String.compare) temps_pairs
+            val _ = settnode (fn t => Map.find (tnodemap, t))
+            val gtempmap = List.foldl (fn ((a, b), m) => Map.insert (m, a, b))
+                                      (Map.mkDict Int.compare) temps_pairs
+            val _ = setgtemp (fn t => Map.find (gtempmap, t))
 
             (* Initialize node work-lists, sets and stacks *)
             val precolored_nodes = List.map (tnode()) precolored_temps
@@ -178,21 +167,27 @@ fun makeIGraph opt_interf (FGRAPH fgraph) =
 
             (* Initialize the other data structures *)
             val adj_init = List.tabulate (List.length temps_list, (fn x => (x, Set.empty Int.compare)))
-            val _ = adjList := tabInserList (tabNueva(), adj_init)
+            val _ = adjList := List.foldl (fn ((a, b), m) => Map.insert (m, a, b))
+                                           (Map.mkDict Int.compare) adj_init
             val degree_init = List.tabulate (List.length temps_list, (fn x => (x, 0)))
-            val _ = degree := tabInserList (tabNueva(), degree_init)
+            val _ = degree := List.foldl (fn ((a, b), m) => Map.insert (m, a, b))
+                                         (Map.mkDict Int.compare) degree_init
             val move_init = List.tabulate (List.length temps_list, (fn x => (x, Set.empty Int.compare)))
-            val _ = movelist := tabInserList (tabNueva(), move_init)
+            val _ = movelist := List.foldl (fn ((a, b), m) => Map.insert (m, a, b))
+                                           (Map.mkDict Int.compare) move_init
             val alias_init = List.tabulate (List.length temps_list, (fn x => (x, x)))
-            val _ = alias := tabInserList (tabNueva(), alias_init)
+            val _ = alias := List.foldl (fn ((a, b), m) => Map.insert (m, a, b))
+                                        (Map.mkDict Int.compare) alias_init
             val color_init = List.tabulate (List.length temps_list, (fn x => (x, "--")))
-            val _ = color := tabInserList (tabNueva(), color_init)
-            val _ = List.map (fn t => tabRInserta_ (tnode() t, t, color)) precolored_temps
+            val _ = color := List.foldl (fn ((a, b), m) => Map.insert (m, a, b))
+                                        (Map.mkDict Int.compare) color_init
+            val _ = color := List.foldl (fn (t, m) => Map.insert (m, tnode() t, t))
+                                        (!color) precolored_temps
 
             (* Liveness P.214 Algorithm 10.4 *)
             val instr_nodes_list = tabClaves (#nodes fgraph)
+            val rev_instr_nodes_list = List.rev instr_nodes_list
             val init_inout_pairs = List.map (fn x => (x, Set.empty String.compare)) instr_nodes_list
-            val init_inout_tab = tabInserList (tabNueva(), init_inout_pairs)
             val init_inout_dict = List.foldl (fn ((a, b), m) => Map.insert (m, a, b))
                                              (Map.mkDict Int.compare) init_inout_pairs
             val inDict = ref init_inout_dict
@@ -200,15 +195,13 @@ fun makeIGraph opt_interf (FGRAPH fgraph) =
             fun liveout n = Map.find (!outDict, n)
             fun livein n = Map.find (!inDict, n)
 
-            fun updateDict (d, k, v) =
-                    let val (d1, _) = Map.remove (d, k)
-                    in
-                        Map.insert (d1, k, v)
-                    end
-
             fun def n = tabSaca (n, (#def fgraph))
             fun use n = tabSaca (n, (#use fgraph))
-            fun succ n = Graph.succ (#control fgraph) n
+            fun succ' n = Graph.succ (#control fgraph) n
+            val init_succmap = List.map (fn x => (x, succ' x)) instr_nodes_list
+            val succmap = List.foldl (fn ((a, b), m) => Map.insert (m, a, b))
+                                             (Map.mkDict Int.compare) init_succmap
+            fun succ n = Map.find (succmap, n)
             fun ismove n = tabSaca(n, (#ismove fgraph))
 
             val _ = debug "liveness()"
@@ -227,54 +220,57 @@ fun makeIGraph opt_interf (FGRAPH fgraph) =
                                 Set.equal (out_n', newout)
                             end
                     in
-                        while (not (List.foldl foreach true (List.rev instr_nodes_list))) do ()
+                        while (not (List.foldl foreach true rev_instr_nodes_list)) do ()
                     end
 
             (* Build P.245 *)
             fun build i =
-                let fun liveout n = Map.find (!outDict, n)
-                    val live = liveout i
+                let val live = liveout i
+                    val i_def = def i
+                    val i_use = use i
                     fun foralln n = 
-                            let val is = tabSaca (tnode() n, !movelist)
+                            let val (d', is) = Map.remove (!movelist, tnode() n)
                             in
-                                tabRInserta_ (tnode() n, (Set.add (is, i)), movelist)
+                                movelist := Map.insert (d', tnode() n, (Set.add (is, i)))
                             end
                     val live' = if ismove i then (
-                                    Set.app foralln (Set.union (def i, use i));
+                                    Set.app foralln (Set.union (i_def, i_use));
                                     worklistMoves := Set.add (!worklistMoves, i);
-                                    Set.difference (live, (use i))
+                                    Set.difference (live, i_use)
                                 ) else
                                     live
-                    val live'' = Set.union (live', (def i))
+                    val live'' = Set.union (live', i_def)
                     fun foralld x = 
                             let fun foralll y = addEdge (tnode() y, tnode() x)
                             in
                                 Set.app foralll live''
                             end
                 in
-                    Set.app foralld (def i)
+                    Set.app foralld i_def
                 end
         in
-            List.map build (List.rev instr_nodes_list)
+            debug "build()";
+            List.app build rev_instr_nodes_list
         end
 
-and addEdge(u, v) =
+and addEdge(u, v) =(
         if (not (areAdj (graph()) u v) andalso u <> v) then (
             setgraph (mk_edge (mk_edge (graph()) {from=u, to=v}) {from=v, to=u});
             if not (isprecolored u) then (
-                tabRInserta_ (u, Set.add (tabSaca (u, !adjList), v), adjList);
-                tabRInserta_ (u, 1 + tabSaca (u, !degree), degree)
+                adjList := updateDict (!adjList, u, Set.add (Map.find (!adjList, u), v));
+                degree := updateDict (!degree, u, 1 + Map.find (!degree, u))
             ) else ();
             if not (isprecolored v) then (
-                tabRInserta_ (v, Set.add (tabSaca (v, !adjList), u), adjList);
-                tabRInserta_ (v, 1 + tabSaca (v, !degree), degree)
+                adjList := updateDict (!adjList, v, Set.add (Map.find (!adjList, v), u));
+                degree := updateDict (!degree, v, 1 + Map.find (!degree, v))
             ) else ()
          ) else ()
+)
 
 fun makeWorkList () =
         let val _ = debug "makeWorkList()"
             fun foralln n =
-                    if tabSaca(n, (!degree)) >= k_len then
+                    if Map.find (!degree, n) >= k_len then
                         spillWorkList := Set.add (!spillWorkList, n)
                     else if isMoveRelated(n) then
                         freezeWorkList := Set.add (!freezeWorkList, n)
@@ -285,7 +281,7 @@ fun makeWorkList () =
         end
 
 and adjacent n =
-        let val a = tabSaca (n, (!adjList))
+        let val a = Map.find (!adjList, n)
             val b = Set.addList (Set.empty Int.compare, Pila.toList selectStack)
             val c = (!coalescedNodes)
         in
@@ -293,7 +289,7 @@ and adjacent n =
         end
 
 and nodeMoves n =
-        let val a = tabSaca(n, (!movelist))
+        let val a = Map.find(!movelist, n)
             val b = (!activeMoves)
             val c = (!worklistMoves)
         in
@@ -315,9 +311,9 @@ fun simplify () =
         end
 
 and decrementDegree m =
-        let val d = tabSaca(m, !degree)
+        let val d = Map.find (!degree, m)
         in
-            tabRInserta_ (m, (d-1), degree);
+            degree := updateDict (!degree, m, d-1);
             if (d = k_len) then (
                 enableMoves (Set.add (adjacent m, m));
                 spillWorkList := set_safedelete (!spillWorkList, m);
@@ -384,14 +380,14 @@ and addWorkList u =
         if (
             not (isprecolored u) andalso
             not (isMoveRelated u) andalso
-            tabSaca(u, (!degree)) < k_len
+            Map.find (!degree, u) < k_len
         ) then (
             freezeWorkList := set_safedelete (!freezeWorkList, u);
             simplifyWorkList := Set.add (!simplifyWorkList, u)
         ) else ()
 
 and ok_fun (t, r) = 
-        let val a = tabSaca(t, (!degree)) < k_len
+        let val a = Map.find (!degree, t) < k_len
             val b = isprecolored t
             val c = areAdj (graph()) t r
         in
@@ -399,7 +395,7 @@ and ok_fun (t, r) =
         end
 
 and conservative ns =
-        let fun cond n = tabSaca(n, (!degree)) >= k_len
+        let fun cond n = Map.find (!degree, n) >= k_len
             val foo = (fn (n, cont) => if cond n then cont + 1 else cont)
         in
             (Set.foldl foo 0 ns) < k_len
@@ -407,7 +403,7 @@ and conservative ns =
 
 and getAlias n =
         if Set.member (!coalescedNodes, n) then
-            getAlias (tabSaca (n, (!alias)))
+            getAlias (Map.find (!alias, n))
         else n
 
 and combine (u, v) =
@@ -422,10 +418,11 @@ and combine (u, v) =
                 )
             );
             coalescedNodes := Set.add (!coalescedNodes, v);
-            tabRInserta_ (v, u, alias);
-            tabRInserta_ (u, Set.union (tabSaca (u, !movelist), tabSaca (v, !movelist)), movelist);
+            alias := updateDict (!alias, v, u);
+            movelist := updateDict (!movelist, u,
+                                    Set.union (Map.find (!movelist, u), Map.find (!movelist, v)));
             Set.app forallt (adjacent v);
-            if (tabSaca(u, !degree) >= k_len) andalso Set.member (!freezeWorkList, u) then (
+            if (Map.find (!degree, u) >= k_len) andalso Set.member (!freezeWorkList, u) then (
                 freezeWorkList := Set.delete (!freezeWorkList, u);
                 spillWorkList := Set.add (!spillWorkList, u)
             ) else ()
@@ -455,7 +452,7 @@ and freezeMoves (FGRAPH fgraph) u =
                     in
                         activeMoves := set_safedelete (!activeMoves, m);
                         frozenMoves := Set.add (!frozenMoves, m);
-                        if Set.isEmpty (nodeMoves v) andalso tabSaca(v, !degree) < k_len andalso
+                        if Set.isEmpty (nodeMoves v) andalso Map.find (!degree, v) < k_len andalso
                             not (isprecolored v) then (
                             freezeWorkList := set_safedelete (!freezeWorkList, v);
                             simplifyWorkList := Set.add (!simplifyWorkList, v)
@@ -488,13 +485,13 @@ fun assignColors_while () = (
             val _ = okColors := Set.addList (!okColors, okColorsList)
             fun forallw w =
                     if Set.member (Set.union (!coloredNodes, !precolored), getAlias w) then
-                        let val w_color = tabSaca (getAlias w, !color)
+                        let val w_color = Map.find (!color, getAlias w)
                         in
                             okColors := set_safedelete ((!okColors), w_color)
                         end
                     else ()
         in
-            Set.app forallw (tabSaca (n, !adjList));
+            Set.app forallw (Map.find (!adjList, n));
             if Set.isEmpty (!okColors) then (
                 spilledNodes := Set.add (!spilledNodes, n)
             )
@@ -502,7 +499,7 @@ fun assignColors_while () = (
                 coloredNodes := Set.add (!coloredNodes, n);
                 (let val coco = set_getone (!okColors)
                 in
-                    tabRInserta_ (n, coco, color)
+                    color := updateDict (!color, n, coco)
                 end)
             )
         end
@@ -511,9 +508,9 @@ fun assignColors_while () = (
 fun assignColors () =
         let val _ = debug "assignColors()"
             fun foralln n =
-                    let val n_color = tabSaca (getAlias n, !color)
+                    let val n_color = Map.find (!color, getAlias n)
                     in
-                        tabRInserta_ (n, n_color, color)
+                        color := updateDict (!color, n, n_color)
                     end
         in 
             assignColors_while();
@@ -556,7 +553,7 @@ fun coloring_main opts (blocks : (Assem.instr list * Frame.frame) list) =
                     if not (Set.isEmpty (!spilledNodes)) then
                             (coloring_main opts o rewriteProgram) blocks
                     else (
-                        if opt_color then Tab.printTab (print o gtemp()) print (!color) else ();
+                        (*if opt_color then Tab.printTab (print o gtemp()) print (!color) else ();*)
                         debug "finish ended()";
                         blocks (* That's all folks! Just return blocks. *)
                     )
@@ -570,7 +567,8 @@ fun coloring_main opts (blocks : (Assem.instr list * Frame.frame) list) =
 fun replaceTemps (blocks : (Assem.instr list * Frame.frame) list) =
         let fun rep_block (is : Assem.instr list, frm : Frame.frame) =
                     let val _ = debug "replace()"
-                        val color_lst = List.map (fn (a, b) => (gtemp() a, b)) (tabAList (!color))
+                        val color_lst = List.map (fn (a, b) => (gtemp() a, b))
+                                                 (Map.listItems (!color))
                         (* Lista de funciones. Cada una reemplaza un temp. *)
                         val fn_lst = List.map Codegen.replace color_lst
                         (* Aplicar todos los reemplazos a una instr. *)

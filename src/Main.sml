@@ -33,8 +33,9 @@ fun main args =
             val (color, l8) = arg (l7, "-color")
             val (final, l9) = arg (l8, "-final")
             val (debug, l10) = arg (l9, "-debug")
+            val (bichito, l11) = arg (l10, "-bichito")
             val entrada =
-                    case l10 of
+                    case l11 of
                     [n] => ((open_in n) handle _ => raise Fail (n ^ " no existe!"))
                   | [] => std_in
                   | _ => raise Fail "opción desconocida!"
@@ -99,11 +100,13 @@ fun main args =
             val _ = TextIO.closeOut fd
 
             (* Build runtime, link and scp *)
-            val _ = Process.system ("arm-linux-gnueabi-gcc -c runtime.c -o runtime.o")
-            val _ = Process.system ("arm-linux-gnueabi-gcc -g runtime.o " ^ out_file_name)
-            val _ = println "starting scp"
-            val _ = Process.system ("scp a.out root@192.168.0.103:")
-
+            val _ = if bichito then (
+                        Process.system ("arm-linux-gnueabi-gcc -c runtime.c -o runtime.o");
+                        Process.system ("arm-linux-gnueabi-gcc -g runtime.o " ^ out_file_name);
+                        println "starting scp";
+                        Process.system ("scp a.out root@192.168.0.103:");
+                        Process.system ("ssh root@192.168.0.103 ./a.out"); ()
+                    ) else ()
         in
             print "Ultra yes!!!\n"
         end
