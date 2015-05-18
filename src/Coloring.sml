@@ -3,6 +3,7 @@ struct
 
 structure T = Tree
 structure Set = Splayset
+structure Map = Splaymap
 
 open Graph
 open Tab
@@ -192,6 +193,18 @@ fun makeIGraph opt_interf (FGRAPH fgraph) =
             val instr_nodes_list = tabClaves (#nodes fgraph)
             val init_inout_pairs = List.map (fn x => (x, Set.empty String.compare)) instr_nodes_list
             val init_inout_tab = tabInserList (tabNueva(), init_inout_pairs)
+            val init_inout_dict = List.foldl (fn ((a, b), m) => Map.insert (m, a, b))
+                                             (Map.mkDict Int.compare) init_inout_pairs
+            val inDict = ref init_inout_dict
+            val outDict = ref init_inout_dict
+            fun liveout n = Map.find (!outDict, n)
+            fun livein n = Map.find (!inDict, n)
+
+            fun updateDict (d, k, v) =
+                    let val (d1, _) = Map.remove (d, k)
+                    in
+                        Map.insert (d1, k, v)
+                    end
 
             fun def n = tabSaca (n, (#def fgraph))
             fun use n = tabSaca (n, (#use fgraph))
@@ -199,35 +212,27 @@ fun makeIGraph opt_interf (FGRAPH fgraph) =
             fun ismove n = tabSaca(n, (#ismove fgraph))
 
             val _ = debug "liveness()"
-            fun liveness (inTab, outTab) =
-                let fun liveness' (inTab', outTab', []) = (inTab', outTab')
-                      | liveness' (inTab', outTab', (n::ns)) =
-                            let fun liveout n = tabSaca (n, outTab')
-                                fun livein n = tabSaca (n, inTab')
+            val _ = (* liveness *)
+                    let fun foreach (n, flag) =
+                            let val in_n' = livein n
+                                val out_n' = liveout n
                                 val newin = Set.union (use n, (Set.difference (liveout n, def n)))
                                 fun aux (x, s) = Set.union (livein x, s)
                                 val newout = Set.foldl aux (Set.empty String.compare) (succ n)
-                                val inTab'' = tabRInserta (n, newin, inTab')
-                                val outTab'' = tabRInserta (n, newout, outTab')
+                                val _ = inDict := updateDict (!inDict, n, newin)
+                                val _ = outDict := updateDict (!outDict, n, newout)
                             in
-                                liveness' (inTab'', outTab'', ns)
+                                flag andalso 
+                                Set.equal (in_n', newin) andalso
+                                Set.equal (out_n', newout)
                             end
-                    val (inTab', outTab') = liveness' (inTab, outTab, List.rev instr_nodes_list)
-                in
-                    if tabEq Set.equal (inTab, inTab') andalso tabEq Set.equal (outTab, outTab') then
-                        (inTab, outTab)
-                    else
-                        liveness (inTab', outTab')
-                end
-            
-            val (inTab, outTab) = liveness (init_inout_tab, init_inout_tab)
-            val _ = if opt_interf then
-                        printTab printint (printSet print) outTab
-                    else ()
+                    in
+                        while (not (List.foldl foreach true (List.rev instr_nodes_list))) do ()
+                    end
 
             (* Build P.245 *)
             fun build i =
-                let fun liveout n = tabSaca (n, outTab)
+                let fun liveout n = Map.find (!outDict, n)
                     val live = liveout i
                     fun foralln n = 
                             let val is = tabSaca (tnode() n, !movelist)
