@@ -5,7 +5,10 @@ open Seman
 open Tigerextras
 open BasicIO Nonstdio
 
-val out_file_name = "output.s"
+val assem_filename = "output.s"
+val bin_filename = "a.out"
+val username = "root"
+val host_ip = "192.168.0.103"
 
 fun lexstream (is: instream) =
         Lexing.createLexer (fn b => fn n => buff_input is b 0 n)
@@ -33,9 +36,10 @@ fun main args =
             val (color, l8) = arg (l7, "-color")
             val (final, l9) = arg (l8, "-final")
             val (debug, l10) = arg (l9, "-debug")
-            val (bichito, l11) = arg (l10, "-bichito")
+            val (runtime, l11) = arg (l10, "-runtime")
+            val (scp, l12) = arg (l11, "-scp")
             val entrada =
-                    case l11 of
+                    case l12 of
                     [n] => ((open_in n) handle _ => raise Fail (n ^ " no existe!"))
                   | [] => std_in
                   | _ => raise Fail "opción desconocida!"
@@ -95,17 +99,23 @@ fun main args =
             val final_prog' = Frame.setDirectives final_prog strs
 
             (* Output program to file *)
-            val fd = TextIO.openOut out_file_name
+            val fd = TextIO.openOut assem_filename
             val _ = TextIO.output (fd, final_prog')
             val _ = TextIO.closeOut fd
 
-            (* Build runtime, link and scp *)
-            val _ = if bichito then (
+            (* Build runtime *)
+            val _ = if runtime then (
                         Process.system ("arm-linux-gnueabi-gcc -c runtime.c -o runtime.o");
-                        Process.system ("arm-linux-gnueabi-gcc -g runtime.o " ^ out_file_name);
+                        ()
+                    ) else ()
+
+            (* Link, scp and remote execution *)
+            val _ = if scp then (
+                        Process.system ("arm-linux-gnueabi-gcc -g runtime.o -o " ^ bin_filename ^ " " ^ assem_filename);
                         println "starting scp";
-                        Process.system ("scp a.out root@192.168.0.103:");
-                        Process.system ("ssh root@192.168.0.103 ./a.out"); ()
+                        Process.system ("scp " ^ bin_filename ^ " " ^ username ^ "@" ^ host_ip ^ ":");
+                        Process.system ("ssh " ^ username ^ "@" ^ host_ip ^ " " ^ bin_filename);
+                        ()
                     ) else ()
         in
             print "Ultra yes!!!\n"
